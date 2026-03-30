@@ -1,0 +1,33 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3498db;
+  margin: 1rem 0;
+}
+
+.quickActions {
+  margin-top: 1rem;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.actionGrid button {
+  display: block;
+  width: 100%;
+}

@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.roomInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.field label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.field value,
+.field span {
+  color: #34495e;
+}
