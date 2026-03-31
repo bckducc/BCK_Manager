@@ -28,18 +28,10 @@ const SidebarWrapper = styled.aside<SidebarProps>`
   overflow: hidden;
 `;
 
-/* ======================
- NAV
-====================== */
-
 const SidebarNav = styled.nav`
   display: flex;
   flex-direction: column;
 `;
-
-/* ======================
- NAV ITEM
-====================== */
 
 interface NavItemProps {
   $active?: boolean;
@@ -63,10 +55,6 @@ const NavItem = styled(Link)<NavItemProps>`
     background: rgba(255, 255, 255, 0.08);
   }
 `;
-
-/* ======================
- ICON
-====================== */
 
 const NavIcon = styled.div`
   font-size: 20px;
@@ -98,10 +86,6 @@ const NavLabel = styled.span<NavLabelProps>`
   pointer-events: none;
   overflow: hidden;
 `;
-
-/* ======================
- TOGGLE BUTTON
-====================== */
 
 const ToggleItem = styled.div<SidebarProps>`
   height: 54px;
@@ -143,7 +127,6 @@ export const Sidebar = () => {
     <SidebarWrapper $collapsed={collapsed}>
       <SidebarNav>
 
-        {/* Toggle Button */}
         <ToggleItem
           $collapsed={collapsed}
           onClick={() => setCollapsed(!collapsed)}
@@ -176,6 +159,7 @@ export const Sidebar = () => {
             </NavItem>
           );
         })}
+
       </SidebarNav>
     </SidebarWrapper>
   );
