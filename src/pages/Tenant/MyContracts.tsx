@@ -1,7 +1,14 @@
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Tables/Table';
 import { Card, Header } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
-import styles from './MyContracts.module.css';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.xl};
+`;
 
 export const MyContracts = () => {
   const contracts: any[] = [];
@@ -31,11 +38,11 @@ export const MyContracts = () => {
   ];
 
   return (
-    <div className={styles.container}>
+    <Container>
       <Header title="Hợp Đồng Của Tôi" />
       <Card>
         <Table columns={columns} data={contracts} emptyText="Chưa có hợp đồng nào" />
       </Card>
-    </div>
+    </Container>
   );
 };

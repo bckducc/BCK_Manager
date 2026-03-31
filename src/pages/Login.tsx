@@ -1,10 +1,54 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { theme } from '../styles/theme';
 import { useAuth } from '../stores/AuthContext';
 import { AuthLayout } from '../layouts/AuthLayout';
 import { Form, FormGroup, Input } from '../components/Forms/Form';
 import { Button } from '../components/Common';
-import styles from './Login.module.css';
+
+const LoginContainer = styled.div`
+  background-color: ${theme.colors.white};
+  border-radius: ${theme.radius.md};
+  padding: ${theme.spacing.xl};
+  box-shadow: ${theme.shadow.md};
+
+  form {
+    margin: 0;
+  }
+
+  h3 {
+    text-align: center;
+    color: ${theme.colors.dark};
+    margin-bottom: ${theme.spacing.lg};
+  }
+`;
+
+const ErrorMessage = styled.div`
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: ${theme.spacing.md};
+  border-radius: ${theme.radius.sm};
+  margin-bottom: ${theme.spacing.md};
+`;
+
+const Footer = styled.p`
+  text-align: center;
+  margin-top: ${theme.spacing.lg};
+  color: ${theme.colors.textSecondary};
+  font-size: ${theme.fontSize.sm};
+
+  a {
+    color: ${theme.colors.primary};
+    text-decoration: none;
+    transition: text-decoration ${theme.transition.base};
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -27,9 +71,9 @@ export const Login = () => {
 
   return (
     <AuthLayout>
-      <div className={styles.loginContainer}>
+      <LoginContainer>
         <Form onSubmit={handleSubmit} title="Đăng Nhập">
-          {error && <div className={styles.error}>{error}</div>}
+          {error && <ErrorMessage>{error}</ErrorMessage>}
           
           <FormGroup label="Email" required>
             <Input
@@ -59,11 +103,11 @@ export const Login = () => {
             Đăng Nhập
           </Button>
 
-          <p className={styles.footer}>
+          <Footer>
             Chưa có tài khoản? <a href="#">Liên hệ quản trị viên</a>
-          </p>
+          </Footer>
         </Form>
-      </div>
+      </LoginContainer>
     </AuthLayout>
   );
 };

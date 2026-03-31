@@ -1,8 +1,25 @@
 import { useState } from 'react';
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Tables/Table';
 import { Header, Button, Card } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
-import styles from './TenantManagement.module.css';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.xl};
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: ${theme.spacing.sm};
+
+  button {
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    font-size: ${theme.fontSize.sm};
+  }
+`;
 
 export const TenantManagement = () => {
   const [tenants] = useState([]);
@@ -17,16 +34,16 @@ export const TenantManagement = () => {
       key: 'actions',
       title: 'Hành Động',
       render: () => (
-        <div className={styles.actions}>
+        <ActionButtons>
           <Button>Xem Chi Tiết</Button>
           <Button variant="danger">Xóa</Button>
-        </div>
+        </ActionButtons>
       ),
     },
   ];
 
   return (
-    <div className={styles.container}>
+    <Container>
       <Header
         title="Quản Lý Người Thuê"
         actions={<Button>+ Thêm Người Thuê</Button>}
@@ -34,6 +51,6 @@ export const TenantManagement = () => {
       <Card>
         <Table columns={columns} data={tenants} emptyText="Chưa có người thuê nào" />
       </Card>
-    </div>
+    </Container>
   );
 };

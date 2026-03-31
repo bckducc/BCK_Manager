@@ -1,6 +1,68 @@
+import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '../../stores/AuthContext';
-import styles from '../../styles/layouts.module.css';
+import { theme } from '../../styles/theme';
+
+const NavbarWrapper = styled.nav`
+  background-color: ${theme.colors.dark};
+  color: ${theme.colors.white};
+  padding: ${theme.spacing.md} ${theme.spacing.xl};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: ${theme.shadow.md};
+`;
+
+const NavbarBrand = styled.div`
+  flex: 1;
+
+  a {
+    text-decoration: none;
+    color: ${theme.colors.white};
+
+    h2 {
+      margin: 0;
+      font-size: ${theme.fontSize['2xl']};
+    }
+  }
+`;
+
+const NavbarUser = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.md};
+`;
+
+const UserName = styled.span`
+  font-weight: ${theme.fontWeight.semibold};
+`;
+
+const UserRole = styled.span`
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: ${theme.spacing.xs} 0.75rem;
+  border-radius: ${theme.radius.full};
+  font-size: ${theme.fontSize.sm};
+  text-transform: uppercase;
+`;
+
+const LogoutBtn = styled.button`
+  background-color: ${theme.colors.danger};
+  color: ${theme.colors.white};
+  border: none;
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  border-radius: ${theme.radius.sm};
+  cursor: pointer;
+  transition: background-color ${theme.transition.base};
+  font-weight: ${theme.fontWeight.semibold};
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    background-color: ${theme.colors.dangerDark};
+  }
+`;
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
@@ -12,23 +74,25 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className={styles.navbar}>
-      <div className={styles.navbarBrand}>
+    <NavbarWrapper>
+      <NavbarBrand>
         <Link to="/">
-          <h2>Mini Apartment Manager</h2>
+          <h2>CC-BCK Manager</h2>
         </Link>
-      </div>
-      <div className={styles.navbarUser}>
+      </NavbarBrand>
+      <NavbarUser>
         {user && (
           <>
-            <span className={styles.navbarUserName}>{user.name}</span>
-            <span className={styles.navbarUserRole}>{user.role}</span>
-            <button onClick={handleLogout} className={styles.navbarLogoutBtn}>
-              Logout
-            </button>
+            <UserOutlined />
+            <UserName>{user.name}</UserName>
+            <UserRole>{user.role}</UserRole>
+            <LogoutBtn onClick={handleLogout}>
+              <LogoutOutlined />
+              Đăng xuất
+            </LogoutBtn>
           </>
         )}
-      </div>
-    </nav>
+      </NavbarUser>
+    </NavbarWrapper>
   );
 };

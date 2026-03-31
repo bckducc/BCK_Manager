@@ -1,39 +1,68 @@
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
 import { Card, Header } from '../../components/Common';
-import styles from './MyRoom.module.css';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.xl};
+`;
+
+const RoomInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.md};
+`;
+
+const Field = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: ${theme.spacing.sm} 0;
+  border-bottom: 1px solid ${theme.colors.borderLight};
+
+  label {
+    font-weight: ${theme.fontWeight.semibold};
+    color: ${theme.colors.dark};
+  }
+
+  span {
+    color: ${theme.colors.textSecondary};
+  }
+`;
 
 export const MyRoom = () => {
   return (
-    <div className={styles.container}>
+    <Container>
       <Header title="Phòng Của Tôi" />
       
       <Card title="Thông Tin Phòng">
-        <div className={styles.roomInfo}>
-          <div className={styles.field}>
+        <RoomInfo>
+          <Field>
             <label>Số Phòng</label>
             <span>101</span>
-          </div>
-          <div className={styles.field}>
+          </Field>
+          <Field>
             <label>Tầng</label>
             <span>1</span>
-          </div>
-          <div className={styles.field}>
+          </Field>
+          <Field>
             <label>Diện Tích</label>
             <span>30 m²</span>
-          </div>
-          <div className={styles.field}>
+          </Field>
+          <Field>
             <label>Giá Thuê/Tháng</label>
             <span>$500</span>
-          </div>
-          <div className={styles.field}>
+          </Field>
+          <Field>
             <label>Mô Tả</label>
             <span>Phòng rộng rãi, thoáng mát, có cửa sổ</span>
-          </div>
-          <div className={styles.field}>
+          </Field>
+          <Field>
             <label>Mô Tả</label>
             <span>Phòng rộng rãi, thoáng mát, có cửa sổ</span>
-          </div>
-        </div>
+          </Field>
+        </RoomInfo>
       </Card>
-    </div>
+    </Container>
   );
 };

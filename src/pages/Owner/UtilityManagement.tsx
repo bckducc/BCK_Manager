@@ -1,9 +1,26 @@
 import { useState } from 'react';
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Tables/Table';
 import { Header, Button, Card, Modal } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
 import { Form, FormGroup, Input } from '../../components/Forms/Form';
-import styles from './UtilityManagement.module.css';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.xl};
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: ${theme.spacing.sm};
+
+  button {
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    font-size: ${theme.fontSize.sm};
+  }
+`;
 
 export const UtilityManagement = () => {
   const [readings] = useState([]);
@@ -18,16 +35,16 @@ export const UtilityManagement = () => {
       key: 'actions',
       title: 'Hành Động',
       render: () => (
-        <div className={styles.actions}>
+        <ActionButtons>
           <Button>Sửa</Button>
           <Button variant="danger">Xóa</Button>
-        </div>
+        </ActionButtons>
       ),
     },
   ];
 
   return (
-    <div className={styles.container}>
+    <Container>
       <Header
         title="Quản Lý Điện Nước"
         actions={<Button onClick={() => setIsModalOpen(true)}>+ Nhập Chỉ Số</Button>}
@@ -57,6 +74,6 @@ export const UtilityManagement = () => {
           </FormGroup>
         </Form>
       </Modal>
-    </div>
+    </Container>
   );
 };

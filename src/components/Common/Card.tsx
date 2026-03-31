@@ -1,4 +1,25 @@
-import styles from '../../styles/common.module.css';
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
+
+const StyledCard = styled.div`
+  background-color: ${theme.colors.white};
+  border-radius: ${theme.radius.md};
+  box-shadow: ${theme.shadow.md};
+  overflow: hidden;
+`;
+
+const CardTitle = styled.h3`
+  margin: 0;
+  padding: ${theme.spacing.md} ${theme.spacing.lg};
+  background-color: ${theme.colors.lightBg};
+  border-bottom: 1px solid ${theme.colors.borderLight};
+  font-size: ${theme.fontSize.lg};
+  color: ${theme.colors.dark};
+`;
+
+const CardContent = styled.div`
+  padding: ${theme.spacing.lg};
+`;
 
 interface CardProps {
   children: React.ReactNode;
@@ -8,9 +29,9 @@ interface CardProps {
 
 export const Card = ({ children, title, className }: CardProps) => {
   return (
-    <div className={`${styles.card} ${className || ''}`}>
-      {title && <h3 className={styles.cardTitle}>{title}</h3>}
-      <div className={styles.cardContent}>{children}</div>
-    </div>
+    <StyledCard className={className}>
+      {title && <CardTitle>{title}</CardTitle>}
+      <CardContent>{children}</CardContent>
+    </StyledCard>
   );
 };

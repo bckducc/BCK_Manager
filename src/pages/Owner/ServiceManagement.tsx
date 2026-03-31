@@ -1,8 +1,25 @@
 import { useState } from 'react';
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Tables/Table';
 import { Header, Button, Card } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
-import styles from './ServiceManagement.module.css';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.xl};
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: ${theme.spacing.sm};
+
+  button {
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    font-size: ${theme.fontSize.sm};
+  }
+`;
 
 export const ServiceManagement = () => {
   const [services] = useState([]);
@@ -17,16 +34,16 @@ export const ServiceManagement = () => {
       key: 'actions',
       title: 'Hành Động',
       render: () => (
-        <div className={styles.actions}>
+        <ActionButtons>
           <Button>Sửa</Button>
           <Button variant="danger">Xóa</Button>
-        </div>
+        </ActionButtons>
       ),
     },
   ];
 
   return (
-    <div className={styles.container}>
+    <Container>
       <Header
         title="Quản Lý Dịch Vụ"
         actions={<Button>+ Thêm Dịch Vụ</Button>}
@@ -34,6 +51,6 @@ export const ServiceManagement = () => {
       <Card>
         <Table columns={columns} data={services} emptyText="Chưa có dịch vụ nào" />
       </Card>
-    </div>
+    </Container>
   );
 };

@@ -1,4 +1,63 @@
-import styles from '../../styles/tables.module.css';
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
+
+const TableContainer = styled.div`
+  background-color: ${theme.colors.white};
+  border-radius: ${theme.radius.md};
+  box-shadow: ${theme.shadow.md};
+  overflow: hidden;
+`;
+
+const TableScroll = styled.div`
+  overflow-x: auto;
+`;
+
+const StyledTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-size: ${theme.fontSize.base};
+
+  thead {
+    background-color: ${theme.colors.lightBg};
+    border-bottom: 2px solid ${theme.colors.borderLight};
+  }
+
+  th {
+    padding: ${theme.spacing.md} ${theme.spacing.lg};
+    text-align: left;
+    font-weight: ${theme.fontWeight.semibold};
+    color: ${theme.colors.dark};
+  }
+
+  tbody tr {
+    border-bottom: 1px solid ${theme.colors.borderLight};
+    transition: background-color ${theme.transition.base};
+
+    &:hover {
+      background-color: ${theme.colors.lightBg};
+    }
+  }
+
+  td {
+    padding: ${theme.spacing.md} ${theme.spacing.lg};
+    color: ${theme.colors.text};
+  }
+`;
+
+const LoadingWrapper = styled.div`
+  padding: ${theme.spacing.lg};
+  text-align: center;
+  color: ${theme.colors.textSecondary};
+`;
+
+const EmptyState = styled.div`
+  padding: ${theme.spacing.xl} ${theme.spacing.lg};
+  text-align: center;
+  color: ${theme.colors.textSecondary};
+  background-color: ${theme.colors.white};
+  border-radius: ${theme.radius.md};
+  box-shadow: ${theme.shadow.md};
+`;
 
 export interface TableColumn {
   key: string;
@@ -21,17 +80,17 @@ export const Table = ({
   emptyText = 'No data',
 }: TableProps) => {
   if (loading) {
-    return <div className={styles.loading}>Loading...</div>;
+    return <LoadingWrapper>Loading...</LoadingWrapper>;
   }
 
   if (data.length === 0) {
-    return <div className={styles.tableEmpty}>{emptyText}</div>;
+    return <EmptyState>{emptyText}</EmptyState>;
   }
 
   return (
-    <div className={styles.tableContainer}>
-      <div className={styles.tableScroll}>
-        <table className={styles.table}>
+    <TableContainer>
+      <TableScroll>
+        <StyledTable>
           <thead>
             <tr>
               {columns.map((col) => (
@@ -52,8 +111,8 @@ export const Table = ({
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
-    </div>
+        </StyledTable>
+      </TableScroll>
+    </TableContainer>
   );
 };

@@ -1,7 +1,14 @@
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Tables/Table';
 import { Card, Header, Badge } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
-import styles from './Notifications.module.css';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.xl};
+`;
 
 export const Notifications = () => {
   const notifications: any[] = [];
@@ -23,7 +30,7 @@ export const Notifications = () => {
   ];
 
   return (
-    <div className={styles.container}>
+    <Container>
       <Header title="Thông Báo" />
       <Card>
         <Table 
@@ -32,6 +39,6 @@ export const Notifications = () => {
           emptyText="Chưa có thông báo nào" 
         />
       </Card>
-    </div>
+    </Container>
   );
 };

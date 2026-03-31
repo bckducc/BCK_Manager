@@ -1,7 +1,14 @@
+import styled from 'styled-components';
+import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Tables/Table';
 import { Card, Header, Badge } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
-import styles from './MyBills.module.css';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.xl};
+`;
 
 export const MyBills = () => {
   const bills: any[] = [];
@@ -32,11 +39,11 @@ export const MyBills = () => {
   ];
 
   return (
-    <div className={styles.container}>
+    <Container>
       <Header title="Hóa Đơn Của Tôi" />
       <Card>
         <Table columns={columns} data={bills} emptyText="Chưa có hóa đơn nào" />
       </Card>
-    </div>
+    </Container>
   );
 };
