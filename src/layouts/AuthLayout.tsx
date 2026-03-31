@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import type { ReactNode } from 'react';
+import { Logo } from '../components/Common/Logo';
 import { theme } from '../styles/theme';
 
 const AuthLayoutWrapper = styled.div`
@@ -20,12 +21,11 @@ const AuthLayoutContainer = styled.div`
   max-width: 400px;
 `;
 
-const AuthLayoutTitle = styled.h1`
+const AuthLayoutLogo = styled.div`
   margin: 0 0 ${theme.spacing.lg} 0;
   text-align: center;
-  font-size: ${theme.fontSize['2xl']};
-  color: ${theme.colors.dark};
-  font-weight: ${theme.fontWeight.bold};
+  display: flex;
+  justify-content: center;
 `;
 
 interface AuthLayoutProps {
@@ -36,7 +36,9 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
     <AuthLayoutWrapper>
       <AuthLayoutContainer>
-        <AuthLayoutTitle>Chung cư Mini CC-BCK</AuthLayoutTitle>
+        <AuthLayoutLogo>
+          <Logo showText={false} />
+        </AuthLayoutLogo>
         {children}
       </AuthLayoutContainer>
     </AuthLayoutWrapper>

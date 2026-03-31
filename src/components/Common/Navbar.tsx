@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '../../stores/AuthContext';
+import { Logo } from './Logo';
 import { theme } from '../../styles/theme';
 
 const NavbarWrapper = styled.nav`
@@ -20,11 +21,8 @@ const NavbarBrand = styled.div`
   a {
     text-decoration: none;
     color: ${theme.colors.white};
-
-    h2 {
-      margin: 0;
-      font-size: ${theme.fontSize['2xl']};
-    }
+    display: flex;
+    align-items: center;
   }
 `;
 
@@ -77,7 +75,7 @@ export const Navbar = () => {
     <NavbarWrapper>
       <NavbarBrand>
         <Link to="/">
-          <h2>CC-BCK Manager</h2>
+          <Logo showText={true} />
         </Link>
       </NavbarBrand>
       <NavbarUser>

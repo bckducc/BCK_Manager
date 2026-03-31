@@ -7,3 +7,4 @@ export { Badge } from './Badge';
 export { Alert } from './Alert';
 export { Loading } from './Loading';
 export { Modal } from './Modal';
+export { Logo } from './Logo';

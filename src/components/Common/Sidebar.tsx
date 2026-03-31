@@ -1,8 +1,10 @@
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import {
   DashboardOutlined,
-  HomeOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   AppstoreOutlined,
   TeamOutlined,
   FileProtectOutlined,
@@ -10,104 +12,170 @@ import {
   ThunderboltOutlined,
   FileTextOutlined,
   CreditCardOutlined,
-  BellOutlined,
 } from '@ant-design/icons';
-import { useAuth } from '../../stores/AuthContext';
+
 import { theme } from '../../styles/theme';
 
-const SidebarWrapper = styled.aside`
-  width: 250px;
-  background-color: ${theme.colors.darkSecondary};
-  color: ${theme.colors.white};
-  padding: 0;
-  min-height: calc(100vh - 60px);
-  border-right: 1px solid ${theme.colors.dark};
+interface SidebarProps {
+  $collapsed: boolean;
+}
+
+const SidebarWrapper = styled.aside<SidebarProps>`
+  width: ${(p) => (p.$collapsed ? '80px' : '240px')};
+  background: ${theme.colors.darkSecondary};
+  min-height: 100vh;
+  transition: width 0.25s ease;
+  overflow: hidden;
 `;
+
+/* ======================
+ NAV
+====================== */
 
 const SidebarNav = styled.nav`
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: ${theme.spacing.md} 0;
 `;
+
+/* ======================
+ NAV ITEM
+====================== */
 
 interface NavItemProps {
-  $isActive?: boolean;
+  $active?: boolean;
+  $collapsed: boolean;
 }
 
-const NavItemLink = styled(Link)<NavItemProps>`
+const NavItem = styled(Link)<NavItemProps>`
+  height: 54px;
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.md};
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
+  justify-content: ${(p) => (p.$collapsed ? 'center' : 'flex-start')};
+  padding: ${(p) => (p.$collapsed ? '0' : '0 20px')};
+  gap: ${(p) => (p.$collapsed ? '0' : '14px')};
   color: ${theme.colors.white};
   text-decoration: none;
-  transition: background-color ${theme.transition.base}, color ${theme.transition.base};
-  border-left: 3px solid transparent;
+  transition: background 0.2s ease;
+  background: ${(p) =>
+    p.$active ? theme.colors.primary : 'transparent'};
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
   }
-
-  ${(props) =>
-    props.$isActive &&
-    `
-    background-color: ${theme.colors.primary};
-    border-left-color: ${theme.colors.primaryDark};
-    font-weight: ${theme.fontWeight.semibold};
-  `}
 `;
 
-const NavIcon = styled.span`
-  font-size: ${theme.fontSize.xl};
+/* ======================
+ ICON
+====================== */
+
+const NavIcon = styled.div`
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
 `;
 
-interface NavItem {
+interface NavLabelProps {
+  $collapsed: boolean;
+}
+
+const NavLabel = styled.span<NavLabelProps>`
+  white-space: nowrap;
+
+  flex: ${(p) => (p.$collapsed ? '0 0 0' : '1')};
+  min-width: 0;
+  
+  opacity: ${(p) => (p.$collapsed ? 0 : 1)};
+  transform: ${(p) => (p.$collapsed ? 'translateX(-8px)' : 'translateX(0)')};
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+
+  pointer-events: none;
+  overflow: hidden;
+`;
+
+/* ======================
+ TOGGLE BUTTON
+====================== */
+
+const ToggleItem = styled.div<SidebarProps>`
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: ${(p) => (p.$collapsed ? 'center' : 'flex-start')};
+  padding: ${(p) => (p.$collapsed ? '0' : '0 20px')};
+  gap: ${(p) => (p.$collapsed ? '0' : '14px')};
+  cursor: pointer;
+  color: white;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+`;
+
+interface NavItemType {
   label: string;
   path: string;
-  icon?: React.ReactNode;
+  icon: React.ReactNode;
 }
 
 export const Sidebar = () => {
-  const { user } = useAuth();
   const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
 
-  const ownerNavItems: NavItem[] = [
+  const navItems: NavItemType[] = [
     { label: 'Trang chủ', path: '/owner', icon: <DashboardOutlined /> },
-    { label: 'Quản lý Phòng', path: '/owner/rooms', icon: <AppstoreOutlined /> },
-    { label: 'Quản lý Người thuê', path: '/owner/tenants', icon: <TeamOutlined /> },
-    { label: 'Quản lý Hợp đồng', path: '/owner/contracts', icon: <FileProtectOutlined /> },
-    { label: 'Quản lý Dịch vụ', path: '/owner/services', icon: <ToolOutlined /> },
-    { label: 'Quản lý Điện nước', path: '/owner/utilities', icon: <ThunderboltOutlined /> },
-    { label: 'Quản lý Hóa đơn', path: '/owner/bills', icon: <FileTextOutlined /> },
-    { label: 'Xác nhận Thanh toán', path: '/owner/payments', icon: <CreditCardOutlined /> },
+    { label: 'Quản lý phòng', path: '/owner/rooms', icon: <AppstoreOutlined /> },
+    { label: 'Người thuê', path: '/owner/tenants', icon: <TeamOutlined /> },
+    { label: 'Hợp đồng', path: '/owner/contracts', icon: <FileProtectOutlined /> },
+    { label: 'Dịch vụ', path: '/owner/services', icon: <ToolOutlined /> },
+    { label: 'Điện nước', path: '/owner/utilities', icon: <ThunderboltOutlined /> },
+    { label: 'Hóa đơn', path: '/owner/bills', icon: <FileTextOutlined /> },
+    { label: 'Thanh toán', path: '/owner/payments', icon: <CreditCardOutlined /> },
   ];
-
-  const tenantNavItems: NavItem[] = [
-    { label: 'Trang chủ', path: '/tenant', icon: <HomeOutlined /> },
-    { label: 'Phòng của tôi', path: '/tenant/room', icon: <AppstoreOutlined /> },
-    { label: 'Hợp đồng', path: '/tenant/contracts', icon: <FileProtectOutlined /> },
-    { label: 'Hóa đơn', path: '/tenant/bills', icon: <FileTextOutlined /> },
-    { label: 'Thông báo', path: '/tenant/notifications', icon: <BellOutlined /> },
-  ];
-
-  const navItems = user?.role === 'owner' ? ownerNavItems : tenantNavItems;
 
   return (
-    <SidebarWrapper>
+    <SidebarWrapper $collapsed={collapsed}>
       <SidebarNav>
-        {navItems.map((item) => (
-          <NavItemLink
-            key={item.path}
-            to={item.path}
-            $isActive={location.pathname === item.path}
-          >
-            {item.icon && <NavIcon>{item.icon}</NavIcon>}
-            <span>{item.label}</span>
-          </NavItemLink>
-        ))}
+
+        {/* Toggle Button */}
+        <ToggleItem
+          $collapsed={collapsed}
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          <NavIcon>
+            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          </NavIcon>
+
+          <NavLabel $collapsed={collapsed}>
+            Menu
+          </NavLabel>
+        </ToggleItem>
+
+        {navItems.map((item) => {
+          const active = location.pathname === item.path;
+
+          return (
+            <NavItem
+              key={item.path}
+              to={item.path}
+              $active={active}
+              $collapsed={collapsed}
+              title={collapsed ? item.label : ''}
+            >
+              <NavIcon>{item.icon}</NavIcon>
+
+              <NavLabel $collapsed={collapsed}>
+                {item.label}
+              </NavLabel>
+            </NavItem>
+          );
+        })}
       </SidebarNav>
     </SidebarWrapper>
   );
