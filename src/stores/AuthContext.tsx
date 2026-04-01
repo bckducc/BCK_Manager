@@ -16,21 +16,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = useCallback(async (email: string, _password: string) => {
+  const login = useCallback(async (username: string, _password: string) => {
     setIsLoading(true);
     try {
       // TODO: Replace with actual API call
       // const response = await fetch('/api/auth/login', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password }),
+      //   body: JSON.stringify({ username, password }),
       // });
       // const data = await response.json();
 
       // Mock login response
       const mockUser: User = {
         id: '1',
-        email,
+        username,
+        email: `${username}@example.com`,
         name: 'User Name',
         role: 'owner',
         createdAt: new Date(),

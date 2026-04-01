@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '../../stores/AuthContext';
 import { Logo } from './Logo';
@@ -86,9 +86,7 @@ export const Navbar = () => {
   return (
     <NavbarWrapper>
       <NavbarBrand>
-        <Link to="/">
-          <Logo showText={true} />
-        </Link>
+          <Logo showText={true} size="sm" />
       </NavbarBrand>
       <NavbarUser>
         {user && (

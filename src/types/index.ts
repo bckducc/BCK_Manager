@@ -3,16 +3,19 @@ export type UserRole = 'owner' | 'tenant' | 'admin';
 
 export interface User {
   id: string;
-  email: string;
+  username: string;
+  email?: string;
   name: string;
   role: UserRole;
   phone?: string;
   address?: string;
+  idNumber?: string; // CMND/CCCD
+  gender?: 'male' | 'female' | 'other';
   createdAt: Date;
 }
 
 export interface LoginRequest {
-  email: string;
+  username: string;
   password: string;
 }
 

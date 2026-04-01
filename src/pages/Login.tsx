@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { theme } from '../styles/theme';
 import { useAuth } from '../stores/AuthContext';
@@ -51,19 +51,22 @@ const Footer = styled.p`
 `;
 
 export const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
     try {
-      await login(email, password);
-      navigate('/owner');
+      await login(username, password);
+      // Redirect về trang cũ, hoặc /owner nếu không có from state
+      const from = (location.state as any)?.from?.pathname || '/owner';
+      navigate(from);
     } catch (err) {
       setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
     }
@@ -75,12 +78,12 @@ export const Login = () => {
         <Form onSubmit={handleSubmit} title="Đăng Nhập">
           {error && <ErrorMessage>{error}</ErrorMessage>}
           
-          <FormGroup label="Email" required>
+          <FormGroup label="Tên Tài Khoản" required>
             <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Nhập email"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Nhập tên tài khoản"
               required
             />
           </FormGroup>
