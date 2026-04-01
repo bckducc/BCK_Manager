@@ -1,6 +1,5 @@
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
 import {
   DashboardOutlined,
   MenuFoldOutlined,
@@ -13,7 +12,7 @@ import {
   FileTextOutlined,
   CreditCardOutlined,
 } from '@ant-design/icons';
-
+import { useSidebar } from '../../stores/SidebarContext';
 import { theme } from '../../styles/theme';
 
 interface SidebarProps {
@@ -21,11 +20,20 @@ interface SidebarProps {
 }
 
 const SidebarWrapper = styled.aside<SidebarProps>`
+  position: fixed;
+
+  top: 64px;
+  left: 0;
+  bottom: 0;
+
   width: ${(p) => (p.$collapsed ? '80px' : '240px')};
+
   background: ${theme.colors.darkSecondary};
-  min-height: 100vh;
+
   transition: width 0.25s ease;
   overflow: hidden;
+
+  z-index: 900;
 `;
 
 const SidebarNav = styled.nav`
@@ -110,7 +118,7 @@ interface NavItemType {
 
 export const Sidebar = () => {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, toggleSidebar } = useSidebar();
 
   const navItems: NavItemType[] = [
     { label: 'Trang chủ', path: '/owner', icon: <DashboardOutlined /> },
@@ -129,7 +137,7 @@ export const Sidebar = () => {
 
         <ToggleItem
           $collapsed={collapsed}
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleSidebar}
         >
           <NavIcon>
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}

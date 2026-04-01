@@ -10,7 +10,14 @@ import { Form, FormGroup, Input } from '../../components/Forms/Form';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: ${theme.spacing.lg};
 `;
 
 const ActionButtons = styled.div`
@@ -64,8 +71,9 @@ export const RoomManagement = () => {
   ];
 
   return (
-    <Container>
-      <Header
+    <PageWrapper>
+      <Container>
+        <Header
         title="Quản Lý Phòng"
         actions={
           <Button onClick={() => setIsModalOpen(true)}>
@@ -131,5 +139,6 @@ export const RoomManagement = () => {
         </Form>
       </Modal>
     </Container>
+    </PageWrapper>
   );
 };

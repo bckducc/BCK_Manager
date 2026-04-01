@@ -6,13 +6,25 @@ import { Logo } from './Logo';
 import { theme } from '../../styles/theme';
 
 const NavbarWrapper = styled.nav`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 64px;
+
   background-color: ${theme.colors.dark};
   color: ${theme.colors.white};
+
   padding: ${theme.spacing.md} ${theme.spacing.xl};
+
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   box-shadow: ${theme.shadow.md};
+
+  z-index: 1000;
 `;
 
 const NavbarBrand = styled.div`

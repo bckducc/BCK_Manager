@@ -8,7 +8,14 @@ import { Table } from '../../components/Tables/Table';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: ${theme.spacing.lg};
 `;
 
 const ActionButtons = styled.div`
@@ -43,14 +50,16 @@ export const TenantManagement = () => {
   ];
 
   return (
-    <Container>
-      <Header
-        title="Quản Lý Người Thuê"
-        actions={<Button>+ Thêm Người Thuê</Button>}
-      />
-      <Card>
-        <Table columns={columns} data={tenants} emptyText="Chưa có người thuê nào" />
-      </Card>
-    </Container>
+    <PageWrapper>
+      <Container>
+        <Header
+          title="Quản Lý Người Thuê"
+          actions={<Button>+ Thêm Người Thuê</Button>}
+        />
+        <Card>
+          <Table columns={columns} data={tenants} emptyText="Chưa có người thuê nào" />
+        </Card>
+      </Container>
+    </PageWrapper>
   );
 };

@@ -15,35 +15,49 @@ import {
 const Dashboard = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
-  padding: 0;
+  gap: ${theme.spacing.lg};
+
+  width: 100%;
+  max-width: 100%;
+
+  padding: ${theme.spacing.lg};
 `;
 
 const WelcomeSection = styled.div`
-  padding: ${theme.spacing.xl};
-  background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryDark} 100%);
+  padding: ${theme.spacing.lg};
+  background: linear-gradient(
+    135deg,
+    ${theme.colors.primary} 0%,
+    ${theme.colors.primaryDark} 100%
+  );
+
   border-radius: ${theme.radius.md};
   color: ${theme.colors.white};
-  margin-bottom: ${theme.spacing.xl};
 
   h1 {
-    margin: 0 0 ${theme.spacing.sm} 0;
-    font-size: ${theme.fontSize['2xl']};
+    margin: 0 0 ${theme.spacing.xs} 0;
+    font-size: ${theme.fontSize.xl};
     font-weight: ${theme.fontWeight.bold};
   }
 
   p {
     margin: 0;
     opacity: 0.9;
-    font-size: ${theme.fontSize.base};
   }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: ${theme.spacing.lg};
-  margin-bottom: ${theme.spacing.xl};
+
+  @media (max-width: ${theme.breakpoints.desktop}) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled(Card)`
@@ -51,43 +65,44 @@ const StatCard = styled(Card)`
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   transition: all ${theme.transition.base};
   cursor: pointer;
+  padding: ${theme.spacing.md} !important;
 
   &:hover {
     box-shadow: ${theme.shadow.lg};
-    transform: translateY(-4px);
+    transform: translateY(-2px);
   }
 
   .stat-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: ${theme.spacing.md};
+    margin-bottom: ${theme.spacing.sm};
 
     .stat-icon {
-      font-size: 32px;
+      font-size: 28px;
       color: ${theme.colors.primary};
-      opacity: 0.8;
+      opacity: 0.7;
     }
   }
 
   .stat-label {
-    font-size: ${theme.fontSize.sm};
+    font-size: 0.75rem;
     color: ${theme.colors.textSecondary};
     font-weight: ${theme.fontWeight.semibold};
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing.xs};
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
   .stat-value {
-    font-size: ${theme.fontSize['2xl']};
+    font-size: ${theme.fontSize.xl};
     font-weight: ${theme.fontWeight.bold};
     color: ${theme.colors.dark};
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing.xs};
   }
 
   .stat-change {
-    font-size: ${theme.fontSize.sm};
+    font-size: 0.75rem;
     color: ${theme.colors.success};
   }
 `;
@@ -96,7 +111,6 @@ const QuickActionsSection = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${theme.spacing.lg};
-  margin-bottom: ${theme.spacing.xl};
 
   @media (max-width: ${theme.breakpoints.tablet}) {
     grid-template-columns: 1fr;
@@ -112,9 +126,9 @@ const ActionCard = styled(Card)`
 `;
 
 const ActionCardTitle = styled.div`
-  font-size: ${theme.fontSize.lg};
+  font-size: ${theme.fontSize.base};
   font-weight: ${theme.fontWeight.bold};
-  margin-bottom: ${theme.spacing.lg};
+  margin-bottom: ${theme.spacing.sm};
   color: ${theme.colors.dark};
 `;
 
@@ -129,32 +143,36 @@ const ActionButtonGrid = styled.div`
 
   button {
     width: 100%;
+    padding: 0.625rem 1rem !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: ${theme.spacing.sm};
+    gap: ${theme.spacing.xs};
+    font-size: 0.875rem;
   }
 `;
 
 const AlertSection = styled(Card)`
   background-color: #fffbf0;
   border-left: 4px solid ${theme.colors.warning};
-  margin-bottom: ${theme.spacing.xl};
+  margin-bottom: 0;
+  margin-left: ${theme.spacing.lg};
+  margin-right: ${theme.spacing.lg};
 
   .alert-header {
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
-    margin-bottom: ${theme.spacing.md};
+    margin-bottom: ${theme.spacing.sm};
 
     .alert-icon {
-      font-size: 24px;
+      font-size: 20px;
       color: ${theme.colors.warning};
     }
 
     h3 {
       margin: 0;
-      font-size: ${theme.fontSize.lg};
+      font-size: ${theme.fontSize.base};
       color: ${theme.colors.dark};
       font-weight: ${theme.fontWeight.bold};
     }
@@ -182,7 +200,7 @@ const InfoCard = styled(Card)`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: ${theme.spacing.md} 0;
+    padding: ${theme.spacing.sm} 0;
     border-bottom: 1px solid ${theme.colors.borderLight};
 
     &:last-child {
@@ -191,12 +209,13 @@ const InfoCard = styled(Card)`
 
     .info-label {
       color: ${theme.colors.textSecondary};
-      font-size: ${theme.fontSize.base};
+      font-size: ${theme.fontSize.sm};
     }
 
     .info-value {
       font-weight: ${theme.fontWeight.bold};
       color: ${theme.colors.dark};
+      font-size: ${theme.fontSize.sm};
     }
   }
 `;

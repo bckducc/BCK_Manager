@@ -8,7 +8,14 @@ import { Table } from '../../components/Tables/Table';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: ${theme.spacing.lg};
 `;
 
 const ActionButtons = styled.div`
@@ -56,8 +63,9 @@ export const BillManagement = () => {
   ];
 
   return (
-    <Container>
-      <Header
+    <PageWrapper>
+      <Container>
+        <Header
         title="Quản Lý Hóa Đơn"
         actions={<Button>+ Tạo Hóa Đơn</Button>}
       />
@@ -65,5 +73,6 @@ export const BillManagement = () => {
         <Table columns={columns} data={bills} emptyText="Chưa có hóa đơn nào" />
       </Card>
     </Container>
+    </PageWrapper>
   );
 };

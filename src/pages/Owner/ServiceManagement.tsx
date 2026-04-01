@@ -8,7 +8,14 @@ import { Table } from '../../components/Tables/Table';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: ${theme.spacing.lg};
 `;
 
 const ActionButtons = styled.div`
@@ -43,8 +50,9 @@ export const ServiceManagement = () => {
   ];
 
   return (
-    <Container>
-      <Header
+    <PageWrapper>
+      <Container>
+        <Header
         title="Quản Lý Dịch Vụ"
         actions={<Button>+ Thêm Dịch Vụ</Button>}
       />
@@ -52,5 +60,6 @@ export const ServiceManagement = () => {
         <Table columns={columns} data={services} emptyText="Chưa có dịch vụ nào" />
       </Card>
     </Container>
+    </PageWrapper>
   );
 };

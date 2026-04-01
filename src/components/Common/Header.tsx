@@ -10,6 +10,8 @@ const HeaderWrapper = styled.header`
   justify-content: space-between;
   align-items: center;
   box-shadow: ${theme.shadow.md};
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 const HeaderTitle = styled.h1`

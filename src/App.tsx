@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './stores/AuthContext';
+import { SidebarProvider } from './stores/SidebarContext';
 import { ProtectedRoute } from './utils/ProtectedRoute';
 import { MainLayout } from './layouts/MainLayout';
 
@@ -27,7 +28,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
+        <SidebarProvider>
+          <Routes>
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
 
@@ -168,6 +170,7 @@ function App() {
           {/* Default Route */}
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
+        </SidebarProvider>
       </AuthProvider>
     </Router>
   );

@@ -8,7 +8,14 @@ import { Table } from '../../components/Tables/Table';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: ${theme.spacing.lg};
 `;
 
 const ActionButtons = styled.div`
@@ -55,8 +62,9 @@ export const ContractManagement = () => {
   ];
 
   return (
-    <Container>
-      <Header
+    <PageWrapper>
+      <Container>
+        <Header
         title="Quản Lý Hợp Đồng"
         actions={<Button>+ Tạo Hợp Đồng</Button>}
       />
@@ -64,5 +72,6 @@ export const ContractManagement = () => {
         <Table columns={columns} data={contracts} emptyText="Chưa có hợp đồng nào" />
       </Card>
     </Container>
+    </PageWrapper>
   );
 };

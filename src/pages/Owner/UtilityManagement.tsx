@@ -9,7 +9,14 @@ import { Form, FormGroup, Input } from '../../components/Forms/Form';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: ${theme.spacing.lg};
 `;
 
 const ActionButtons = styled.div`
@@ -44,8 +51,9 @@ export const UtilityManagement = () => {
   ];
 
   return (
-    <Container>
-      <Header
+    <PageWrapper>
+      <Container>
+        <Header
         title="Quản Lý Điện Nước"
         actions={<Button onClick={() => setIsModalOpen(true)}>+ Nhập Chỉ Số</Button>}
       />
@@ -75,5 +83,6 @@ export const UtilityManagement = () => {
         </Form>
       </Modal>
     </Container>
+    </PageWrapper>
   );
 };

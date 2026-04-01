@@ -9,7 +9,14 @@ import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: ${theme.spacing.lg};
 `;
 
 const ActionButtons = styled.div`
@@ -56,8 +63,9 @@ export const PaymentManagement = () => {
   ];
 
   return (
-    <Container>
-      <Header
+    <PageWrapper>
+      <Container>
+        <Header
         title="Xác Nhận Thanh Toán"
         actions={<Button onClick={() => setIsModalOpen(true)}>+ Xác Nhận Thanh Toán</Button>}
       />
@@ -96,5 +104,6 @@ export const PaymentManagement = () => {
         </Form>
       </Modal>
     </Container>
+    </PageWrapper>
   );
 };

@@ -1,42 +1,53 @@
 import styled from 'styled-components';
 import type { ReactNode } from 'react';
 import { Navbar, Sidebar } from '../components/Common';
+import { useSidebar } from '../stores/SidebarContext';
 import { theme } from '../styles/theme';
 
 const MainLayoutWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   background-color: ${theme.colors.lightBg};
+  overflow: hidden;
 `;
 
 const MainLayoutContent = styled.div`
   display: flex;
-  flex: 1;
-  gap: 0;
+`;
+
+interface MainLayoutMainProps {
+  $sidebarCollapsed: boolean;
+}
+
+const MainLayoutMain = styled.main<MainLayoutMainProps>`
+  margin-top: 64px;
+  margin-left: ${(p) => (p.$sidebarCollapsed ? '80px' : '240px')};
+
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+
+  padding: 0;
+  width: ${(p) => (p.$sidebarCollapsed ? 'calc(100% - 80px)' : 'calc(100% - 240px)')};
+
+  transition: margin-left 0.25s ease, width 0.25s ease;
 
   @media (max-width: ${theme.breakpoints.tablet}) {
-    flex-direction: column;
+    margin-left: 0;
+    width: 100%;
   }
 `;
-
-const MainLayoutMain = styled.main`
-  flex: 1;
-  padding: ${theme.spacing.lg};
-  overflow-y: auto;
-`;
-
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
+  const { collapsed } = useSidebar();
+
   return (
     <MainLayoutWrapper>
       <Navbar />
       <MainLayoutContent>
         <Sidebar />
-        <MainLayoutMain>{children}</MainLayoutMain>
+        <MainLayoutMain $sidebarCollapsed={collapsed}>{children}</MainLayoutMain>
       </MainLayoutContent>
     </MainLayoutWrapper>
   );
