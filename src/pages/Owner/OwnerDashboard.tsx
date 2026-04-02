@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import { Button, Card } from '../../components/Common';
+import { RoomStatusGrid, type Room } from '../../components/RoomStatus/RoomStatusGrid';
 import {
   AppstoreOutlined,
   TeamOutlined,
@@ -48,7 +49,7 @@ const WelcomeSection = styled.div`
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: ${theme.spacing.lg};
 
   @media (max-width: ${theme.breakpoints.desktop}) {
@@ -60,16 +61,19 @@ const StatsGrid = styled.div`
   }
 `;
 
-const StatCard = styled(Card)`
-  position: relative;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  transition: all ${theme.transition.base};
+const StatCardWrapper = styled.div`
   cursor: pointer;
-  padding: ${theme.spacing.md} !important;
+  transition: all ${theme.transition.base};
+  border-radius: ${theme.radius.md};
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  padding: ${theme.spacing.md};
+  border: 2px solid transparent;
+  box-shadow: ${theme.shadow.sm};
 
   &:hover {
     box-shadow: ${theme.shadow.lg};
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    border-color: ${theme.colors.primary};
   }
 
   .stat-header {
@@ -79,9 +83,9 @@ const StatCard = styled(Card)`
     margin-bottom: ${theme.spacing.sm};
 
     .stat-icon {
-      font-size: 28px;
+      font-size: 32px;
       color: ${theme.colors.primary};
-      opacity: 0.7;
+      opacity: 0.8;
     }
   }
 
@@ -102,8 +106,9 @@ const StatCard = styled(Card)`
   }
 
   .stat-change {
-    font-size: 0.75rem;
-    color: ${theme.colors.success};
+    font-size: 0.875rem;
+    color: ${theme.colors.primary};
+    font-weight: ${theme.fontWeight.semibold};
   }
 `;
 
@@ -220,6 +225,15 @@ const InfoCard = styled(Card)`
   }
 `;
 
+const RoomStatusSection = styled(Card)`
+  h3 {
+    margin: 0 0 ${theme.spacing.md} 0;
+    font-size: ${theme.fontSize.base};
+    font-weight: ${theme.fontWeight.bold};
+    color: ${theme.colors.dark};
+  }
+`;
+
 export const OwnerDashboard = () => {
   const navigate = useNavigate();
 
@@ -228,71 +242,93 @@ export const OwnerDashboard = () => {
     occupiedRooms: 6,
     totalTenants: 12,
     totalRevenue: 24000,
+    paidBills: 10,
+    unpaidBills: 2,
   });
+
+  // Mock room data
+  const [rooms] = useState<Room[]>([
+    { id: '101', roomNumber: '101', status: 'occupied' },
+    { id: '102', roomNumber: '102', status: 'occupied' },
+    { id: '201', roomNumber: '201', status: 'occupied' },
+    { id: '202', roomNumber: '202', status: 'available' },
+    { id: '203', roomNumber: '203', status: 'occupied' },
+    { id: '204', roomNumber: '204', status: 'occupied' },
+    { id: '205', roomNumber: '205', status: 'available' },
+    { id: '206', roomNumber: '206', status: 'maintenance' },
+    { id: '207', roomNumber: '207', status: 'available' },
+    { id: '301', roomNumber: '301', status: 'occupied' },
+  ]);
 
   const occupancyRate = Math.round((stats.occupiedRooms / stats.totalRooms) * 100);
   const emptyRooms = stats.totalRooms - stats.occupiedRooms;
 
+  const handleRoomClick = () => {
+    // Navigate to room detail page
+    navigate(`/owner/rooms`);
+  };
+
   return (
     <Dashboard>
       <WelcomeSection>
-        <h1>Xin chào, Owner! 👋</h1>
-        <p>Quản lý chung cư của bạn một cách hiệu quả</p>
+        <h1>Bảng Điều Khiển 📊</h1>
+        <p>Quản lý chung cư mini {stats.totalRooms} phòng - Cập nhật {new Date().toLocaleDateString('vi-VN')}</p>
       </WelcomeSection>
 
       <StatsGrid>
-        <StatCard>
+        <StatCardWrapper onClick={() => navigate('/owner/rooms')}>
           <div className="stat-header">
             <div>
-              <div className="stat-label">Tổng Phòng</div>
-              <div className="stat-value">{stats.totalRooms}</div>
+              <div className="stat-label">Phòng Cho Thuê</div>
+              <div className="stat-value">{stats.occupiedRooms}/{stats.totalRooms}</div>
             </div>
             <div className="stat-icon">
               <AppstoreOutlined />
             </div>
           </div>
-          <div className="stat-change">✓ Quản lý tất cả</div>
-        </StatCard>
+          <div className="stat-change">📈 {occupancyRate}% lấp đầy</div>
+        </StatCardWrapper>
 
-        <StatCard>
+        <StatCardWrapper onClick={() => navigate('/owner/payments')}>
           <div className="stat-header">
             <div>
-              <div className="stat-label">Phòng Đã Cho Thuê</div>
-              <div className="stat-value">{stats.occupiedRooms}</div>
-            </div>
-            <div className="stat-icon">
-              <TeamOutlined />
-            </div>
-          </div>
-          <div className="stat-change">→ {occupancyRate}% lấp đầy</div>
-        </StatCard>
-
-        <StatCard>
-          <div className="stat-header">
-            <div>
-              <div className="stat-label">Người Thuê</div>
-              <div className="stat-value">{stats.totalTenants}</div>
-            </div>
-            <div className="stat-icon">
-              <TeamOutlined />
-            </div>
-          </div>
-          <div className="stat-change">✓ Hoạt động</div>
-        </StatCard>
-
-        <StatCard>
-          <div className="stat-header">
-            <div>
-              <div className="stat-label">Doanh Thu/Tháng</div>
-              <div className="stat-value">${stats.totalRevenue.toLocaleString()}</div>
+              <div className="stat-label">Hóa Đơn Thanh Toán</div>
+              <div className="stat-value">{stats.paidBills}/{stats.paidBills + stats.unpaidBills}</div>
             </div>
             <div className="stat-icon">
               <CreditCardOutlined />
             </div>
           </div>
-          <div className="stat-change">✓ Ổn định</div>
-        </StatCard>
+          <div className="stat-change">⏳ {stats.unpaidBills} chưa thanh toán</div>
+        </StatCardWrapper>
+
+        <StatCardWrapper>
+          <div className="stat-header">
+            <div>
+              <div className="stat-label">Doanh Thu Tháng Này</div>
+              <div className="stat-value">${(stats.totalRevenue / 1000).toFixed(1)}k</div>
+            </div>
+            <div className="stat-icon">
+              <CreditCardOutlined />
+            </div>
+          </div>
+          <div className="stat-change">💰 Ổn định</div>
+        </StatCardWrapper>
       </StatsGrid>
+
+      {stats.unpaidBills > 0 && (
+        <AlertSection>
+          <div className="alert-header">
+            <div className="alert-icon">
+              <AlertOutlined />
+            </div>
+            <h3>⚠️ Hóa Đơn Chưa Thanh Toán</h3>
+          </div>
+          <div className="alert-content">
+            Có <strong>{stats.unpaidBills}</strong> hóa đơn chưa được thanh toán. <a href="#" style={{ color: '#2563eb', fontWeight: 'bold', textDecoration: 'none' }}>Xem chi tiết</a>
+          </div>
+        </AlertSection>
+      )}
 
       {emptyRooms > 0 && (
         <AlertSection>
@@ -300,17 +336,22 @@ export const OwnerDashboard = () => {
             <div className="alert-icon">
               <AlertOutlined />
             </div>
-            <h3>Phòng Trống Cần Chú Ý</h3>
+            <h3>📍 Phòng Trống Cần Chú Ý</h3>
           </div>
           <div className="alert-content">
-            Bạn có <strong>{emptyRooms}</strong> phòng trống. Hãy xem xét quảng bá hoặc giảm giá để thu hút người thuê.
+            Bạn có <strong>{emptyRooms}</strong> phòng trống. <a href="#" style={{ color: '#2563eb', fontWeight: 'bold', textDecoration: 'none' }}>Quản lý phòng</a>
           </div>
         </AlertSection>
       )}
 
+      <RoomStatusSection>
+        <h3>🏠 Quản Lý Phòng & Cư Trú</h3>
+        <RoomStatusGrid rooms={rooms} onRoomClick={handleRoomClick} />
+      </RoomStatusSection>
+
       <QuickActionsSection>
         <ActionCard>
-          <ActionCardTitle>Quản Lý Phòng & Hợp Đồng</ActionCardTitle>
+          <ActionCardTitle>⚙️ Quản Lý Cơ Bản</ActionCardTitle>
           <ActionButtonGrid>
             <Button onClick={() => navigate('/owner/rooms')}>
               <AppstoreOutlined /> Phòng
@@ -321,14 +362,14 @@ export const OwnerDashboard = () => {
             <Button onClick={() => navigate('/owner/contracts')}>
               <FileProtectOutlined /> Hợp Đồng
             </Button>
-            <Button onClick={() => navigate('/owner/services')}>
-              <ArrowRightOutlined /> Dịch Vụ
+            <Button onClick={() => navigate('/owner/utilities')}>
+              <ArrowRightOutlined /> Tiện Ích
             </Button>
           </ActionButtonGrid>
         </ActionCard>
 
         <ActionCard>
-          <ActionCardTitle>Tài Chính & Thanh Toán</ActionCardTitle>
+          <ActionCardTitle>💳 Tài Chính</ActionCardTitle>
           <ActionButtonGrid>
             <Button onClick={() => navigate('/owner/bills')}>
               <FileProtectOutlined /> Hóa Đơn
@@ -336,46 +377,60 @@ export const OwnerDashboard = () => {
             <Button onClick={() => navigate('/owner/payments')}>
               <CreditCardOutlined /> Thanh Toán
             </Button>
-            <Button onClick={() => navigate('/owner/utilities')}>
-              <ArrowRightOutlined /> Dịch Vụ
+            <Button onClick={() => navigate('/owner/services')}>
+              <CreditCardOutlined /> Dịch Vụ
             </Button>
             <Button variant="primary">
-              <CreditCardOutlined /> Báo Cáo
+              📊 Báo Cáo
             </Button>
           </ActionButtonGrid>
         </ActionCard>
       </QuickActionsSection>
 
       <TwoColumnLayout>
-        <InfoCard title="Thống Kê Nhanh">
+        <InfoCard title="📋 Tổng Quan Nhanh">
           <div className="info-item">
-            <span className="info-label">Tỷ lệ lấp đầy:</span>
+            <span className="info-label">🏠 Lấp đầy:</span>
             <span className="info-value">{occupancyRate}%</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Phòng trống:</span>
+            <span className="info-label">📍 Phòng trống:</span>
             <span className="info-value">{emptyRooms}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Trung bình/phòng:</span>
+            <span className="info-label">👥 Người thuê:</span>
+            <span className="info-value">{stats.totalTenants}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">💰 Avg/phòng:</span>
             <span className="info-value">${stats.totalTenants > 0 ? Math.round(stats.totalRevenue / stats.totalTenants) : 0}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Trạng thái:</span>
+            <span className="info-label">📊 Trạng thái:</span>
             <span className="info-value" style={{ color: '#27ae60' }}>✓ Bình thường</span>
           </div>
         </InfoCard>
 
-        <InfoCard title="Hành Động Nhanh">
+        <InfoCard title="⚡ Thao Tác Nhanh">
           <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
-            <Button variant="primary" fullWidth>
-              Tạo Hóa Đơn
+            <Button 
+              variant="primary" 
+              fullWidth
+              onClick={() => navigate('/owner/bills')}
+            >
+              📧 Gửi Hóa Đơn
             </Button>
-            <Button fullWidth>
-              Xuất hóa đơn
+            <Button 
+              fullWidth
+              onClick={() => navigate('/owner/tenants')}
+            >
+              ➕ Thêm Người Thuê
             </Button>
-            <Button fullWidth>
-              Xuất Báo Cáo
+            <Button 
+              fullWidth
+              onClick={() => navigate('/owner/contracts')}
+            >
+              📄 Ký Hợp Đồng
             </Button>
           </div>
         </InfoCard>

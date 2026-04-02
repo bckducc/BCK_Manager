@@ -1,6 +1,175 @@
-// import type { ApiResponse, PaginatedResponse } from '../types';
+/**
+ * API Client for Backend Communication
+ * Automatically attaches JWT token to all requests
+ */
 
-// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = 'http://localhost:5000';
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  token?: string;
+  user?: T;
+  [key: string]: any;
+}
+
+interface RequestOptions extends RequestInit {
+  headers?: Record<string, string>;
+}
+
+/**
+ * Make API call with automatic token attachment
+ */
+export const apiCall = async <T = any>(
+  endpoint: string,
+  options: RequestOptions = {}
+): Promise<ApiResponse<T>> => {
+  const token = localStorage.getItem('token');
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    const data = await response.json();
+
+    // Handle authentication errors
+    if (response.status === 401) {
+      // Token expired, clear it
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`API call failed: ${endpoint}`, error);
+    throw error;
+  }
+};
+
+/**
+ * Authentication API
+ */
+export const authApi = {
+  /**
+   * Login user
+   */
+  login: (username: string, password: string) =>
+    apiCall<any>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  /**
+   * Get current user info
+   */
+  getMe: () => apiCall<any>('/api/auth/me', { method: 'GET' }),
+
+  /**
+   * Logout
+   */
+  logout: () => apiCall('/api/auth/logout', { method: 'POST' }),
+};
+
+/**
+ * Rooms API (for future use)
+ */
+export const roomsApi = {
+  /**
+   * Get all rooms
+   */
+  getAll: () => apiCall<any>('/api/rooms', { method: 'GET' }),
+
+  /**
+   * Get room by ID
+   */
+  getById: (id: string) => apiCall<any>(`/api/rooms/${id}`, { method: 'GET' }),
+
+  /**
+   * Create new room
+   */
+  create: (data: any) =>
+    apiCall<any>('/api/rooms', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  /**
+   * Update room
+   */
+  update: (id: string, data: any) =>
+    apiCall<any>(`/api/rooms/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  /**
+   * Delete room
+   */
+  delete: (id: string) =>
+    apiCall<any>(`/api/rooms/${id}`, { method: 'DELETE' }),
+};
+
+/**
+ * Tenants API (for future use)
+ */
+export const tenantsApi = {
+  /**
+   * Get all tenants
+   */
+  getAll: () => apiCall<any>('/api/tenants', { method: 'GET' }),
+
+  /**
+   * Get tenant by ID
+   */
+  getById: (id: string) => apiCall<any>(`/api/tenants/${id}`, { method: 'GET' }),
+
+  /**
+   * Create new tenant
+   */
+  create: (data: any) =>
+    apiCall<any>('/api/tenants', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  /**
+   * Update tenant
+   */
+  update: (id: string, data: any) =>
+    apiCall<any>(`/api/tenants/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  /**
+   * Delete tenant
+   */
+  delete: (id: string) =>
+    apiCall<any>(`/api/tenants/${id}`, { method: 'DELETE' }),
+};
+
+export default {
+  apiCall,
+  authApi,
+  roomsApi,
+  tenantsApi,
+};
+
 
 // /**
 //  * Hàm fetch cơ bản với xử lý errors

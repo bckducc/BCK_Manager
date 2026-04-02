@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { User, AuthContextType } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,38 +16,83 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = useCallback(async (username: string, _password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true);
+    let timeoutId: NodeJS.Timeout | null = null;
+    
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ username, password }),
-      // });
-      // const data = await response.json();
+      if (!username || !password) {
+        throw new Error('Vui lòng nhập tên tài khoản và mật khẩu');
+      }
 
-      // Mock login response
-      const mockUser: User = {
-        id: '1',
-        username,
-        email: `${username}@example.com`,
-        name: 'User Name',
-        role: 'owner',
-        createdAt: new Date(),
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+        signal: controller.signal,
+      });
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
+      const data = await response.json();
+
+      // Check for API errors
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Đăng nhập thất bại');
+      }
+
+      // Validate user data
+      if (!data.user || !data.token) {
+        throw new Error('Dữ liệu từ server không hợp lệ');
+      }
+
+      // Map API response to User type
+      const user: User = {
+        id: String(data.user.id),
+        username: data.user.username,
+        email: data.user.email || '',
+        name: data.user.name || 'User',
+        role: 'owner', // Chủ nhà
+        phone: data.user.phone,
+        address: data.user.address,
+        idNumber: data.user.idNumber,
+        gender: data.user.gender,
+        createdAt: new Date(data.user.createdAt),
       };
 
-      const mockToken = 'mock-jwt-token';
+      // Save to state and localStorage
+      setUser(user);
+      setToken(data.token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', data.token);
+    } catch (error: any) {
+      // Clear timeout if still pending
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
-      setUser(mockUser);
-      setToken(mockToken);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('token', mockToken);
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+      // Handle different error types
+      const errorMessage = 
+        error?.name === 'AbortError' 
+          ? 'Kết nối timeout. Vui lòng kiểm tra kết nối mạng.'
+          : error?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+      
+      console.error('Login error:', error);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
+      // Final cleanup
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }, []);
 
@@ -57,6 +102,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
   }, []);
+
+  // Validate token on app start
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken && !user) { 
+      fetch('http://localhost:5000/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${storedToken}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.user) {
+            const user: User = {
+              id: String(data.user.id),
+              username: data.user.username,
+              email: data.user.email,
+              name: data.user.name || '',
+              role: 'owner',
+              phone: data.user.phone,
+              address: data.user.address,
+              idNumber: data.user.idNumber,
+              gender: data.user.gender,
+              createdAt: new Date(data.user.createdAt),
+            };
+            setUser(user);
+            localStorage.setItem('user', JSON.stringify(user));
+          } else {
+            // Token invalid, clear it
+            logout();
+          }
+        })
+        .catch((error) => {
+          console.error('Token validation failed:', error);
+          logout();
+        });
+    }
+  }, [user, logout]);
 
   const value: AuthContextType = {
     user,

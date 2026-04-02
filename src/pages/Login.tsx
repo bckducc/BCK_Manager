@@ -62,13 +62,24 @@ export const Login = () => {
     e.preventDefault();
     setError('');
 
+    // Validation
+    if (!username.trim()) {
+      setError('Vui lòng nhập tên tài khoản');
+      return;
+    }
+
+    if (!password.trim()) {
+      setError('Vui lòng nhập mật khẩu');
+      return;
+    }
+
     try {
       await login(username, password);
-      // Redirect về trang cũ, hoặc /owner nếu không có from state
       const from = (location.state as any)?.from?.pathname || '/owner';
       navigate(from);
-    } catch (err) {
-      setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+      setError(errorMsg);
     }
   };
 
