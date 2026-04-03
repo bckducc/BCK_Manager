@@ -5,7 +5,7 @@ import type { Room } from '../../types';
 import type { TableColumn } from '../../components/Tables/Table';
 import { Header, Button, Card, Modal } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
-import { Form, FormGroup, Input } from '../../components/Forms/Form';
+import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
 
 const Container = styled.div`
   display: flex;
@@ -38,14 +38,15 @@ export const RoomManagement = () => {
     area: '',
     floor: '',
     price: '',
+    status: '',
     description: '',
   });
-
+      
   const handleAddRoom = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Add room logic
     setIsModalOpen(false);
-    setFormData({ roomNumber: '', area: '', floor: '', price: '', description: '' });
+    setFormData({ roomNumber: '', area: '', floor: '', price: '', status: '', description: '' });
   };
 
   const columns: TableColumn[] = [
@@ -125,6 +126,18 @@ export const RoomManagement = () => {
               type="number"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+            />
+          </FormGroup>
+          <FormGroup label="Trạng thái phòng" required>
+            <Select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              options={[
+                { value: 'available', label: 'Còn trống' },
+                { value: 'rented', label: 'Đã cho thuê' },
+                { value: 'maintenance', label: 'Bảo trì' },
+              ]}
+              placeholder="Chọn trạng thái..."
             />
           </FormGroup>
           <FormGroup label="Mô Tả">

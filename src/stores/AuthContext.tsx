@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useState, useCallback, useEffect } from 'react';
 import type { User, AuthContextType } from '../types';
+import { authService } from '../services';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -18,81 +19,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true);
-    let timeoutId: NodeJS.Timeout | null = null;
     
     try {
       if (!username || !password) {
         throw new Error('Vui lòng nhập tên tài khoản và mật khẩu');
       }
 
-      const controller = new AbortController();
-      timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 10000);
+      const response = await authService.login(username, password);
 
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-        signal: controller.signal,
-      });
-
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-
-      const data = await response.json();
-
-      // Check for API errors
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Đăng nhập thất bại');
+      if (!response.success) {
+        throw new Error(response.message || 'Đăng nhập thất bại');
       }
 
       // Validate user data
-      if (!data.user || !data.token) {
+      if (!response.user || !response.token) {
         throw new Error('Dữ liệu từ server không hợp lệ');
       }
 
       // Map API response to User type
       const user: User = {
-        id: String(data.user.id),
-        username: data.user.username,
-        email: data.user.email || '',
-        name: data.user.name || 'User',
+        id: String((response.user as Record<string, unknown>).id),
+        username: (response.user as Record<string, unknown>).username as string,
+        email: ((response.user as Record<string, unknown>).email as string) || '',
+        name: ((response.user as Record<string, unknown>).name as string) || 'User',
         role: 'owner', // Chủ nhà
-        phone: data.user.phone,
-        address: data.user.address,
-        idNumber: data.user.idNumber,
-        gender: data.user.gender,
-        createdAt: new Date(data.user.createdAt),
+        phone: (response.user as Record<string, unknown>).phone as string,
+        address: (response.user as Record<string, unknown>).address as string,
+        idNumber: (response.user as Record<string, unknown>).idNumber as string,
+        gender: ((response.user as Record<string, unknown>).gender as 'male' | 'female' | 'other' | undefined),
+        createdAt: new Date((response.user as Record<string, unknown>).createdAt as string),
       };
 
       // Save to state and localStorage
       setUser(user);
-      setToken(data.token);
+      setToken(response.token);
       localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('token', data.token);
-    } catch (error: any) {
-      // Clear timeout if still pending
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
+      localStorage.setItem('token', response.token);
+    } catch (error) {
       // Handle different error types
-      const errorMessage = 
-        error?.name === 'AbortError' 
-          ? 'Kết nối timeout. Vui lòng kiểm tra kết nối mạng.'
-          : error?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+      const errorMessage = (error as Error)?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
       
       console.error('Login error:', error);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
-      // Final cleanup
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
     }
   }, []);
 
@@ -107,23 +77,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken && !user) { 
-      fetch('http://localhost:5000/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${storedToken}` },
-      })
-        .then((res) => res.json())
+      authService.getMe()
         .then((data) => {
           if (data.success && data.user) {
             const user: User = {
-              id: String(data.user.id),
-              username: data.user.username,
-              email: data.user.email,
-              name: data.user.name || '',
+              id: String((data.user as Record<string, unknown>).id),
+              username: (data.user as Record<string, unknown>).username as string,
+              email: (data.user as Record<string, unknown>).email as string,
+              name: ((data.user as Record<string, unknown>).name as string) || '',
               role: 'owner',
-              phone: data.user.phone,
-              address: data.user.address,
-              idNumber: data.user.idNumber,
-              gender: data.user.gender,
-              createdAt: new Date(data.user.createdAt),
+              phone: (data.user as Record<string, unknown>).phone as string,
+              address: (data.user as Record<string, unknown>).address as string,
+              idNumber: (data.user as Record<string, unknown>).idNumber as string,
+              gender: ((data.user as Record<string, unknown>).gender as 'male' | 'female' | 'other' | undefined),
+              createdAt: new Date((data.user as Record<string, unknown>).createdAt as string),
             };
             setUser(user);
             localStorage.setItem('user', JSON.stringify(user));
@@ -149,12 +116,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
 };

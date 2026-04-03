@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { theme } from '../styles/theme';
-import { useAuth } from '../stores/AuthContext';
+import { useAuth } from '../hooks';
 import { AuthLayout } from '../layouts/AuthLayout';
 import { Form, FormGroup, Input } from '../components/Forms/Form';
 import { Button } from '../components/Common';
@@ -75,10 +75,11 @@ export const Login = () => {
 
     try {
       await login(username, password);
-      const from = (location.state as any)?.from?.pathname || '/owner';
-      navigate(from);
-    } catch (err: any) {
-      const errorMsg = err?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+      const from = (location.state as Record<string, unknown>)?.from as Record<string, unknown> | undefined;
+      const pathname = (from?.pathname as string) || '/owner';
+      navigate(pathname);
+    } catch (err) {
+      const errorMsg = (err as Error)?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
       setError(errorMsg);
     }
   };

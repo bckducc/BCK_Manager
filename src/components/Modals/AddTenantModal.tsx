@@ -223,7 +223,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
       });
       setGeneratedCredentials(null);
       onClose();
-    } catch (err) {
+    } catch (_err) {
       setError('Có lỗi xảy ra khi thêm người thuê');
     }
   };
@@ -345,7 +345,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
                 variant="primary"
                 fullWidth
               >
-                {generatedCredentials ? '↻ Tạo Lại Tài Khoản' : '🔐 Tạo Tài Khoản Đăng Nhập'}
+                {generatedCredentials ? '↻ Tạo Lại Tài Khoản' : 'Tạo Tài Khoản Đăng Nhập'}
               </Button>
             </FullWidthField>
 

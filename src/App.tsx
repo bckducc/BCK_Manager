@@ -169,7 +169,15 @@ function App() {
             }
           />
 
-          {/* Default Route */}
+          <Route
+            path="/tenant-preview"
+            element={
+              <MainLayout>
+                <TenantDashboard />
+              </MainLayout>
+            }
+          />
+
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
         </SidebarProvider>

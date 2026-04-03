@@ -81,7 +81,7 @@ export const TenantManagement = () => {
     {
       key: 'actions',
       title: 'Hành Động',
-      render: (_, row: any) => (
+      render: (_, row: Record<string, unknown>) => (
         <ActionButtons>
           <Button>Xem Chi Tiết</Button>
           <Button 

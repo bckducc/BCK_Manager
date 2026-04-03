@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
-import { useAuth } from '../../stores/AuthContext';
+import { useAuth } from '../../hooks';
 import { Logo } from './Logo';
 import { theme } from '../../styles/theme';
 
