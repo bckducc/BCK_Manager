@@ -1,4 +1,4 @@
-import { findUserByUsername, getUserWithLandlordInfo, validatePassword } from '../services/authService.js';
+import { findUserByUsername, getUserWithLandlordInfo, getUserWithTenantInfo, validatePassword } from '../services/authService.js';
 import { generateToken } from '../middleware/auth.js';
 
 export const login = async (req, res) => {
@@ -48,22 +48,33 @@ export const login = async (req, res) => {
       });
     }
 
-    // Check if landlord role
-    if (user.role !== 'landlord') {
+    // Get user info based on role
+    let userWithInfo;
+    
+    if (user.role === 'landlord') {
+      userWithInfo = await getUserWithLandlordInfo(user.id);
+      
+      if (!userWithInfo) {
+        console.log(`Landlord info not found for user id: ${user.id}`); // Debug
+        return res.status(404).json({
+          success: false,
+          message: 'Thông tin chủ nhà không tìm thấy',
+        });
+      }
+    } else if (user.role === 'tenant') {
+      userWithInfo = await getUserWithTenantInfo(user.id);
+      
+      if (!userWithInfo) {
+        console.log(`Tenant info not found for user id: ${user.id}`); // Debug
+        return res.status(404).json({
+          success: false,
+          message: 'Thông tin người thuê không tìm thấy',
+        });
+      }
+    } else {
       return res.status(403).json({
         success: false,
-        message: 'Chỉ chủ nhà mới có thể truy cập',
-      });
-    }
-
-    // Get landlord info
-    const userWithLandlordInfo = await getUserWithLandlordInfo(user.id);
-
-    if (!userWithLandlordInfo) {
-      console.log(`Landlord info not found for user id: ${user.id}`); // Debug
-      return res.status(404).json({
-        success: false,
-        message: 'Thông tin chủ nhà không tìm thấy',
+        message: 'Vai trò người dùng không hợp lệ',
       });
     }
 
@@ -77,16 +88,17 @@ export const login = async (req, res) => {
       message: 'Đăng nhập thành công',
       token,
       user: {
-        id: userWithLandlordInfo.id,
-        username: userWithLandlordInfo.username,
-        role: userWithLandlordInfo.role,
-        name: userWithLandlordInfo.full_name || 'Unknown',
-        email: `${userWithLandlordInfo.username}@landlord.local`,
-        phone: userWithLandlordInfo.phone || '',
-        address: null,
-        idNumber: null,
-        gender: null,
-        createdAt: userWithLandlordInfo.created_at,
+        id: userWithInfo.id,
+        username: userWithInfo.username,
+        role: userWithInfo.role,
+        name: userWithInfo.full_name || 'Unknown',
+        email: `${userWithInfo.username}@${user.role}.local`,
+        phone: userWithInfo.phone || '',
+        address: userWithInfo.address || null,
+        idNumber: userWithInfo.identity_card || null,
+        gender: userWithInfo.gender || null,
+        birthday: userWithInfo.birthday || null,
+        createdAt: userWithInfo.created_at,
       },
     });
   } catch (error) {
@@ -101,9 +113,22 @@ export const login = async (req, res) => {
 export const me = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userWithLandlordInfo = await getUserWithLandlordInfo(userId);
+    const userRole = req.user.role;
+    
+    let userWithInfo;
+    
+    if (userRole === 'landlord') {
+      userWithInfo = await getUserWithLandlordInfo(userId);
+    } else if (userRole === 'tenant') {
+      userWithInfo = await getUserWithTenantInfo(userId);
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: 'Vai trò người dùng không hợp lệ',
+      });
+    }
 
-    if (!userWithLandlordInfo) {
+    if (!userWithInfo) {
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy người dùng',
@@ -113,16 +138,17 @@ export const me = async (req, res) => {
     return res.status(200).json({
       success: true,
       user: {
-        id: userWithLandlordInfo.id,
-        username: userWithLandlordInfo.username,
-        role: userWithLandlordInfo.role,
-        name: userWithLandlordInfo.full_name,
-        email: `${userWithLandlordInfo.username}@landlord.local`,
-        phone: userWithLandlordInfo.phone,
-        address: null,
-        idNumber: null,
-        gender: null,
-        createdAt: userWithLandlordInfo.created_at,
+        id: userWithInfo.id,
+        username: userWithInfo.username,
+        role: userWithInfo.role,
+        name: userWithInfo.full_name,
+        email: `${userWithInfo.username}@${userRole}.local`,
+        phone: userWithInfo.phone,
+        address: userWithInfo.address || null,
+        idNumber: userWithInfo.identity_card || null,
+        gender: userWithInfo.gender || null,
+        birthday: userWithInfo.birthday || null,
+        createdAt: userWithInfo.created_at,
       },
     });
   } catch (error) {

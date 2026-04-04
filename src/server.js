@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import tenantRoutes from './routes/tenant.js';
+import roomRoutes from './routes/rooms.js';
 import pool from './config/database.js';
 
 dotenv.config();
@@ -9,7 +11,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
@@ -17,7 +18,6 @@ app.use(cors({
   credentials: true,
 }));
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -27,6 +27,8 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/tenant', tenantRoutes);
+app.use('/api/rooms', roomRoutes);
 
 // 404 Handler
 app.use((req, res) => {

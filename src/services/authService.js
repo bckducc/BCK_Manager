@@ -56,6 +56,42 @@ export const getUserWithLandlordInfo = async (userId) => {
   }
 };
 
+export const getUserWithTenantInfo = async (userId) => {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query(
+      `SELECT 
+        u.id, 
+        u.username, 
+        u.role, 
+        u.is_active,
+        u.created_at,
+        t.full_name,
+        t.phone,
+        t.identity_card,
+        t.birthday,
+        t.gender,
+        t.address
+      FROM users u
+      LEFT JOIN tenant t ON u.id = t.user_id
+      WHERE u.id = ?`,
+      [userId]
+    );
+    connection.release();
+    
+    const user = rows[0];
+    if (!user) {
+      throw new Error(`Không tìm thấy người dùng có id ${userId}`);
+    }
+    
+    console.log('User with tenant info:', user); // Debug
+    return user;
+  } catch (error) {
+    console.error('Database error in getUserWithTenantInfo:', error);
+    throw error;
+  }
+};
+
 export const validatePassword = async (plainPassword, hashedPassword) => {
   try {
     return await bcrypt.compare(plainPassword, hashedPassword);
