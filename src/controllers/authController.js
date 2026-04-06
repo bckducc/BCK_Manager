@@ -5,7 +5,6 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Validation
     if (!username || !password) {
       return res.status(400).json({
         success: false,
@@ -15,7 +14,6 @@ export const login = async (req, res) => {
 
     console.log(`Login attempt: ${username}`); // Debug
 
-    // Find user
     const user = await findUserByUsername(username);
 
     if (!user) {
@@ -28,7 +26,6 @@ export const login = async (req, res) => {
 
     console.log(`User found: ${user.username}`); // Debug
 
-    // Check if user is active
     if (!user.is_active) {
       return res.status(401).json({
         success: false,
@@ -36,8 +33,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Validate password (comparing plain text for now, should be hashed in production)
-    // TODO: Hash passwords in database and use bcrypt comparison
     const passwordMatch = password === user.password;
 
     if (!passwordMatch) {
@@ -48,7 +43,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Get user info based on role
     let userWithInfo;
     
     if (user.role === 'landlord') {

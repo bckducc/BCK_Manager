@@ -17,7 +17,6 @@ const pool = mysql.createPool({
     keepAliveInitialDelayMs: 0,
 });
 
-// Pool error handler
 pool.on('error', (err) => {
   console.error('Database pool error:', err);
 });
