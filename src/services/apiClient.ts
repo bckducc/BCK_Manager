@@ -1,17 +1,12 @@
-const API_BASE_URL = 'http://localhost:5000';
+import type { ApiResponse } from '../types';
 
-export interface ApiResponse<T = Record<string, unknown>> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  token?: string;
-  user?: T;
-  [key: string]: unknown;
-}
+const API_BASE_URL = 'http://localhost:5000';
 
 interface RequestOptions extends RequestInit {
   headers?: Record<string, string>;
 }
+
+export type { ApiResponse };
 
 export const apiCall = async <T = Record<string, unknown>>(
   endpoint: string,

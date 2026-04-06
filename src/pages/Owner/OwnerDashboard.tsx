@@ -246,7 +246,6 @@ export const OwnerDashboard = () => {
     unpaidBills: 2,
   });
 
-  // Mock room data
   const [rooms] = useState<Room[]>([
     { id: '101', roomNumber: '101', status: 'occupied' },
     { id: '102', roomNumber: '102', status: 'occupied' },
@@ -264,7 +263,6 @@ export const OwnerDashboard = () => {
   const emptyRooms = stats.totalRooms - stats.occupiedRooms;
 
   const handleRoomClick = () => {
-    // Navigate to room detail page
     navigate(`/owner/rooms`);
   };
 

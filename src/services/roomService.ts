@@ -1,7 +1,7 @@
 import { apiCall } from './apiClient';
 
 export const roomService = {
-  getAll: () => apiCall<Record<string, unknown>>('/api/rooms', { method: 'GET' }),
+  getAll: () => apiCall<Record<string, unknown>>('/api/rooms/landlord/rooms', { method: 'GET' }),
 
   getById: (id: string) => apiCall<Record<string, unknown>>(`/api/rooms/${id}`, { method: 'GET' }),
 
@@ -19,4 +19,6 @@ export const roomService = {
 
   delete: (id: string) =>
     apiCall<Record<string, unknown>>(`/api/rooms/${id}`, { method: 'DELETE' }),
+
+  getAvailable: () => apiCall<Record<string, unknown>>('/api/rooms/available', { method: 'GET' }),
 };

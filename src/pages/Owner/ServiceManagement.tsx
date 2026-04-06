@@ -2,8 +2,9 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Tables/Table';
-import { Header, Button, Card } from '../../components/Common';
+import { Header, Button, Card, Modal } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
+import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
 
 const Container = styled.div`
   display: flex;
@@ -30,6 +31,20 @@ const ActionButtons = styled.div`
 
 export const ServiceManagement = () => {
   const [services] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    unit: '',
+    type: '',
+  });
+
+  const handleAddService = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsModalOpen(false);
+    setFormData({ name: '', description: '', price: '', unit: '', type: '' });
+  };
 
   const columns: TableColumn[] = [
     { key: 'name', title: 'Tên Dịch Vụ' },
@@ -53,13 +68,82 @@ export const ServiceManagement = () => {
     <PageWrapper>
       <Container>
         <Header
-        title="Quản Lý Dịch Vụ"
-        actions={<Button>+ Thêm Dịch Vụ</Button>}
-      />
-      <Card>
-        <Table columns={columns} data={services} emptyText="Chưa có dịch vụ nào" />
-      </Card>
-    </Container>
+          title="Quản Lý Dịch Vụ"
+          actions={
+            <Button onClick={() => setIsModalOpen(true)}>
+              + Thêm Dịch Vụ
+            </Button>
+          }
+        />
+        <Card>
+          <Table columns={columns} data={services} emptyText="Chưa có dịch vụ nào" />
+        </Card>
+
+        <Modal
+          isOpen={isModalOpen}
+          title="Thêm Dịch Vụ Mới"
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={() => {
+            handleAddService({ preventDefault: () => {} } as React.FormEvent);
+          }}
+          confirmText="Tạo"
+        >
+          <Form onSubmit={handleAddService}>
+            <FormGroup label="Tên Dịch Vụ" required>
+              <Input
+                type="text"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder="Ví dụ: Wifi, Dọn vệ sinh"
+              />
+            </FormGroup>
+            <FormGroup label="Mô Tả">
+              <Input
+                type="text"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
+            </FormGroup>
+            <FormGroup label="Giá" required>
+              <Input
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              />
+            </FormGroup>
+            <FormGroup label="Đơn Vị" required>
+              <Select
+                value={formData.unit}
+                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                options={[
+                  { value: 'month', label: 'Tháng' },
+                  { value: 'person', label: 'Người' },
+                  { value: 'time', label: 'Lần' },
+                  { value: 'fixed', label: 'Cố định' },
+                ]}
+                placeholder="Chọn đơn vị..."
+              />
+            </FormGroup>
+            <FormGroup label="Loại" required>
+              <Select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                options={[
+                  { value: 'utilities', label: 'Tiện ích' },
+                  { value: 'maintenance', label: 'Bảo trì' },
+                  { value: 'cleaning', label: 'Vệ sinh' },
+                  { value: 'other', label: 'Khác' },
+                ]}
+                placeholder="Chọn loại..."
+              />
+            </FormGroup>
+          </Form>
+        </Modal>
+      </Container>
     </PageWrapper>
   );
 };

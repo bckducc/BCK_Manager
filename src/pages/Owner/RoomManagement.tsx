@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { Room } from '../../types';
@@ -6,6 +6,9 @@ import type { TableColumn } from '../../components/Tables/Table';
 import { Header, Button, Card, Modal } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
 import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
+import { useAuth } from '../../hooks/useAuth';
+import { useFetch } from '../../hooks/useFetch';
+import { roomService } from '../../services';
 
 const Container = styled.div`
   display: flex;
@@ -31,8 +34,12 @@ const ActionButtons = styled.div`
 `;
 
 export const RoomManagement = () => {
-  const [rooms] = useState<Room[]>([]);
+  const { isAuthenticated } = useAuth();
+  const { data: responseData, loading, error, execute } = useFetch(() => roomService.getAll());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rooms, setRooms] = useState<Record<string, unknown>[]>([]);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const [formData, setFormData] = useState({
     roomNumber: '',
     area: '',
@@ -41,23 +48,86 @@ export const RoomManagement = () => {
     status: '',
     description: '',
   });
+
+  useEffect(() => {
+    if (responseData) {
+      const dataObj = responseData as Record<string, unknown>;
       
-  const handleAddRoom = (e: React.FormEvent) => {
+      if (dataObj.rooms && Array.isArray(dataObj.rooms)) {
+        setRooms(dataObj.rooms);
+      } 
+      // Handle direct array response: [...]
+      else if (Array.isArray(responseData)) {
+        setRooms(responseData as Record<string, unknown>[]);
+      }
+      else {
+        setRooms([]);
+      }
+    }
+  }, [responseData]);
+
+  useEffect(() => {
+    if (isAuthenticated && !hasInitialized) {
+      execute();
+      setHasInitialized(true);
+    }
+  }, [isAuthenticated, hasInitialized]);
+
+  const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Add room logic
-    setIsModalOpen(false);
-    setFormData({ roomNumber: '', area: '', floor: '', price: '', status: '', description: '' });
+    
+    if (!formData.roomNumber || !formData.price || !formData.status) {
+      alert('Vui lòng điền tất cả các trường bắt buộc');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await roomService.create({
+        room_number: formData.roomNumber,
+        area: parseFloat(formData.area),
+        floor: parseInt(formData.floor),
+        price: parseFloat(formData.price),
+        status: formData.status,
+        description: formData.description,
+      });
+
+      if (response.success) {
+        await execute();
+        setIsModalOpen(false);
+        setFormData({
+          roomNumber: '',
+          area: '',
+          floor: '',
+          price: '',
+          status: '',
+          description: '',
+        });
+        alert('Tạo phòng thành công');
+      }
+    } catch (err) {
+      alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể tạo phòng'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const columns: TableColumn[] = [
-    { key: 'roomNumber', title: 'Số Phòng' },
+    { key: 'room_number', title: 'Số Phòng' },
     { key: 'area', title: 'Diện Tích (m²)' },
     { key: 'floor', title: 'Tầng' },
-    { key: 'price', title: 'Giá Thuê/Tháng', render: (val) => `$${val}` },
+    { key: 'price', title: 'Giá Thuê/Tháng', render: (val) => `${val.toLocaleString()}đ` },
     {
       key: 'status',
       title: 'Trạng Thái',
-      render: (val) => <span style={{ color: val === 'available' ? 'green' : 'red' }}>{val}</span>,
+      render: (val) => {
+        const statusLabels: Record<string, string> = {
+          available: 'Còn trống',
+          rented: 'Đã cho thuê',
+          maintenance: 'Bảo trì',
+        };
+        return <span style={{ color: val === 'available' ? 'green' : val === 'rented' ? 'orange' : 'red' }}>{statusLabels[val] || val}</span>;
+      },
     },
     {
       key: 'actions',
@@ -77,14 +147,15 @@ export const RoomManagement = () => {
         <Header
         title="Quản Lý Phòng"
         actions={
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button onClick={() => setIsModalOpen(true)} disabled={loading}>
             + Thêm Phòng
           </Button>
         }
       />
 
       <Card>
-        <Table columns={columns} data={rooms} emptyText="Chưa có phòng nào" />
+        {error && <p style={{ color: 'red' }}>Lỗi: {error}</p>}
+        <Table columns={columns} data={rooms as unknown as Record<string, string | number>[]} emptyText="Chưa có phòng nào" />
       </Card>
 
       <Modal
@@ -95,6 +166,7 @@ export const RoomManagement = () => {
           handleAddRoom({ preventDefault: () => {} } as React.FormEvent);
         }}
         confirmText="Tạo"
+        disabled={isSubmitting}
       >
         <Form onSubmit={handleAddRoom}>
           <FormGroup label="Số Phòng" required>
@@ -105,6 +177,7 @@ export const RoomManagement = () => {
                 setFormData({ ...formData, roomNumber: e.target.value })
               }
               placeholder="Ví dụ: 101"
+              disabled={isSubmitting}
             />
           </FormGroup>
           <FormGroup label="Diện Tích (m²)" required>
@@ -112,6 +185,7 @@ export const RoomManagement = () => {
               type="number"
               value={formData.area}
               onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+              disabled={isSubmitting}
             />
           </FormGroup>
           <FormGroup label="Tầng" required>
@@ -119,13 +193,15 @@ export const RoomManagement = () => {
               type="number"
               value={formData.floor}
               onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+              disabled={isSubmitting}
             />
           </FormGroup>
-          <FormGroup label="Giá Thuê/Tháng" required>
+          <FormGroup label="Giá Thuê/Tháng (VNĐ)" required>
             <Input
               type="number"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              disabled={isSubmitting}
             />
           </FormGroup>
           <FormGroup label="Trạng thái phòng" required>
@@ -133,11 +209,12 @@ export const RoomManagement = () => {
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               options={[
+                { value: '', label: 'Chọn trạng thái...' },
                 { value: 'available', label: 'Còn trống' },
                 { value: 'rented', label: 'Đã cho thuê' },
                 { value: 'maintenance', label: 'Bảo trì' },
               ]}
-              placeholder="Chọn trạng thái..."
+              disabled={isSubmitting}
             />
           </FormGroup>
           <FormGroup label="Mô Tả">
@@ -147,6 +224,7 @@ export const RoomManagement = () => {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
+              disabled={isSubmitting}
             />
           </FormGroup>
         </Form>

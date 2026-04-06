@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         address: (response.user as Record<string, unknown>).address as string,
         idNumber: (response.user as Record<string, unknown>).idNumber as string,
         gender: ((response.user as Record<string, unknown>).gender as 'male' | 'female' | 'other' | undefined),
+        landlord_id: (response.user as Record<string, unknown>).landlord_id as string | number,
         createdAt: new Date((response.user as Record<string, unknown>).createdAt as string),
       };
 
@@ -90,6 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               address: (data.user as Record<string, unknown>).address as string,
               idNumber: (data.user as Record<string, unknown>).idNumber as string,
               gender: ((data.user as Record<string, unknown>).gender as 'male' | 'female' | 'other' | undefined),
+              landlord_id: (data.user as Record<string, unknown>).landlord_id as string | number,
               createdAt: new Date((data.user as Record<string, unknown>).createdAt as string),
             };
             setUser(user);

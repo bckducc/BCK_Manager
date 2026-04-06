@@ -31,7 +31,6 @@ const ActionButtons = styled.div`
   }
 `;
 
-// Mock rooms data - replace with actual data from context/api
 const MOCK_ROOMS = [
   { id: 'room_1', roomNumber: '101' },
   { id: 'room_2', roomNumber: '102' },
@@ -47,7 +46,6 @@ export const TenantManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { tenants, users, deleteTenant } = useTenant();
 
-  // Map tenant data with user info for display
   const tenantDisplayData = useMemo(() => {
     return tenants.map((tenant) => {
       const user = users.find((u) => u.id === tenant.userId);

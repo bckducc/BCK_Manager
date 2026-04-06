@@ -62,7 +62,6 @@ export const Login = () => {
     e.preventDefault();
     setError('');
 
-    // Validation
     if (!username.trim()) {
       setError('Vui lòng nhập tên tài khoản');
       return;

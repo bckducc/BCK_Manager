@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { ApiResponse } from '../services';
+import type { ApiResponse } from '../types';
 
 interface UseFetchState<T> {
   data: T | null;
