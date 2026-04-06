@@ -108,6 +108,5 @@ export const Modal = ({
   );
 };
 
-// Import Button component to use here
 import { Button as ButtonComponent } from './Button';
 const Button = ButtonComponent;

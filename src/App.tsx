@@ -32,10 +32,8 @@ function App() {
         <TenantProvider>
           <SidebarProvider>
             <Routes>
-          {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
 
-          {/* Owner Routes */}
           <Route
             path="/owner"
             element={
@@ -117,7 +115,6 @@ function App() {
             }
           />
 
-          {/* Tenant Routes */}
           <Route
             path="/tenant"
             element={

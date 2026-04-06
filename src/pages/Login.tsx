@@ -73,9 +73,18 @@ export const Login = () => {
     }
 
     try {
-      await login(username, password);
+      const loggedInUser = await login(username, password);
       const from = (location.state as Record<string, unknown>)?.from as Record<string, unknown> | undefined;
-      const pathname = (from?.pathname as string) || '/owner';
+      
+      let pathname = '/owner'; // default
+      if (loggedInUser?.role === 'tenant') {
+        pathname = '/tenant';
+      } else if (loggedInUser?.role === 'admin') {
+        pathname = '/admin';
+      } else {
+        pathname = (from?.pathname as string) || '/owner';
+      }
+      
       navigate(pathname);
     } catch (err) {
       const errorMsg = (err as Error)?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';

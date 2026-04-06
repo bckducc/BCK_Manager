@@ -37,12 +37,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Map API response to User type
+      // Backend uses "landlord", frontend uses "owner"
+      const backendRole = (response.user as Record<string, unknown>).role as string;
+      const mappedRole = backendRole === 'landlord' ? 'owner' : (backendRole as 'owner' | 'tenant' | 'admin');
+      
       const user: User = {
         id: String((response.user as Record<string, unknown>).id),
         username: (response.user as Record<string, unknown>).username as string,
         email: ((response.user as Record<string, unknown>).email as string) || '',
         name: ((response.user as Record<string, unknown>).name as string) || 'User',
-        role: 'owner', // Chủ nhà
+        role: mappedRole || 'owner',
         phone: (response.user as Record<string, unknown>).phone as string,
         address: (response.user as Record<string, unknown>).address as string,
         idNumber: (response.user as Record<string, unknown>).idNumber as string,
@@ -56,6 +60,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(response.token);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', response.token);
+      
+      // Return user object so caller can access the role immediately
+      return user;
     } catch (error) {
       // Handle different error types
       const errorMessage = (error as Error)?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
@@ -81,12 +88,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       authService.getMe()
         .then((data) => {
           if (data.success && data.user) {
+            // Map backend role to frontend role
+            const backendRole = (data.user as Record<string, unknown>).role as string;
+            const mappedRole = backendRole === 'landlord' ? 'owner' : (backendRole as 'owner' | 'tenant' | 'admin');
+            
             const user: User = {
               id: String((data.user as Record<string, unknown>).id),
               username: (data.user as Record<string, unknown>).username as string,
               email: (data.user as Record<string, unknown>).email as string,
               name: ((data.user as Record<string, unknown>).name as string) || '',
-              role: 'owner',
+              role: mappedRole || 'owner',
               phone: (data.user as Record<string, unknown>).phone as string,
               address: (data.user as Record<string, unknown>).address as string,
               idNumber: (data.user as Record<string, unknown>).idNumber as string,
