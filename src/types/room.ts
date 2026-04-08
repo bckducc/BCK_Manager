@@ -5,7 +5,7 @@ export interface Room {
   area: number; // m²
   floor: number;
   status: 'available' | 'rented' | 'maintenance';
-  price: number; // giá thuê/tháng
+  price: number;
   description?: string;
   landlord_id?: string | number;
   created_at?: Date;

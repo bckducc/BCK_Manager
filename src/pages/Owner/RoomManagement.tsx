@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
-import type { Room } from '../../types';
 import type { TableColumn } from '../../components/Tables/Table';
 import { Header, Button, Card, Modal } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
@@ -88,7 +87,7 @@ export const RoomManagement = () => {
         area: parseFloat(formData.area),
         floor: parseInt(formData.floor),
         price: parseFloat(formData.price),
-        status: formData.status,
+        status: formData.status as 'available' | 'rented' | 'maintenance',
         description: formData.description,
       });
 
@@ -154,7 +153,7 @@ export const RoomManagement = () => {
       />
 
       <Card>
-        {error && <p style={{ color: 'red' }}>Lỗi: {error}</p>}
+        {error && <p style={{ color: 'red' }}>Lỗi: {String(error)}</p>}
         <Table columns={columns} data={rooms as unknown as Record<string, string | number>[]} emptyText="Chưa có phòng nào" />
       </Card>
 
@@ -166,7 +165,6 @@ export const RoomManagement = () => {
           handleAddRoom({ preventDefault: () => {} } as React.FormEvent);
         }}
         confirmText="Tạo"
-        disabled={isSubmitting}
       >
         <Form onSubmit={handleAddRoom}>
           <FormGroup label="Số Phòng" required>

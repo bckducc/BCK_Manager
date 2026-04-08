@@ -1,22 +1,23 @@
 import { apiCall } from './apiClient';
+import type { Bill } from '../types';
 
 export const billService = {
-  getAll: () => apiCall<Record<string, unknown>>('/api/bills', { method: 'GET' }),
+  getAll: () => apiCall<{ bills: Bill[] }>('/api/v1/bills', { method: 'GET' }),
 
-  getById: (id: string) => apiCall<Record<string, unknown>>(`/api/bills/${id}`, { method: 'GET' }),
+  getById: (id: string) => apiCall<Bill>(`/api/v1/bills/${id}`, { method: 'GET' }),
 
-  create: (data: Record<string, unknown>) =>
-    apiCall<Record<string, unknown>>('/api/bills', {
+  create: (data: Omit<Bill, 'id' | 'issuedDate' | 'dueDate' | 'paidDate'>) =>
+    apiCall<Bill>('/api/v1/bills', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: Record<string, unknown>) =>
-    apiCall<Record<string, unknown>>(`/api/bills/${id}`, {
+  update: (id: string, data: Partial<Omit<Bill, 'id' | 'issuedDate' | 'dueDate' | 'paidDate'>>) =>
+    apiCall<Bill>(`/api/v1/bills/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
 
   delete: (id: string) =>
-    apiCall<Record<string, unknown>>(`/api/bills/${id}`, { method: 'DELETE' }),
+    apiCall<{ success: boolean }>(`/api/v1/bills/${id}`, { method: 'DELETE' }),
 };

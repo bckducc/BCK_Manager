@@ -13,7 +13,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
+                    
   if (requiredRole && user?.role !== requiredRole) {
     return <Navigate to="/" replace />;
   }

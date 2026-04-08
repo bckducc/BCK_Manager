@@ -1,22 +1,23 @@
 import { apiCall } from './apiClient';
+import type { Contract } from '../types';
 
 export const contractService = {
-  getAll: () => apiCall<any>('/api/contracts', { method: 'GET' }),
+  getAll: () => apiCall<{ contracts: Contract[] }>('/api/v1/contracts', { method: 'GET' }),
 
-  getById: (id: string) => apiCall<any>(`/api/contracts/${id}`, { method: 'GET' }),
+  getById: (id: string) => apiCall<Contract>(`/api/v1/contracts/${id}`, { method: 'GET' }),
 
-  create: (data: any) =>
-    apiCall<any>('/api/contracts', {
+  create: (data: Omit<Contract, 'id' | 'createdAt'>) =>
+    apiCall<Contract>('/api/v1/contracts', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: any) =>
-    apiCall<any>(`/api/contracts/${id}`, {
+  update: (id: string, data: Partial<Omit<Contract, 'id' | 'createdAt'>>) =>
+    apiCall<Contract>(`/api/v1/contracts/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
 
   delete: (id: string) =>
-    apiCall<any>(`/api/contracts/${id}`, { method: 'DELETE' }),
+    apiCall<{ success: boolean }>(`/api/v1/contracts/${id}`, { method: 'DELETE' }),
 };
