@@ -1,110 +1,76 @@
 import { findUserByUsername, getUserWithLandlordInfo, getUserWithTenantInfo, validatePassword } from '../services/authService.js';
 import { generateToken } from '../middleware/auth.js';
+import { ApiResponse, sendResponse } from '../utils/responseHandler.js';
+import { AuthenticationError, NotFoundError, AuthorizationError, ValidationError } from '../utils/customError.js';
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tên tài khoản và mật khẩu là bắt buộc',
-      });
-    }
-
-    console.log(`Login attempt: ${username}`); // Debug
+    console.log(`[LOGIN] Attempt: ${username}`);
 
     const user = await findUserByUsername(username);
 
     if (!user) {
-      console.log(`User not found: ${username}`); // Debug
-      return res.status(401).json({
-        success: false,
-        message: 'Tên tài khoản hoặc mật khẩu không chính xác',
-      });
+      console.log(`[LOGIN] User not found: ${username}`);
+      throw new AuthenticationError('Tên tài khoản hoặc mật khẩu không chính xác');
     }
 
-    console.log(`User found: ${user.username}`); // Debug
-
     if (!user.is_active) {
-      return res.status(401).json({
-        success: false,
-        message: 'Tài khoản đã bị vô hiệu hóa',
-      });
+      throw new AuthenticationError('Tài khoản đã bị vô hiệu hóa');
     }
 
     const passwordMatch = password === user.password;
-
     if (!passwordMatch) {
-      console.log(`Password mismatch for user: ${username}`); // Debug
-      return res.status(401).json({
-        success: false,
-        message: 'Tên tài khoản hoặc mật khẩu không chính xác',
-      });
+      console.log(`[LOGIN] Password mismatch: ${username}`);
+      throw new AuthenticationError('Tên tài khoản hoặc mật khẩu không chính xác');
     }
 
     let userWithInfo;
     
     if (user.role === 'landlord') {
       userWithInfo = await getUserWithLandlordInfo(user.id);
-      
       if (!userWithInfo) {
-        console.log(`Landlord info not found for user id: ${user.id}`); // Debug
-        return res.status(404).json({
-          success: false,
-          message: 'Thông tin chủ nhà không tìm thấy',
-        });
+        throw new NotFoundError('Thông tin chủ nhà không tìm thấy');
       }
     } else if (user.role === 'tenant') {
       userWithInfo = await getUserWithTenantInfo(user.id);
-      
       if (!userWithInfo) {
-        console.log(`Tenant info not found for user id: ${user.id}`); // Debug
-        return res.status(404).json({
-          success: false,
-          message: 'Thông tin người thuê không tìm thấy',
-        });
+        throw new NotFoundError('Thông tin người thuê không tìm thấy');
       }
     } else {
-      return res.status(403).json({
-        success: false,
-        message: 'Vai trò người dùng không hợp lệ',
-      });
+      throw new AuthorizationError('Vai trò người dùng không hợp lệ');
     }
 
-    // Generate JWT token
     const token = generateToken(user.id, user.username, user.role);
 
-    console.log(`Login successful for user: ${username}`); // Debug
+    console.log(`[LOGIN] Success: ${username}`);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Đăng nhập thành công',
+    const response = ApiResponse.success(200, {
       token,
       user: {
         id: userWithInfo.id,
         username: userWithInfo.username,
         role: userWithInfo.role,
-        name: userWithInfo.full_name || 'Unknown',
-        email: `${userWithInfo.username}@${user.role}.local`,
+        fullName: userWithInfo.full_name || 'Unknown',
+        email: userWithInfo.email || `${userWithInfo.username}@${user.role}.local`,
         phone: userWithInfo.phone || '',
-        address: userWithInfo.address || null,
-        idNumber: userWithInfo.identity_card || null,
+        identityCard: userWithInfo.identity_card || null,
         gender: userWithInfo.gender || null,
         birthday: userWithInfo.birthday || null,
+        landlord_id: userWithInfo.landlord_id || null,
         createdAt: userWithInfo.created_at,
       },
-    });
+    }, 'Đăng nhập thành công');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Login error:', error.message, error.stack); // Better debugging
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Đăng nhập thất bại',
-    });
+    console.error('[LOGIN] Error:', error.message);
+    next(error);
   }
 };
 
-export const me = async (req, res) => {
+export const me = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
@@ -116,91 +82,67 @@ export const me = async (req, res) => {
     } else if (userRole === 'tenant') {
       userWithInfo = await getUserWithTenantInfo(userId);
     } else {
-      return res.status(403).json({
-        success: false,
-        message: 'Vai trò người dùng không hợp lệ',
-      });
+      throw new AuthorizationError('Vai trò người dùng không hợp lệ');
     }
 
     if (!userWithInfo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy người dùng',
-      });
+      throw new NotFoundError('Không tìm thấy người dùng');
     }
 
-    return res.status(200).json({
-      success: true,
-      user: {
-        id: userWithInfo.id,
-        username: userWithInfo.username,
-        role: userWithInfo.role,
-        name: userWithInfo.full_name,
-        email: `${userWithInfo.username}@${userRole}.local`,
-        phone: userWithInfo.phone,
-        address: userWithInfo.address || null,
-        idNumber: userWithInfo.identity_card || null,
-        gender: userWithInfo.gender || null,
-        birthday: userWithInfo.birthday || null,
-        createdAt: userWithInfo.created_at,
-      },
-    });
+    const response = ApiResponse.success(200, {
+      id: userWithInfo.id,
+      username: userWithInfo.username,
+      role: userWithInfo.role,
+      fullName: userWithInfo.full_name,
+      email: userWithInfo.email || `${userWithInfo.username}@${userRole}.local`,
+      phone: userWithInfo.phone,
+      identityCard: userWithInfo.identity_card || null,
+      gender: userWithInfo.gender || null,
+      birthday: userWithInfo.birthday || null,
+      createdAt: userWithInfo.created_at,
+    }, 'Lấy thông tin người dùng thành công');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Get user error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Lấy thông tin người dùng thất bại',
-      error: error.message,
-    });
+    console.error('[ME] Error:', error.message);
+    next(error);
   }
 };
 
-export const logout = (req, res) => {
+export const logout = (req, res, next) => {
   try {
-    // JWT is stateless, logout is handled on client side by removing token
-    return res.status(200).json({
-      success: true,
-      message: 'Đăng xuất thành công',
-    });
+    const response = ApiResponse.success(200, null, 'Đăng xuất thành công');
+    return sendResponse(res, response);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: 'Đăng xuất thất bại',
-      error: error.message,
-    });
+    console.error('[LOGOUT] Error:', error.message);
+    next(error);
   }
 };
 
-export const checkUser = async (req, res) => {
+export const checkUser = async (req, res, next) => {
   try {
     const { username } = req.query;
 
-    if (!username) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tên tài khoản là bắt buộc',
-      });
+    if (!username || username.trim() === '') {
+      throw new ValidationError('Tên tài khoản là bắt buộc');
     }
 
     const user = await findUserByUsername(username);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy người dùng',
-      });
+      throw new NotFoundError('Không tìm thấy người dùng');
     }
 
-    return res.status(200).json({
-      success: true,
-      user,
-    });
+    const response = ApiResponse.success(200, {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      isActive: user.is_active,
+    }, 'Tìm thấy người dùng');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Error checking user:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Kiểm tra người dùng thất bại',
-      error: error.message,
-    });
+    console.error('[CHECK_USER] Error:', error.message);
+    next(error);
   }
 };

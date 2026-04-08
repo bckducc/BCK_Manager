@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { AuthenticationError, AuthorizationError } from '../utils/customError.js';
 
 export const generateToken = (userId, username, role) => {
   return jwt.sign(
@@ -12,7 +13,7 @@ export const verifyToken = (token) => {
   try {
     return jwt.verify(token, process.env.JWT_SECRET);
   } catch (error) {
-    console.error('Token verification error:', error.message);
+    console.error('[TOKEN_VERIFICATION] Error:', error.message);
     return null;
   }
 };
@@ -22,50 +23,38 @@ export const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Không có token được cung cấp',
-      });
+      throw new AuthenticationError('Không có token được cung cấp');
     }
 
     const decoded = verifyToken(token);
 
     if (!decoded) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token không hợp lệ hoặc đã hết hạn',
-      });
+      throw new AuthenticationError('Token không hợp lệ hoặc đã hết hạn');
     }
 
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: 'Lỗi xác thực',
-      error: error.message,
-    });
+    next(error);
   }
 };
 
 export const requireRole = (requiredRoles) => {
   return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Chưa được xác thực',
-      });
+    try {
+      if (!req.user) {
+        throw new AuthenticationError('Chưa được xác thực');
+      }
+
+      const rolesArray = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+
+      if (!rolesArray.includes(req.user.role)) {
+        throw new AuthorizationError('Không có quyền truy cập tài nguyên này');
+      }
+
+      next();
+    } catch (error) {
+      next(error);
     }
-
-    const rolesArray = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-
-    if (!rolesArray.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Cấm truy cập - quyền hạn không đủ',
-      });
-    }
-
-    next();
   };
 };

@@ -1,17 +1,21 @@
 import express from 'express';
 import { getTenantDashboard, updateTenantProfile } from '../controllers/tenantController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { validateFields } from '../middleware/validation.js';
 
 const router = express.Router();
 
-// All tenant routes require authentication and tenant role
 router.use(authMiddleware);
 router.use(requireRole('tenant'));
 
-// Tenant dashboard
 router.get('/dashboard', getTenantDashboard);
 
-// Update tenant profile
-router.put('/profile', updateTenantProfile);
+router.put('/profile', 
+  validateFields({
+    fullName: 'required|string|max:100',
+    phone: 'required|string|min:10'
+  }),
+  updateTenantProfile
+);
 
 export default router;

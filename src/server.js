@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import tenantRoutes from './routes/tenant.js';
 import roomRoutes from './routes/rooms.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { ApiResponse } from './utils/responseHandler.js';
 import pool from './config/database.js';
 
 dotenv.config();
@@ -18,40 +20,34 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-  });
+  res.status(200).json(
+    ApiResponse.success(200, {
+      status: 'OK',
+      environment: process.env.NODE_ENV || 'development',
+    }, 'Server đang chạy')
+  );
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/tenant', tenantRoutes);
-app.use('/api/rooms', roomRoutes);
+const apiV1 = express.Router();
 
-// 404 Handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Không tìm thấy route',
-  });
-});
+apiV1.use('/auth', authRoutes);
+apiV1.use('/tenant', tenantRoutes);
+apiV1.use('/rooms', roomRoutes);
 
-// Error Handler
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({
-    success: false,
-    message: 'Lỗi server nội bộ',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
-  });
-});
+app.use('/api/v1', apiV1);
 
-// Start Server
+app.use(notFoundHandler);
+
+app.use(errorHandler);
+
 const server = app.listen(PORT, async () => {
   try {
-    // Test database connection
     const connection = await pool.getConnection();
     console.log('✓ Database connected successfully');
     connection.release();
@@ -65,7 +61,6 @@ const server = app.listen(PORT, async () => {
   }
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, closing server...');
   server.close(() => {
