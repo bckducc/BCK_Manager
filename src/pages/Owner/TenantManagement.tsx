@@ -84,7 +84,7 @@ export const TenantManagement = () => {
           <Button>Xem Chi Tiết</Button>
           <Button 
             variant="danger" 
-            onClick={() => deleteTenant(row.id)}
+            onClick={() => deleteTenant(String(row.id))}
           >
             <DeleteOutlined />
           </Button>

@@ -37,7 +37,6 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setUsers((prev) => [...prev, newUser]);
     setTenants((prev) => [...prev, newTenant]);
 
-    // Lưu vào localStorage
     localStorage.setItem('tenants', JSON.stringify([...tenants, newTenant]));
     localStorage.setItem('users', JSON.stringify([...users, newUser]));
   }, [tenants, users]);
@@ -51,7 +50,6 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const deleteTenant = useCallback((id: string) => {
     const tenant = tenants.find((t) => t.id === id);
     if (tenant) {
-      // Xóa user liên kết
       setUsers((prev) => prev.filter((u) => u.id !== tenant.userId));
     }
     setTenants((prev) => prev.filter((t) => t.id !== id));

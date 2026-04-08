@@ -203,7 +203,6 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
         },
         {
           username: generatedCredentials.username,
-          email: `tenant_${Date.now()}@local`,
           name: formData.name,
           phone: formData.phone,
           idNumber: formData.idNumber,
@@ -212,7 +211,6 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
         }
       );
 
-      // Reset form
       setFormData({
         name: '',
         phone: '',

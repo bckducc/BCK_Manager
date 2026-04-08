@@ -31,40 +31,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(response.message || 'Đăng nhập thất bại');
       }
 
-      // Validate user data
       if (!response.user || !response.token) {
         throw new Error('Dữ liệu từ server không hợp lệ');
       }
 
-      // Map API response to User type
-      // Backend uses "landlord", frontend uses "owner"
       const backendRole = (response.user as Record<string, unknown>).role as string;
       const mappedRole = backendRole === 'landlord' ? 'owner' : (backendRole as 'owner' | 'tenant' | 'admin');
       
       const user: User = {
         id: String((response.user as Record<string, unknown>).id),
         username: (response.user as Record<string, unknown>).username as string,
-        email: ((response.user as Record<string, unknown>).email as string) || '',
         name: ((response.user as Record<string, unknown>).name as string) || 'User',
         role: mappedRole || 'owner',
         phone: (response.user as Record<string, unknown>).phone as string,
-        address: (response.user as Record<string, unknown>).address as string,
         idNumber: (response.user as Record<string, unknown>).idNumber as string,
         gender: ((response.user as Record<string, unknown>).gender as 'male' | 'female' | 'other' | undefined),
         landlord_id: (response.user as Record<string, unknown>).landlord_id as string | number,
         createdAt: new Date((response.user as Record<string, unknown>).createdAt as string),
       };
 
-      // Save to state and localStorage
       setUser(user);
       setToken(response.token);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', response.token);
       
-      // Return user object so caller can access the role immediately
       return user;
     } catch (error) {
-      // Handle different error types
       const errorMessage = (error as Error)?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
       
       console.error('Login error:', error);
@@ -81,25 +73,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('token');
   }, []);
 
-  // Validate token on app start
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken && !user) { 
       authService.getMe()
         .then((data) => {
           if (data.success && data.user) {
-            // Map backend role to frontend role
             const backendRole = (data.user as Record<string, unknown>).role as string;
             const mappedRole = backendRole === 'landlord' ? 'owner' : (backendRole as 'owner' | 'tenant' | 'admin');
             
             const user: User = {
               id: String((data.user as Record<string, unknown>).id),
               username: (data.user as Record<string, unknown>).username as string,
-              email: (data.user as Record<string, unknown>).email as string,
               name: ((data.user as Record<string, unknown>).name as string) || '',
               role: mappedRole || 'owner',
               phone: (data.user as Record<string, unknown>).phone as string,
-              address: (data.user as Record<string, unknown>).address as string,
               idNumber: (data.user as Record<string, unknown>).idNumber as string,
               gender: ((data.user as Record<string, unknown>).gender as 'male' | 'female' | 'other' | undefined),
               landlord_id: (data.user as Record<string, unknown>).landlord_id as string | number,
@@ -108,7 +96,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(user);
             localStorage.setItem('user', JSON.stringify(user));
           } else {
-            // Token invalid, clear it
             logout();
           }
         })
