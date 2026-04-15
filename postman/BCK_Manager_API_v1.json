@@ -1,0 +1,349 @@
+{
+  "info": {
+    "_postman_id": "bck-manager-api-v1",
+    "name": "BCK Manager API v1",
+    "description": "BCK Manager Backend API Collection for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"token\", jsonData.data.token);",
+                  "    pm.environment.set(\"userId\", jsonData.data.user.id);",
+                  "    pm.environment.set(\"userRole\", jsonData.data.user.role);",
+                  "    console.log(\"Token saved: \" + jsonData.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"landlord1\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Login with username and password"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Get current authenticated user information"
+          },
+          "response": []
+        },
+        {
+          "name": "Check User - Test (landlord1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/check-user?username=landlord1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "check-user"],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "landlord1"
+                }
+              ]
+            },
+            "description": "Check if user exists (using test user landlord1)"
+          },
+          "response": []
+        },
+        {
+          "name": "Check User - Test (tenant1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/check-user?username=tenant1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "check-user"],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "tenant1"
+                }
+              ]
+            },
+            "description": "Check if user exists (using test user tenant1)"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Logout user (client removes token)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rooms",
+      "item": [
+        {
+          "name": "Get Available Rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/available",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", "available"]
+            },
+            "description": "Get list of available rooms (public endpoint)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Landlord Rooms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/landlord/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", "landlord", "rooms"]
+            },
+            "description": "Get all rooms created by authenticated landlord"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Room Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", "1"]
+            },
+            "description": "Get details of a specific room"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomNumber\": \"101\",\n  \"floor\": 1,\n  \"area\": 30.5,\n  \"price\": 5000000,\n  \"status\": \"available\",\n  \"description\": \"Phòng đẹp, thoáng mát\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms"]
+            },
+            "description": "Create a new room (landlord only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Room",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomNumber\": \"101\",\n  \"floor\": 1,\n  \"area\": 35.5,\n  \"price\": 5500000,\n  \"status\": \"available\",\n  \"description\": \"Phòng đẹp, thoáng mát, được cập nhật\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", "1"]
+            },
+            "description": "Update room information (landlord only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Room",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rooms/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rooms", "1"]
+            },
+            "description": "Delete a room (landlord only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tenant",
+      "item": [
+        {
+          "name": "Get Tenant Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenant/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tenant", "dashboard"]
+            },
+            "description": "Get tenant profile and dashboard information"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Tenant Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn B\",\n  \"email\": \"user@example.com\",\n  \"phone\": \"0123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenant/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tenant", "profile"]
+            },
+            "description": "Update tenant profile information (tenant only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check server health status"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userRole",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

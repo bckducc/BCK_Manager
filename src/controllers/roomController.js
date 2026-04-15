@@ -7,101 +7,72 @@ import {
   deleteRoom,
   getRoomCountByStatus
 } from '../services/roomService.js';
+import { ApiResponse, sendResponse } from '../utils/responseHandler.js';
+import { NotFoundError, AuthorizationError, ValidationError } from '../utils/customError.js';
 
-export const getLandlordRooms = async (req, res) => {
+export const getLandlordRooms = async (req, res, next) => {
   try {
     const landlordUserId = req.user.id;
     
     const rooms = await getRoomsByLandlord(landlordUserId);
     const stats = await getRoomCountByStatus(landlordUserId);
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        rooms,
-        stats
-      }
-    });
+    const response = ApiResponse.success(200, {
+      rooms,
+      stats,
+      total: rooms.length
+    }, 'Lấy danh sách phòng thành công');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Get landlord rooms error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Lấy danh sách phòng thất bại',
-      error: error.message,
-    });
+    console.error('[GET_LANDLORD_ROOMS] Error:', error.message);
+    next(error);
   }
 };
 
-export const getAvailableRoomsList = async (req, res) => {
+export const getAvailableRoomsList = async (req, res, next) => {
   try {
     const rooms = await getAvailableRooms();
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        rooms,
-        count: rooms.length
-      }
-    });
+    const response = ApiResponse.success(200, {
+      rooms,
+      count: rooms.length
+    }, 'Lấy danh sách phòng khả dụng thành công');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Get available rooms error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Lấy danh sách phòng thất bại',
-      error: error.message,
-    });
+    console.error('[GET_AVAILABLE_ROOMS] Error:', error.message);
+    next(error);
   }
 };
 
-export const getRoomDetail = async (req, res) => {
+export const getRoomDetail = async (req, res, next) => {
   try {
     const { roomId } = req.params;
-
-    if (!roomId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Room ID là bắt buộc',
-      });
-    }
 
     const room = await getRoomById(roomId);
 
     if (!room) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy phòng',
-      });
+      throw new NotFoundError('Không tìm thấy phòng');
     }
 
-    return res.status(200).json({
-      success: true,
-      data: room
-    });
+    const response = ApiResponse.success(200, room, 'Lấy chi tiết phòng thành công');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Get room detail error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Lấy chi tiết phòng thất bại',
-      error: error.message,
-    });
+    console.error('[GET_ROOM_DETAIL] Error:', error.message);
+    next(error);
   }
 };
 
-export const createNewRoom = async (req, res) => {
+export const createNewRoom = async (req, res, next) => {
   try {
     const landlordUserId = req.user.id;
-    const { room_number, floor, area, price, status, description } = req.body;
-
-    if (!room_number || !price) {
-      return res.status(400).json({
-        success: false,
-        message: 'Số phòng và giá là bắt buộc',
-      });
-    }
+    const { roomNumber, floor, area, price, status, description } = req.body;
 
     const roomData = {
       owner_id: landlordUserId,
-      room_number,
+      room_number: roomNumber,
       floor: floor || null,
       area: area || null,
       price,
@@ -111,51 +82,32 @@ export const createNewRoom = async (req, res) => {
 
     const newRoom = await createRoom(roomData);
 
-    return res.status(201).json({
-      success: true,
-      message: 'Tạo phòng thành công',
-      data: newRoom
-    });
+    const response = ApiResponse.success(201, newRoom, 'Tạo phòng thành công');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Create room error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Tạo phòng thất bại',
-      error: error.message,
-    });
+    console.error('[CREATE_ROOM] Error:', error.message);
+    next(error);
   }
 };
 
-export const updateRoomInfo = async (req, res) => {
+export const updateRoomInfo = async (req, res, next) => {
   try {
     const landlordUserId = req.user.id;
     const { roomId } = req.params;
-    const { room_number, floor, area, price, status, description } = req.body;
-
-    if (!roomId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Room ID là bắt buộc',
-      });
-    }
+    const { roomNumber, floor, area, price, status, description } = req.body;
 
     const room = await getRoomById(roomId);
     if (!room) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy phòng',
-      });
+      throw new NotFoundError('Không tìm thấy phòng');
     }
 
     if (room.owner_id !== landlordUserId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Bạn không có quyền cập nhật phòng này',
-      });
+      throw new AuthorizationError('Bạn không có quyền cập nhật phòng này');
     }
 
     const updateData = {};
-    if (room_number !== undefined) updateData.room_number = room_number;
+    if (roomNumber !== undefined) updateData.room_number = roomNumber;
     if (floor !== undefined) updateData.floor = floor;
     if (area !== undefined) updateData.area = area;
     if (price !== undefined) updateData.price = price;
@@ -164,60 +116,36 @@ export const updateRoomInfo = async (req, res) => {
 
     const updatedRoom = await updateRoom(roomId, updateData);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Cập nhật phòng thành công',
-      data: updatedRoom
-    });
+    const response = ApiResponse.success(200, updatedRoom, 'Cập nhật phòng thành công');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Update room error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Cập nhật phòng thất bại',
-      error: error.message,
-    });
+    console.error('[UPDATE_ROOM] Error:', error.message);
+    next(error);
   }
 };
 
-export const deleteRoomInfo = async (req, res) => {
+export const deleteRoomInfo = async (req, res, next) => {
   try {
     const landlordUserId = req.user.id;
     const { roomId } = req.params;
 
-    if (!roomId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Room ID là bắt buộc',
-      });
-    }
-
     const room = await getRoomById(roomId);
     if (!room) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy phòng',
-      });
+      throw new NotFoundError('Không tìm thấy phòng');
     }
 
     if (room.owner_id !== landlordUserId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Bạn không có quyền xóa phòng này',
-      });
+      throw new AuthorizationError('Bạn không có quyền xóa phòng này');
     }
 
     await deleteRoom(roomId);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Xóa phòng thành công'
-    });
+    const response = ApiResponse.success(204, null, 'Xóa phòng thành công');
+
+    return sendResponse(res, response);
   } catch (error) {
-    console.error('Delete room error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Xóa phòng thất bại',
-      error: error.message,
-    });
+    console.error('[DELETE_ROOM] Error:', error.message);
+    next(error);
   }
 };

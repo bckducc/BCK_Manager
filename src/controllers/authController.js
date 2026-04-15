@@ -46,7 +46,9 @@ export const login = async (req, res, next) => {
 
     console.log(`[LOGIN] Success: ${username}`);
 
-    const response = ApiResponse.success(200, {
+    return res.status(200).json({
+      success: true,
+      message: 'Đăng nhập thành công',
       token,
       user: {
         id: userWithInfo.id,
@@ -61,9 +63,7 @@ export const login = async (req, res, next) => {
         landlord_id: userWithInfo.landlord_id || null,
         createdAt: userWithInfo.created_at,
       },
-    }, 'Đăng nhập thành công');
-
-    return sendResponse(res, response);
+    });
   } catch (error) {
     console.error('[LOGIN] Error:', error.message);
     next(error);

@@ -40,7 +40,7 @@ apiV1.use('/auth', authRoutes);
 apiV1.use('/tenant', tenantRoutes);
 apiV1.use('/rooms', roomRoutes);
 
-app.use('/api/v1', apiV1);
+app.use('/api', apiV1);
 
 app.use(notFoundHandler);
 

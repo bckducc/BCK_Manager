@@ -8,6 +8,7 @@ import {
   deleteRoomInfo
 } from '../controllers/roomController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { validateId, validateFields } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -16,10 +17,30 @@ router.get('/available', getAvailableRoomsList);
 router.use(authMiddleware);
 
 router.get('/landlord/rooms', requireRole('landlord'), getLandlordRooms);
-router.post('/', requireRole('landlord'), createNewRoom);
-router.put('/:roomId', requireRole('landlord'), updateRoomInfo);
-router.delete('/:roomId', requireRole('landlord'), deleteRoomInfo);
 
-router.get('/:roomId', getRoomDetail);
+router.post('/', 
+  requireRole('landlord'),
+  validateFields({
+    roomNumber: 'required|string',
+    floor: 'required|number',
+    area: 'required|number',
+    price: 'required|number'
+  }),
+  createNewRoom
+);
+
+router.get('/:roomId', validateId('roomId'), getRoomDetail);
+
+router.put('/:roomId', 
+  requireRole('landlord'),
+  validateId('roomId'),
+  updateRoomInfo
+);
+
+router.delete('/:roomId', 
+  requireRole('landlord'),
+  validateId('roomId'),
+  deleteRoomInfo
+);
 
 export default router;
