@@ -8,11 +8,6 @@ import { Form, FormGroup, Input } from '../components/Forms/Form';
 import { Button } from '../components/Common';
 
 const LoginContainer = styled.div`
-  background-color: ${theme.colors.white};
-  border-radius: ${theme.radius.md};
-  padding: ${theme.spacing.xl};
-  box-shadow: ${theme.shadow.md};
-
   form {
     margin: 0;
   }

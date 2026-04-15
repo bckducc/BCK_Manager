@@ -2,23 +2,31 @@ import styled from 'styled-components';
 import type { ReactNode } from 'react';
 import { Logo } from '../components/Common/Logo';
 import { theme } from '../styles/theme';
+import backgroundImage from '../assets/images/background.png';
 
-const AuthLayoutWrapper = styled.div`
+const AuthLayoutWrapper = styled.div<{ $bgImage: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryDark} 100%);
+  background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.5) 100%), 
+                    url(${props => props.$bgImage});
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   padding: ${theme.spacing.md};
 `;
 
 const AuthLayoutContainer = styled.div`
-  background-color: ${theme.colors.white};
+  background-color: rgb(255, 250, 250);
+  backdrop-filter: blur(15px);
   border-radius: ${theme.radius.md};
   box-shadow: ${theme.shadow.lg};
   padding: ${theme.spacing.xl};
   width: 100%;
   max-width: 400px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 `;
 
 const AuthLayoutLogo = styled.div`
@@ -34,7 +42,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
-    <AuthLayoutWrapper>
+    <AuthLayoutWrapper $bgImage={backgroundImage}>
       <AuthLayoutContainer>
         <AuthLayoutLogo>
           <Logo showText={false} />
