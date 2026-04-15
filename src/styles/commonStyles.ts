@@ -1,6 +1,10 @@
 import styled from 'styled-components';
 import { theme } from './theme';
 
+/**
+ * Common styled components used across the app
+ */
+
 export const FlexBox = styled.div<{
   gap?: keyof typeof theme.spacing;
   align?: string;
