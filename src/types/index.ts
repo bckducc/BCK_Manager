@@ -1,4 +1,3 @@
-// User Types
 export type UserRole = 'owner' | 'tenant' | 'admin';
 
 export interface User {
@@ -24,7 +23,6 @@ export interface LoginResponse {
   token: string;
 }
 
-// Room Types
 export interface Room {
   id: string;
   roomNumber: string;
@@ -36,7 +34,6 @@ export interface Room {
   createdAt: Date;
 }
 
-// Tenant Types
 export interface Tenant {
   id: string;
   userId: string;
@@ -45,8 +42,6 @@ export interface Tenant {
   currentRoom?: Room;
   currentUser?: User;
 }
-
-// Contract Types
 export interface Contract {
   id: string;
   tenantId: string;
@@ -59,7 +54,6 @@ export interface Contract {
   createdAt: Date;
 }
 
-// Service Types
 export interface Service {
   id: string;
   name: string;
@@ -80,7 +74,6 @@ export interface TenantService {
   service?: Service;
 }
 
-// Utility Reading Types (Điện nước)
 export interface UtilityReading {
   id: string;
   roomId: string;
@@ -90,7 +83,6 @@ export interface UtilityReading {
   notes?: string;
 }
 
-// Bill Types
 export interface Bill {
   id: string;
   tenantId: string;
@@ -124,7 +116,6 @@ export interface UtilityCharge {
   amount: number;
 }
 
-// Payment Types
 export interface Payment {
   id: string;
   billId: string;
@@ -136,7 +127,6 @@ export interface Payment {
   notes?: string;
 }
 
-// Notification Types
 export interface Notification {
   id: string;
   userId: string;
@@ -148,7 +138,6 @@ export interface Notification {
   relatedId?: string; // ID của bill, room, contract, etc.
 }
 
-// Auth Context Types
 export interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -158,7 +147,6 @@ export interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-// API Response Types
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

@@ -44,17 +44,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const data = await response.json();
 
-      // Check for API errors
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Đăng nhập thất bại');
       }
 
-      // Validate user data
       if (!data.user || !data.token) {
         throw new Error('Dữ liệu từ server không hợp lệ');
       }
 
-      // Map API response to User type
       const user: User = {
         id: String(data.user.id),
         username: data.user.username,
@@ -68,18 +65,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         createdAt: new Date(data.user.createdAt),
       };
 
-      // Save to state and localStorage
       setUser(user);
       setToken(data.token);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', data.token);
     } catch (error: any) {
-      // Clear timeout if still pending
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
 
-      // Handle different error types
       const errorMessage = 
         error?.name === 'AbortError' 
           ? 'Kết nối timeout. Vui lòng kiểm tra kết nối mạng.'
@@ -89,7 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
-      // Final cleanup
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
@@ -103,7 +96,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('token');
   }, []);
 
-  // Validate token on app start
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken && !user) { 
@@ -128,7 +120,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(user);
             localStorage.setItem('user', JSON.stringify(user));
           } else {
-            // Token invalid, clear it
             logout();
           }
         })
