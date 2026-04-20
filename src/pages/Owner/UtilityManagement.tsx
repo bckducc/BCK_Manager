@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Tables/Table';
-import { Header, Button, Card, Modal, Badge } from '../../components/Common';
+import { Header, Button, Card, Badge, Modal } from '../../components/Common';
 import { Table } from '../../components/Tables/Table';
-import { Form, FormGroup, Input } from '../../components/Forms/Form';
+import { useAuth } from '../../hooks/useAuth';
+import { useFetch } from '../../hooks/useFetch';
+import { roomService } from '../../services';
+import type { Room } from '../../types';
 
 const Container = styled.div`
   display: flex;
@@ -19,7 +22,53 @@ const PageWrapper = styled.div`
   padding: ${theme.spacing.lg};
 `;
 
-const ActionButtons = styled.div`
+const FilterSection = styled(Card)`
+  background: linear-gradient(135deg, ${theme.colors.primary}10 0%, transparent 100%);
+  border-left: 4px solid ${theme.colors.primary};
+`;
+
+const FilterGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  gap: ${theme.spacing.md};
+  align-items: flex-end;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FormGroupSmall = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.sm};
+
+  label {
+    font-size: ${theme.fontSize.sm};
+    font-weight: ${theme.fontWeight.semibold};
+    color: ${theme.colors.dark};
+  }
+
+  select,
+  input {
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    border: 1px solid ${theme.colors.border};
+    border-radius: ${theme.radius.sm};
+    font-size: ${theme.fontSize.base};
+
+    &:focus {
+      outline: none;
+      border-color: ${theme.colors.primary};
+      box-shadow: 0 0 0 3px ${theme.colors.primary}20;
+    }
+  }
+`;
+
+const FilterButtonGroup = styled.div`
   display: flex;
   gap: ${theme.spacing.sm};
 
@@ -29,27 +78,82 @@ const ActionButtons = styled.div`
   }
 `;
 
-const TabContainer = styled.div`
-  display: flex;
+const StatsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: ${theme.spacing.md};
-  border-bottom: 2px solid ${theme.colors.border};
+`;
+
+const StatCard = styled(Card)`
+  text-align: center;
+`;
+
+const StatValue = styled.div`
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: ${theme.colors.primary};
+  margin: ${theme.spacing.md} 0;
+`;
+
+const StatLabel = styled.div`
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textSecondary};
+`;
+
+const EmptyState = styled.div`
+  padding: ${theme.spacing.xl} ${theme.spacing.lg};
+  text-align: center;
+  background-color: ${theme.colors.lightBg};
+  border-radius: ${theme.radius.md};
+  border: 2px dashed ${theme.colors.border};
+`;
+
+const EmptyIcon = styled.div`
+  font-size: 3rem;
   margin-bottom: ${theme.spacing.md};
 `;
 
-const Tab = styled.button<{ $active: boolean }>`
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: ${theme.fontSize.base};
-  font-weight: ${(props) => (props.$active ? '600' : '400')};
-  color: ${(props) => (props.$active ? theme.colors.primary : theme.colors.textSecondary)};
-  border-bottom: 3px solid ${(props) => (props.$active ? theme.colors.primary : 'transparent')};
-  margin-bottom: -2px;
-  transition: all 0.3s ease;
+const EmptyTitle = styled.h3`
+  font-size: ${theme.fontSize.lg};
+  color: ${theme.colors.dark};
+  margin-bottom: ${theme.spacing.sm};
+`;
 
-  &:hover {
-    color: ${theme.colors.primary};
+const EmptyDesc = styled.p`
+  color: ${theme.colors.textSecondary};
+  margin: 0;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.sm};
+  margin-bottom: ${theme.spacing.md};
+
+  label {
+    font-size: ${theme.fontSize.base};
+    font-weight: ${theme.fontWeight.semibold};
+    color: ${theme.colors.dark};
+  }
+
+  select,
+  input {
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    border: 1px solid ${theme.colors.border};
+    border-radius: ${theme.radius.sm};
+    font-size: ${theme.fontSize.base};
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: ${theme.colors.primary};
+      box-shadow: 0 0 0 3px ${theme.colors.primary}20;
+    }
+
+    &:disabled {
+      background-color: ${theme.colors.lightBg};
+      color: ${theme.colors.textSecondary};
+    }
   }
 `;
 
@@ -57,49 +161,6 @@ const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${theme.spacing.md};
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const PriceCard = styled.div<{ $bgColor: string }>`
-  padding: ${theme.spacing.lg};
-  background: linear-gradient(135deg, ${(props) => props.$bgColor}20 0%, transparent 100%);
-  border-left: 4px solid ${(props) => props.$bgColor};
-  border-radius: ${theme.radius.md};
-  box-shadow: ${theme.shadow.sm};
-`;
-
-const PriceValue = styled.div`
-  font-size: 2rem;
-  font-weight: 700;
-  color: ${theme.colors.dark};
-  margin: ${theme.spacing.md} 0;
-
-  .unit {
-    font-size: 0.875rem;
-    color: ${theme.colors.textSecondary};
-    font-weight: 400;
-  }
-`;
-
-const PriceLabel = styled.div`
-  font-size: ${theme.fontSize.sm};
-  color: ${theme.colors.textSecondary};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`;
-
-const PriceUpdateButton = styled(Button)`
-  width: 100%;
-  margin-top: ${theme.spacing.md};
-`;
-
-const StatsContainer = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${theme.spacing.lg};
   margin-bottom: ${theme.spacing.lg};
 
   @media (max-width: 768px) {
@@ -107,453 +168,307 @@ const StatsContainer = styled.div`
   }
 `;
 
-const SectionTitle = styled.h3`
-  font-size: ${theme.fontSize.lg};
-  color: ${theme.colors.dark};
-  margin: ${theme.spacing.lg} 0 ${theme.spacing.md} 0;
+const ModalActions = styled.div`
   display: flex;
-  align-items: center;
-  gap: ${theme.spacing.sm};
+  gap: ${theme.spacing.md};
+  margin-top: ${theme.spacing.lg};
+  justify-content: flex-end;
+`;
 
-  &:before {
-    content: '';
-    display: inline-block;
-    width: 4px;
-    height: 1.5em;
-    background: ${theme.colors.primary};
-    border-radius: 2px;
+const ReadingDateInput = styled.input`
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.sm};
+  font-size: ${theme.fontSize.base};
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primary}20;
   }
 `;
 
-interface UtilityPrice {
-  type: 'electricity' | 'water';
-  price: number;
-  unit: string;
-  lastUpdated: string;
-}
-
 interface UtilityReading {
   id: string;
+  roomId: string;
   roomNumber: string;
+  month: number;
+  year: number;
   electricityReading: number;
   waterReading: number;
   readingDate: string;
-  month: number;
-  year: number;
 }
 
-interface PriceFormData {
-  electricityPrice: string;
-  waterPrice: string;
-}
-
-interface ReadingFormData {
-  roomNumber: string;
-  electricityReading: string;
-  waterReading: string;
-  readingDate: string;
-  month: string;
-  year: string;
+interface FilterState {
+  roomId: string;
+  startMonth: number;
+  startYear: number;
+  endMonth: number;
+  endYear: number;
 }
 
 export const UtilityManagement = () => {
-  const [activeTab, setActiveTab] = useState<'prices' | 'readings'>('prices');
+  const { user } = useAuth();
+  const { data: roomsData } = useFetch(() => roomService.getAll());
+
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [readings, setReadings] = useState<UtilityReading[]>([
-    {
-      id: '1',
-      roomNumber: '101',
-      electricityReading: 1250,
-      waterReading: 45,
-      readingDate: '2024-01-15',
-      month: 1,
-      year: 2024,
-    },
-    {
-      id: '2',
-      roomNumber: '102',
-      electricityReading: 1320,
-      waterReading: 52,
-      readingDate: '2024-01-15',
-      month: 1,
-      year: 2024,
-    },
+    { id: '1', roomId: '1', roomNumber: '101', month: 1, year: 2024, electricityReading: 150, waterReading: 12, readingDate: '2024-01-15' },
+    { id: '2', roomId: '1', roomNumber: '101', month: 2, year: 2024, electricityReading: 165, waterReading: 15, readingDate: '2024-02-15' },
+    { id: '3', roomId: '2', roomNumber: '102', month: 1, year: 2024, electricityReading: 170, waterReading: 18, readingDate: '2024-01-15' },
+    { id: '4', roomId: '2', roomNumber: '102', month: 2, year: 2024, electricityReading: 185, waterReading: 20, readingDate: '2024-02-15' },
   ]);
 
-  const [prices, setPrices] = useState<UtilityPrice[]>([
-    {
-      type: 'electricity',
-      price: 3500,
-      unit: 'VNĐ/kWh',
-      lastUpdated: '2024-01-01',
-    },
-    {
-      type: 'water',
-      price: 8500,
-      unit: 'VNĐ/m³',
-      lastUpdated: '2024-01-01',
-    },
-  ]);
-
-  const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
-  const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
-
-  const electricityPriceFromState = prices.find((p) => p.type === 'electricity')?.price || 3500;
-  const waterPriceFromState = prices.find((p) => p.type === 'water')?.price || 8500;
-
-  const [priceFormData, setPriceFormData] = useState<PriceFormData>({
-    electricityPrice: String(electricityPriceFromState),
-    waterPrice: String(waterPriceFromState),
-  });
-
-  const [readingFormData, setReadingFormData] = useState<ReadingFormData>({
-    roomNumber: '',
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    roomId: '',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
     electricityReading: '',
     waterReading: '',
     readingDate: new Date().toISOString().split('T')[0],
-    month: String(new Date().getMonth() + 1),
-    year: String(new Date().getFullYear()),
   });
 
-  const handleUpdatePrice = () => {
-    const updatedPrices = prices.map((price) => {
-      if (price.type === 'electricity') {
-        return {
-          ...price,
-          price: parseFloat(priceFormData.electricityPrice) || price.price,
-          lastUpdated: new Date().toISOString().split('T')[0],
-        };
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const currentDate = new Date();
+  const [filter, setFilter] = useState<FilterState>({
+    roomId: '',
+    startMonth: currentDate.getMonth() + 1,
+    startYear: currentDate.getFullYear(),
+    endMonth: currentDate.getMonth() + 1,
+    endYear: currentDate.getFullYear(),
+  });
+
+  useEffect(() => {
+    if (roomsData) {
+      const dataObj = roomsData as Record<string, unknown>;
+      if (dataObj.rooms && Array.isArray(dataObj.rooms)) {
+        setRooms(dataObj.rooms as Room[]);
+        if (user?.role === 'tenant' && (dataObj.rooms as Room[]).length > 0) {
+          setFilter((prev) => ({ ...prev, roomId: ((dataObj.rooms as Room[])[0].id as string) || '' }));
+        }
       }
-      if (price.type === 'water') {
-        return {
-          ...price,
-          price: parseFloat(priceFormData.waterPrice) || price.price,
-          lastUpdated: new Date().toISOString().split('T')[0],
-        };
-      }
-      return price;
-    });
-    setPrices(updatedPrices);
-    setIsPriceModalOpen(false);
+    }
+  }, [roomsData, user]);
+
+  const filteredReadings = readings.filter((reading) => {
+    if (filter.roomId && reading.roomId !== filter.roomId) return false;
+    const readingYearMonth = reading.year * 100 + reading.month;
+    const startYearMonth = filter.startYear * 100 + filter.startMonth;
+    const endYearMonth = filter.endYear * 100 + filter.endMonth;
+    return readingYearMonth >= startYearMonth && readingYearMonth <= endYearMonth;
+  });
+
+  const stats = {
+    totalReadings: filteredReadings.length,
+    avgElectricity: filteredReadings.length > 0
+      ? (filteredReadings.reduce((sum, r) => sum + r.electricityReading, 0) / filteredReadings.length).toFixed(2)
+      : 0,
+    avgWater: filteredReadings.length > 0
+      ? (filteredReadings.reduce((sum, r) => sum + r.waterReading, 0) / filteredReadings.length).toFixed(2)
+      : 0,
   };
 
-  const handleAddReading = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRoomChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilter((prev) => ({ ...prev, roomId: e.target.value }));
+  };
 
-    if (
-      !readingFormData.roomNumber ||
-      !readingFormData.electricityReading ||
-      !readingFormData.waterReading
-    ) {
-      alert('Vui lòng điền đầy đủ thông tin');
-      return;
-    }
+  const handleDateChange = (field: keyof FilterState, value: string) => {
+    setFilter((prev) => ({ ...prev, [field]: parseInt(value) }));
+  };
 
-    const newReading: UtilityReading = {
-      id: String(readings.length + 1),
-      roomNumber: readingFormData.roomNumber,
-      electricityReading: parseFloat(readingFormData.electricityReading),
-      waterReading: parseFloat(readingFormData.waterReading),
-      readingDate: readingFormData.readingDate,
-      month: parseInt(readingFormData.month),
-      year: parseInt(readingFormData.year),
-    };
+  const handleResetFilter = () => {
+    setFilter({
+      roomId: user?.role === 'tenant' ? (rooms[0]?.id as string) || '' : '',
+      startMonth: currentDate.getMonth() + 1,
+      startYear: currentDate.getFullYear(),
+      endMonth: currentDate.getMonth() + 1,
+      endYear: currentDate.getFullYear(),
+    });
+  };
 
-    setReadings([...readings, newReading]);
-    setIsReadingModalOpen(false);
-    setReadingFormData({
-      roomNumber: '',
+  const handleOpenModal = () => {
+    setFormData({
+      roomId: user?.role === 'owner' ? '' : (user?.id as string) || '',
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear(),
       electricityReading: '',
       waterReading: '',
       readingDate: new Date().toISOString().split('T')[0],
-      month: String(new Date().getMonth() + 1),
-      year: String(new Date().getFullYear()),
     });
+    setFormErrors({});
+    setIsModalOpen(true);
   };
 
-  const handleDeleteReading = (id: string) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa chỉ số này?')) {
-      setReadings(readings.filter((r) => r.id !== id));
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setFormErrors({});
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'electricityReading' || name === 'waterReading' ? (value ? parseFloat(value) : '') : value,
+    }));
+    if (formErrors[name]) {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
-  const readingsColumns: TableColumn[] = [
-    { key: 'roomNumber', title: 'Phòng' },
-    {
-      key: 'electricityReading',
-      title: 'Chỉ Số Điện (kWh)',
-      render: (value) => <Badge>{value} kWh</Badge>,
-    },
-    {
-      key: 'waterReading',
-      title: 'Chỉ Số Nước (m³)',
-      render: (value) => <Badge variant="info">{value} m³</Badge>,
-    },
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.roomId) errors.roomId = 'Vui lòng chọn phòng';
+    if (!formData.electricityReading || parseFloat(String(formData.electricityReading)) < 0) errors.electricityReading = 'Chỉ số điện phải hợp lệ';
+    if (!formData.waterReading || parseFloat(String(formData.waterReading)) < 0) errors.waterReading = 'Chỉ số nước phải hợp lệ';
+    if (!formData.readingDate) errors.readingDate = 'Vui lòng chọn ngày ghi chỉ số';
+    return errors;
+  };
+
+  const handleAddReading = () => {
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    const selectedRoom = rooms.find((r) => r.id === formData.roomId);
+    const newReading: UtilityReading = {
+      id: `${Date.now()}`,
+      roomId: formData.roomId,
+      roomNumber: (selectedRoom?.roomNumber as string) || '',
+      month: formData.month,
+      year: formData.year,
+      electricityReading: parseFloat(String(formData.electricityReading)),
+      waterReading: parseFloat(String(formData.waterReading)),
+      readingDate: formData.readingDate,
+    };
+
+    setReadings((prev) => [newReading, ...prev]);
+    handleCloseModal();
+  };
+
+  const columns: TableColumn[] = [
+    { key: 'roomNumber', title: 'Phòng', render: (value) => <Badge>{value}</Badge> },
+    { key: 'month', title: 'Tháng/Năm', render: (value, record: UtilityReading) => `${value}/${record.year}` },
+    { key: 'electricityReading', title: 'Chỉ Số Điện (kWh)', render: (value) => <Badge variant="warning">⚡ {value}</Badge> },
+    { key: 'waterReading', title: 'Chỉ Số Nước (m³)', render: (value) => <Badge variant="info">💧 {value}</Badge> },
     { key: 'readingDate', title: 'Ngày Ghi Chỉ Số' },
-    {
-      key: 'month',
-      title: 'Tháng',
-      render: (value, row: UtilityReading) => `${value}/${row.year}`,
-    },
-    {
-      key: 'actions',
-      title: 'Hành Động',
-      render: (_, row: UtilityReading) => (
-        <ActionButtons>
-          <Button>Sửa</Button>
-          <Button variant="danger" onClick={() => handleDeleteReading(row.id)}>
-            Xóa
-          </Button>
-        </ActionButtons>
-      ),
-    },
   ];
+
+  const availableRooms = user?.role === 'tenant' ? rooms.filter((r) => r.id === user.id) : rooms;
+  const monthOptions = Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `Tháng ${i + 1}` }));
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 5 }, (_, i) => ({ value: String(currentYear - i), label: String(currentYear - i) }));
 
   return (
     <PageWrapper>
       <Container>
-        <Header title="Quản Lý Điện Nước" />
-
-        <TabContainer>
-          <Tab $active={activeTab === 'prices'} onClick={() => setActiveTab('prices')}>
-            💰 Quản Lý Giá Điện Nước
-          </Tab>
-          <Tab $active={activeTab === 'readings'} onClick={() => setActiveTab('readings')}>
-            📊 Nhập Chỉ Số Điện Nước
-          </Tab>
-        </TabContainer>
-
-        {/* TAB 1: PRICES MANAGEMENT */}
-        {activeTab === 'prices' && (
-          <Container>
-            <SectionTitle>Giá Hiện Tại</SectionTitle>
-
-            <StatsContainer>
-              {prices.map((price) => (
-                <PriceCard
-                  key={price.type}
-                  $bgColor={price.type === 'electricity' ? theme.colors.warning : theme.colors.info}
-                >
-                  <PriceLabel>
-                    {price.type === 'electricity' ? '⚡ Giá Điện' : '💧 Giá Nước'}
-                  </PriceLabel>
-                  <PriceValue>
-                    {price.price.toLocaleString('vi-VN')}
-                    <span className="unit"> {price.unit}</span>
-                  </PriceValue>
-                  <div
-                    style={{
-                      fontSize: '0.875rem',
-                      color: theme.colors.textSecondary,
-                      marginBottom: theme.spacing.md,
-                    }}
-                  >
-                    Cập nhập: {price.lastUpdated}
-                  </div>
-                  <PriceUpdateButton
-                    onClick={() => {
-                      setIsPriceModalOpen(true);
-                    }}
-                  >
-                    Cập Nhập Giá
-                  </PriceUpdateButton>
-                </PriceCard>
-              ))}
-            </StatsContainer>
-
-            <Card>
-              <SectionTitle>Lịch Sử Cập Nhập</SectionTitle>
-              <div
-                style={{
-                  padding: theme.spacing.md,
-                  backgroundColor: theme.colors.lightBg,
-                  borderRadius: '4px',
-                  marginTop: theme.spacing.md,
-                }}
-              >
-                <p style={{ color: theme.colors.textSecondary, marginBottom: 0 }}>
-                  📅 Lần cập nhập gần nhất: {prices[0]?.lastUpdated}
-                </p>
-                <p style={{ color: theme.colors.textSecondary }}>
-                  Điện: {prices.find((p) => p.type === 'electricity')?.price.toLocaleString('vi-VN')} VNĐ/kWh
-                </p>
-                <p style={{ color: theme.colors.textSecondary }}>
-                  Nước: {prices.find((p) => p.type === 'water')?.price.toLocaleString('vi-VN')} VNĐ/m³
-                </p>
-              </div>
-            </Card>
-          </Container>
+        <Header title="Quản lý điện nước" />
+        <FilterSection>
+          <div style={{ marginBottom: theme.spacing.md }}>
+            <h3 style={{ margin: 0, color: theme.colors.dark }}>Truy cứu điện nước</h3>
+          </div>
+          <FilterGrid>
+            {user?.role === 'owner' && (
+              <FormGroupSmall>
+                <label>Chọn Phòng</label>
+                <select value={filter.roomId} onChange={handleRoomChange}>
+                  <option value="">-- Tất Cả Phòng --</option>
+                  {availableRooms.map((room) => (
+                    <option key={room.id} value={room.id as string}>
+                      Phòng {room.roomNumber}
+                    </option>
+                  ))}
+                </select>
+              </FormGroupSmall>
+            )}
+            {user?.role === 'tenant' && (
+              <FormGroupSmall>
+                <label>Phòng Của Bạn</label>
+                <input
+                  type="text"
+                  value={rooms.find((r) => r.id === filter.roomId)?.roomNumber ? `Phòng ${rooms.find((r) => r.id === filter.roomId)?.roomNumber}` : 'N/A'}
+                  disabled
+                />
+              </FormGroupSmall>
+            )}
+            <FormGroupSmall>
+              <label>Từ Tháng</label>
+              <select value={String(filter.startMonth)} onChange={(e) => handleDateChange('startMonth', e.target.value)}>
+                {monthOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </FormGroupSmall>
+            <FormGroupSmall>
+              <label>Năm</label>
+              <select value={String(filter.startYear)} onChange={(e) => handleDateChange('startYear', e.target.value)}>
+                {yearOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </FormGroupSmall>
+            <FormGroupSmall>
+              <label>Đến Tháng</label>
+              <select value={String(filter.endMonth)} onChange={(e) => handleDateChange('endMonth', e.target.value)}>
+                {monthOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </FormGroupSmall>
+            <FormGroupSmall>
+              <label>Năm</label>
+              <select value={String(filter.endYear)} onChange={(e) => handleDateChange('endYear', e.target.value)}>
+                {yearOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </FormGroupSmall>
+            <FilterButtonGroup>
+              <Button variant="secondary" onClick={handleResetFilter}>
+                Reset
+              </Button>
+            </FilterButtonGroup>
+          </FilterGrid>
+        </FilterSection>
+        {filteredReadings.length > 0 && (
+          <StatsContainer>
+            <StatCard>
+              <StatLabel>Tổng Bản Ghi</StatLabel>
+              <StatValue>{stats.totalReadings}</StatValue>
+            </StatCard>
+            <StatCard>
+              <StatLabel>Trung Bình Điện</StatLabel>
+              <StatValue>{stats.avgElectricity} kWh</StatValue>
+            </StatCard>
+            <StatCard>
+              <StatLabel>Trung Bình Nước</StatLabel>
+              <StatValue>{stats.avgWater} m³</StatValue>
+            </StatCard>
+          </StatsContainer>
         )}
-
-        {/* TAB 2: READINGS MANAGEMENT */}
-        {activeTab === 'readings' && (
-          <Container>
-            <Header
-              title=""
-              actions={
-                <Button onClick={() => setIsReadingModalOpen(true)}>+ Nhập Chỉ Số Mới</Button>
-              }
-            />
-
-            <Card>
-              <Table
-                columns={readingsColumns}
-                data={readings}
-                emptyText="Chưa có ghi chỉ số nào. Nhấp nút '+ Nhập Chỉ Số Mới' để thêm."
-              />
-            </Card>
-          </Container>
-        )}
-
-        {/* MODAL: UPDATE PRICES */}
-        <Modal
-          isOpen={isPriceModalOpen}
-          title="Cập Nhập Giá Điện Nước"
-          onClose={() => setIsPriceModalOpen(false)}
-          onConfirm={handleUpdatePrice}
-          confirmText="Lưu Giá Mới"
-        >
-          <Form onSubmit={(e) => e.preventDefault()}>
-            <FormGrid>
-              <FormGroup label="💰 Giá Điện (VNĐ/kWh)" required>
-                <Input
-                  type="number"
-                  value={priceFormData.electricityPrice}
-                  onChange={(e) =>
-                    setPriceFormData({
-                      ...priceFormData,
-                      electricityPrice: e.target.value,
-                    })
-                  }
-                  placeholder="Nhập giá điện"
-                  min="0"
-                  step="100"
-                />
-              </FormGroup>
-              <FormGroup label="💧 Giá Nước (VNĐ/m³)" required>
-                <Input
-                  type="number"
-                  value={priceFormData.waterPrice}
-                  onChange={(e) =>
-                    setPriceFormData({
-                      ...priceFormData,
-                      waterPrice: e.target.value,
-                    })
-                  }
-                  placeholder="Nhập giá nước"
-                  min="0"
-                  step="100"
-                />
-              </FormGroup>
-            </FormGrid>
-            <div style={{ marginTop: theme.spacing.md, padding: theme.spacing.md, backgroundColor: theme.colors.warningLight, borderRadius: '4px' }}>
-              <p style={{ margin: 0, color: theme.colors.warningDark, fontSize: '0.875rem' }}>
-                ⚠️ Giá này sẽ áp dụng cho tất cả các hóa đơn được tạo từ bây giờ
-              </p>
-            </div>
-          </Form>
-        </Modal>
-
-        {/* MODAL: ADD READING */}
-        <Modal
-          isOpen={isReadingModalOpen}
-          title="Nhập Chỉ Số Điện Nước Cho Hóa Đơn Tháng Mới"
-          onClose={() => setIsReadingModalOpen(false)}
-          onConfirm={() => handleAddReading({ preventDefault: () => {} } as React.FormEvent)}
-          confirmText="Lưu Chỉ Số"
-        >
-          <Form onSubmit={handleAddReading}>
-            <FormGroup label="Phòng/Căn Hộ" required>
-              <Input
-                type="text"
-                value={readingFormData.roomNumber}
-                onChange={(e) =>
-                  setReadingFormData({
-                    ...readingFormData,
-                    roomNumber: e.target.value,
-                  })
-                }
-                placeholder="VD: 101, 102, ..."
-              />
-            </FormGroup>
-
-            <FormGrid>
-              <FormGroup label="Chỉ Số Điện (kWh)" required>
-                <Input
-                  type="number"
-                  value={readingFormData.electricityReading}
-                  onChange={(e) =>
-                    setReadingFormData({
-                      ...readingFormData,
-                      electricityReading: e.target.value,
-                    })
-                  }
-                  placeholder="VD: 1250"
-                  min="0"
-                  step="0.1"
-                />
-              </FormGroup>
-              <FormGroup label="Chỉ Số Nước (m³)" required>
-                <Input
-                  type="number"
-                  value={readingFormData.waterReading}
-                  onChange={(e) =>
-                    setReadingFormData({
-                      ...readingFormData,
-                      waterReading: e.target.value,
-                    })
-                  }
-                  placeholder="VD: 45"
-                  min="0"
-                  step="0.1"
-                />
-              </FormGroup>
-            </FormGrid>
-
-            <FormGrid>
-              <FormGroup label="Ngày Ghi Chỉ Số" required>
-                <Input
-                  type="date"
-                  value={readingFormData.readingDate}
-                  onChange={(e) =>
-                    setReadingFormData({
-                      ...readingFormData,
-                      readingDate: e.target.value,
-                    })
-                  }
-                />
-              </FormGroup>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.md }}>
-                <FormGroup label="Tháng" required>
-                  <Input
-                    type="number"
-                    value={readingFormData.month}
-                    onChange={(e) =>
-                      setReadingFormData({
-                        ...readingFormData,
-                        month: e.target.value,
-                      })
-                    }
-                    min="1"
-                    max="12"
-                  />
-                </FormGroup>
-                <FormGroup label="Năm" required>
-                  <Input
-                    type="number"
-                    value={readingFormData.year}
-                    onChange={(e) =>
-                      setReadingFormData({
-                        ...readingFormData,
-                        year: e.target.value,
-                      })
-                    }
-                    min="2020"
-                  />
-                </FormGroup>
+        <Card>
+          {filteredReadings.length > 0 ? (
+            <>
+              <div style={{ marginBottom: theme.spacing.md }}>
+                <h3 style={{ margin: 0, color: theme.colors.dark }}>Lịch Sử Điện Nước</h3>
               </div>
-            </FormGrid>
-          </Form>
-        </Modal>
+              <Table columns={columns} data={filteredReadings} />
+            </>
+          ) : (
+            <EmptyState>
+              <EmptyIcon>📭</EmptyIcon>
+              <EmptyTitle>Không Có Dữ Liệu</EmptyTitle>
+              <EmptyDesc>Không tìm thấy chỉ số điện nước cho phòng và khoảng thời gian đã chọn.</EmptyDesc>
+            </EmptyState>
+          )}
+        </Card>
       </Container>
     </PageWrapper>
   );

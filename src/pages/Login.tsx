@@ -71,7 +71,7 @@ export const Login = () => {
       const loggedInUser = await login(username, password);
       const from = (location.state as Record<string, unknown>)?.from as Record<string, unknown> | undefined;
       
-      let pathname = '/owner'; // default
+      let pathname = '/owner'; 
       if (loggedInUser?.role === 'tenant') {
         pathname = '/tenant';
       } else if (loggedInUser?.role === 'admin') {

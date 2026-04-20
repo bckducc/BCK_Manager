@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import type { ReactNode } from 'react';
-import { Navbar, Sidebar } from '../components/Common';
+import { useLocation } from 'react-router-dom';
+import { Navbar, Sidebar, PageTransition } from '../components/Common';
 import { useSidebar } from '../stores/SidebarContext';
 import { theme } from '../styles/theme';
 
@@ -35,19 +36,25 @@ const MainLayoutMain = styled.main<MainLayoutMainProps>`
     width: 100%;
   }
 `;
+
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const { collapsed } = useSidebar();
+  const location = useLocation();
 
   return (
     <MainLayoutWrapper>
       <Navbar />
       <MainLayoutContent>
         <Sidebar />
-        <MainLayoutMain $sidebarCollapsed={collapsed}>{children}</MainLayoutMain>
+        <MainLayoutMain $sidebarCollapsed={collapsed}>
+          <PageTransition key={location.pathname}>
+            {children}
+          </PageTransition>
+        </MainLayoutMain>
       </MainLayoutContent>
     </MainLayoutWrapper>
   );

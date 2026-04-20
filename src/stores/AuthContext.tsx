@@ -50,7 +50,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         createdAt: new Date((response.user as Record<string, unknown>).createdAt as string),
       };
 
-      // Save to state and localStorage
       setUser(user);
       setToken(response.token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -74,7 +73,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('token');
   }, []);
 
-  // Validate token on app start
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken && !user) { 
@@ -98,7 +96,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(user);
             localStorage.setItem('user', JSON.stringify(user));
           } else {
-            // Token invalid, clear it
             logout();
           }
         })
