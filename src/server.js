@@ -1,9 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';
-import tenantRoutes from './routes/tenant.js';
-import roomRoutes from './routes/rooms.js';
+// Import module routes
+import authRoutes from './modules/auth/auth.route.js';
+import tenantRoutes from './modules/tenant/tenant.route.js';
+import roomRoutes from './modules/room/room.route.js';
+import billRoutes from './modules/bill/bill.route.js';
+import serviceRoutes from './modules/service/service.route.js';
+import contractRoutes from './modules/contract/contract.route.js';
+// Import middleware and utilities
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { ApiResponse } from './utils/responseHandler.js';
 import pool from './config/database.js';
@@ -36,9 +41,13 @@ app.get('/health', (req, res) => {
 
 const apiV1 = express.Router();
 
+// Register module routes
 apiV1.use('/auth', authRoutes);
 apiV1.use('/tenant', tenantRoutes);
 apiV1.use('/rooms', roomRoutes);
+apiV1.use('/bills', billRoutes);
+apiV1.use('/services', serviceRoutes);
+apiV1.use('/contracts', contractRoutes);
 
 app.use('/api', apiV1);
 
