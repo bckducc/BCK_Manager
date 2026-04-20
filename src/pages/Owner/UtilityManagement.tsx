@@ -124,70 +124,6 @@ const EmptyDesc = styled.p`
   margin: 0;
 `;
 
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${theme.spacing.sm};
-  margin-bottom: ${theme.spacing.md};
-
-  label {
-    font-size: ${theme.fontSize.base};
-    font-weight: ${theme.fontWeight.semibold};
-    color: ${theme.colors.dark};
-  }
-
-  select,
-  input {
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
-    border: 1px solid ${theme.colors.border};
-    border-radius: ${theme.radius.sm};
-    font-size: ${theme.fontSize.base};
-    font-family: inherit;
-
-    &:focus {
-      outline: none;
-      border-color: ${theme.colors.primary};
-      box-shadow: 0 0 0 3px ${theme.colors.primary}20;
-    }
-
-    &:disabled {
-      background-color: ${theme.colors.lightBg};
-      color: ${theme.colors.textSecondary};
-    }
-  }
-`;
-
-const FormGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${theme.spacing.md};
-  margin-bottom: ${theme.spacing.lg};
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const ModalActions = styled.div`
-  display: flex;
-  gap: ${theme.spacing.md};
-  margin-top: ${theme.spacing.lg};
-  justify-content: flex-end;
-`;
-
-const ReadingDateInput = styled.input`
-  padding: ${theme.spacing.sm} ${theme.spacing.md};
-  border: 1px solid ${theme.colors.border};
-  border-radius: ${theme.radius.sm};
-  font-size: ${theme.fontSize.base};
-
-  &:focus {
-    outline: none;
-    border-color: ${theme.colors.primary};
-    box-shadow: 0 0 0 3px ${theme.colors.primary}20;
-  }
-`;
-
 interface UtilityReading {
   id: string;
   roomId: string;
@@ -212,24 +148,12 @@ export const UtilityManagement = () => {
   const { data: roomsData } = useFetch(() => roomService.getAll());
 
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [readings, setReadings] = useState<UtilityReading[]>([
+  const [readings] = useState<UtilityReading[]>([
     { id: '1', roomId: '1', roomNumber: '101', month: 1, year: 2024, electricityReading: 150, waterReading: 12, readingDate: '2024-01-15' },
     { id: '2', roomId: '1', roomNumber: '101', month: 2, year: 2024, electricityReading: 165, waterReading: 15, readingDate: '2024-02-15' },
     { id: '3', roomId: '2', roomNumber: '102', month: 1, year: 2024, electricityReading: 170, waterReading: 18, readingDate: '2024-01-15' },
     { id: '4', roomId: '2', roomNumber: '102', month: 2, year: 2024, electricityReading: 185, waterReading: 20, readingDate: '2024-02-15' },
   ]);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    roomId: '',
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
-    electricityReading: '',
-    waterReading: '',
-    readingDate: new Date().toISOString().split('T')[0],
-  });
-
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const currentDate = new Date();
   const [filter, setFilter] = useState<FilterState>({
@@ -286,71 +210,6 @@ export const UtilityManagement = () => {
       endMonth: currentDate.getMonth() + 1,
       endYear: currentDate.getFullYear(),
     });
-  };
-
-  const handleOpenModal = () => {
-    setFormData({
-      roomId: user?.role === 'owner' ? '' : (user?.id as string) || '',
-      month: new Date().getMonth() + 1,
-      year: new Date().getFullYear(),
-      electricityReading: '',
-      waterReading: '',
-      readingDate: new Date().toISOString().split('T')[0],
-    });
-    setFormErrors({});
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setFormErrors({});
-  };
-
-  const handleFormChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'electricityReading' || name === 'waterReading' ? (value ? parseFloat(value) : '') : value,
-    }));
-    if (formErrors[name]) {
-      setFormErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-    if (!formData.roomId) errors.roomId = 'Vui lòng chọn phòng';
-    if (!formData.electricityReading || parseFloat(String(formData.electricityReading)) < 0) errors.electricityReading = 'Chỉ số điện phải hợp lệ';
-    if (!formData.waterReading || parseFloat(String(formData.waterReading)) < 0) errors.waterReading = 'Chỉ số nước phải hợp lệ';
-    if (!formData.readingDate) errors.readingDate = 'Vui lòng chọn ngày ghi chỉ số';
-    return errors;
-  };
-
-  const handleAddReading = () => {
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    const selectedRoom = rooms.find((r) => r.id === formData.roomId);
-    const newReading: UtilityReading = {
-      id: `${Date.now()}`,
-      roomId: formData.roomId,
-      roomNumber: (selectedRoom?.roomNumber as string) || '',
-      month: formData.month,
-      year: formData.year,
-      electricityReading: parseFloat(String(formData.electricityReading)),
-      waterReading: parseFloat(String(formData.waterReading)),
-      readingDate: formData.readingDate,
-    };
-
-    setReadings((prev) => [newReading, ...prev]);
-    handleCloseModal();
   };
 
   const columns: TableColumn[] = [

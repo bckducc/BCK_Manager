@@ -2,15 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
-import { Button, Card } from '../../components/Common';
-import {
-  AppstoreOutlined,
-  TeamOutlined,
-  FileProtectOutlined,
-  CreditCardOutlined,
-  AlertOutlined,
-  ArrowRightOutlined,
-} from '@ant-design/icons';
 
 const Dashboard = styled.div`
   display: flex;
