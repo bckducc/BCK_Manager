@@ -46,7 +46,10 @@ const StyledButton = styled.button<ButtonStyledProps>`
   font-size: ${theme.fontSize.base};
   font-weight: ${theme.fontWeight.semibold};
   transition: all ${theme.transition.base};
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   text-align: center;
 
   ${(props) => getVariantStyles(props.$variant || 'primary')}
@@ -60,8 +63,30 @@ const StyledButton = styled.button<ButtonStyledProps>`
     props.$fullWidth &&
     `
     width: 100%;
-    display: block;
+    display: flex;
   `}
+`;
+
+const SpinnerIcon = styled.span`
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const ButtonContent = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 interface ButtonProps {
@@ -91,7 +116,14 @@ export const Button = ({
       $variant={variant}
       $fullWidth={fullWidth}
     >
-      {loading ? 'Loading...' : children}
+      {loading ? (
+        <ButtonContent>
+          <SpinnerIcon />
+          {children}
+        </ButtonContent>
+      ) : (
+        children
+      )}
     </StyledButton>
   );
 };

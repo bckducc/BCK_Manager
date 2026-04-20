@@ -44,10 +44,29 @@ const StyledTable = styled.table`
   }
 `;
 
-const LoadingWrapper = styled.div`
+const SkeletonLoader = styled.div`
   padding: ${theme.spacing.lg};
   text-align: center;
-  color: ${theme.colors.textSecondary};
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  background: linear-gradient(
+    to right,
+    ${theme.colors.lightBg} 8%,
+    ${theme.colors.borderLight} 18%,
+    ${theme.colors.lightBg} 33%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  height: 200px;
+  border-radius: ${theme.radius.md};
 `;
 
 const EmptyState = styled.div`
@@ -80,7 +99,7 @@ export const Table = ({
   emptyText = 'No data',
 }: TableProps) => {
   if (loading) {
-    return <LoadingWrapper>Loading...</LoadingWrapper>;
+    return <SkeletonLoader />;
   }
 
   if (data.length === 0) {

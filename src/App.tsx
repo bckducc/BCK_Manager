@@ -2,10 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './stores/AuthContext';
 import { SidebarProvider } from './stores/SidebarContext';
 import { TenantProvider } from './stores/TenantContext';
+import { PageTransitionProvider } from './stores/PageTransitionContext';
 import { ProtectedRoute } from './utils/ProtectedRoute';
 import { MainLayout } from './layouts/MainLayout';
 
-// Pages
 import { Login } from './pages/Login';
 import {
   OwnerDashboard,
@@ -31,7 +31,8 @@ function App() {
       <AuthProvider>
         <TenantProvider>
           <SidebarProvider>
-            <Routes>
+            <PageTransitionProvider>
+              <Routes>
           <Route path="/login" element={<Login />} />
 
           <Route
@@ -177,6 +178,7 @@ function App() {
 
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
+            </PageTransitionProvider>
         </SidebarProvider>
         </TenantProvider>
       </AuthProvider>

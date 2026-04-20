@@ -1,16 +1,16 @@
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  DashboardOutlined,
+  ApartmentOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  AppstoreOutlined,
   TeamOutlined,
   FileProtectOutlined,
   ToolOutlined,
   ThunderboltOutlined,
   FileTextOutlined,
   CreditCardOutlined,
+  HomeOutlined,
 } from '@ant-design/icons';
 import { useSidebar } from '../../stores/SidebarContext';
 import { theme } from '../../styles/theme';
@@ -121,8 +121,8 @@ export const Sidebar = () => {
   const { collapsed, toggleSidebar } = useSidebar();
 
   const navItems: NavItemType[] = [
-    { label: 'Trang chủ', path: '/owner', icon: <DashboardOutlined /> },
-    { label: 'Quản lý phòng', path: '/owner/rooms', icon: <AppstoreOutlined /> },
+    { label: 'Trang chủ', path: '/owner', icon: <HomeOutlined /> },
+    { label: 'Quản lý phòng', path: '/owner/rooms', icon: <ApartmentOutlined /> },
     { label: 'Người thuê', path: '/owner/tenants', icon: <TeamOutlined /> },
     { label: 'Hợp đồng', path: '/owner/contracts', icon: <FileProtectOutlined /> },
     { label: 'Dịch vụ', path: '/owner/services', icon: <ToolOutlined /> },
@@ -143,9 +143,7 @@ export const Sidebar = () => {
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </NavIcon>
 
-          <NavLabel $collapsed={collapsed}>
-            Menu
-          </NavLabel>
+          <NavLabel $collapsed={collapsed}></NavLabel>
         </ToggleItem>
 
         {navItems.map((item) => {

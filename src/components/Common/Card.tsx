@@ -1,11 +1,13 @@
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
+import { fadeInAnimation } from '../../styles/animations';
 
 const StyledCard = styled.div`
   background-color: ${theme.colors.white};
   border-radius: ${theme.radius.md};
   box-shadow: ${theme.shadow.md};
   overflow: hidden;
+  ${fadeInAnimation}
 `;
 
 const CardTitle = styled.h3`
