@@ -1,73 +1,83 @@
-# React + TypeScript + Vite
+# BCK Manager – Quản lý nhà trọ / chung cư mini
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**BCK Manager** là ứng dụng web hỗ trợ chủ trọ và người thuê quản lý vận hành nhà trọ/chung cư mini: quản lý phòng, người thuê, hợp đồng, hoá đơn, thanh toán và theo dõi điện nước.
 
-Currently, two official plugins are available:
+## Tính năng chính
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Xác thực & phân quyền**: đăng nhập và điều hướng theo vai trò (owner/tenant/admin).
+- **Owner**: quản lý phòng, người thuê, hợp đồng, dịch vụ, điện nước, hoá đơn, thanh toán.
+- **Tenant**: xem thông tin phòng, hợp đồng, hoá đơn, thông báo.
 
-## React Compiler
+## Công nghệ sử dụng
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React + TypeScript**
+- **Vite**
+- **React Router**
+- **styled-components**
+- **@ant-design/icons**
 
-## Expanding the ESLint configuration
+## Cấu trúc thư mục (theo module)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```txt
+src/
+├── main.tsx
+├── App.tsx
+├── index.css
+├── assets/
+├── components/          # UI dùng lại
+│   ├── common/
+│   ├── forms/
+│   └── Table.tsx
+├── modules/             # business chính
+│   ├── auth/
+│   ├── room/
+│   ├── tenant/
+│   ├── bill/
+│   ├── contract/
+│   ├── payment/
+│   ├── service/
+│   └── utility/
+├── layouts/
+├── store/               # context global
+├── services/            # core services (apiClient.ts)
+├── hooks/
+├── utils/
+└── styles/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Yêu cầu môi trường
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Node.js** (khuyến nghị bản LTS)
+- **npm**
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Cài đặt & chạy dự án
+
+Cài dependencies:
+
+```bash
+npm install
 ```
+
+Chạy dev:
+
+```bash
+npm run dev
+```
+
+Build production:
+
+```bash
+npm run build
+```
+
+Preview bản build:
+
+```bash
+npm run preview
+```
+
+## Ghi chú
+
+- API client cấu hình tại `src/services/apiClient.ts` (mặc định gọi `http://localhost:5000`).
+- Routing & phân quyền: `src/App.tsx`, `src/utils/ProtectedRoute.tsx`.
+
