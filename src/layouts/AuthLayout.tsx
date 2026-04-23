@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import type { ReactNode } from 'react';
-import { Logo } from '../components/Common/Logo';
+import { Logo } from '../components/common/Logo';
 import { theme } from '../styles/theme';
 import backgroundImage from '../assets/images/background.png';
 

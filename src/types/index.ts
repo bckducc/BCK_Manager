@@ -10,6 +10,7 @@ export interface User {
   address?: string;
   idNumber?: string; // CMND/CCCD
   gender?: 'male' | 'female' | 'other';
+  landlord_id?: string | number;
   createdAt: Date;
 }
 
@@ -135,14 +136,14 @@ export interface Notification {
   message: string;
   read: boolean;
   createdAt: Date;
-  relatedId?: string; // ID của bill, room, contract, etc.
+  relatedId?: string;
 }
 
 export interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<User>;
   logout: () => void;
   isAuthenticated: boolean;
 }

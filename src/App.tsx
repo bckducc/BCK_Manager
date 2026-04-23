@@ -1,29 +1,25 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './stores/AuthContext';
-import { SidebarProvider } from './stores/SidebarContext';
-import { TenantProvider } from './stores/TenantContext';
-import { PageTransitionProvider } from './stores/PageTransitionContext';
+import { AuthProvider } from './store/AuthContext';
+import { SidebarProvider } from './store/SidebarContext';
+import { TenantProvider } from './store/TenantContext';
+import { PageTransitionProvider } from './store/PageTransitionContext';
 import { ProtectedRoute } from './utils/ProtectedRoute';
 import { MainLayout } from './layouts/MainLayout';
 
-import { Login } from './pages/Login';
-import {
-  OwnerDashboard,
-  RoomManagement,
-  TenantManagement,
-  ContractManagement,
-  ServiceManagement,
-  UtilityManagement,
-  BillManagement,
-  PaymentManagement,
-} from './pages/Owner';
-import {
-  TenantDashboard,
-  MyRoom,
-  MyContracts,
-  MyBills,
-  Notifications,
-} from './pages/Tenant';
+import { Login } from './modules/auth/Login';
+import { OwnerDashboard } from './modules/room/OwnerDashboard';
+import { RoomManagement } from './modules/room/RoomManagement';
+import { TenantManagement } from './modules/tenant/TenantManagement';
+import { ContractManagement } from './modules/contract/ContractManagement';
+import { ServiceManagement } from './modules/service/ServiceManagement';
+import { UtilityManagement } from './modules/utility/UtilityManagement';
+import { BillManagement } from './modules/bill/BillManagement';
+import { PaymentManagement } from './modules/payment/PaymentManagement';
+import { TenantDashboard } from './modules/tenant/TenantDashboard';
+import { MyRoom } from './modules/tenant/MyRoom';
+import { MyContracts } from './modules/contract/MyContracts';
+import { MyBills } from './modules/bill/MyBills';
+import { Notifications } from './modules/tenant/Notifications';
 
 function App() {
   return (

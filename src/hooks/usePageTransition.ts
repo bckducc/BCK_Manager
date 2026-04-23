@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { PageTransitionContext } from '../stores/PageTransitionContext';
+import { PageTransitionContext } from '../store/PageTransitionContext';
 
 export const usePageTransition = () => {
   const context = useContext(PageTransitionContext);

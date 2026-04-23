@@ -1,8 +1,8 @@
 import styled from 'styled-components';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Navbar, Sidebar, PageTransition } from '../components/Common';
-import { useSidebar } from '../stores/SidebarContext';
+import { Navbar, Sidebar, PageTransition } from '../components/common';
+import { useSidebar } from '../store/SidebarContext';
 import { theme } from '../styles/theme';
 
 const MainLayoutWrapper = styled.div`

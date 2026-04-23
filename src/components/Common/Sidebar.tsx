@@ -12,7 +12,7 @@ import {
   CreditCardOutlined,
   HomeOutlined,
 } from '@ant-design/icons';
-import { useSidebar } from '../../stores/SidebarContext';
+import { useSidebar } from '../../store/SidebarContext';
 import { theme } from '../../styles/theme';
 
 interface SidebarProps {
