@@ -10,6 +10,7 @@ const mapBackendRole = (backendRole: string): UserRole => {
   return 'tenant'; 
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

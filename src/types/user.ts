@@ -6,7 +6,7 @@ export interface User {
   name: string;
   role: UserRole;
   phone?: string;
-  idNumber?: string; // CMND/CCCD
+  idNumber?: string;
   gender?: 'male' | 'female' | 'other';
   landlord_id?: string | number;
   createdAt: Date;

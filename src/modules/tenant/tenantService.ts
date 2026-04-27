@@ -11,22 +11,22 @@ export const tenantService = {
       body: JSON.stringify(data),
     }),
 
-  getAll: () => apiCall<{ tenants: Tenant[] }>('/api/list', { method: 'GET' }),
+  getAll: () => apiCall<{ tenants: Tenant[] }>('/api/v1/tenants', { method: 'GET' }),
 
-  getById: (id: string) => apiCall<Tenant>(`/api/tenants/${id}`, { method: 'GET' }),
+  getById: (id: string) => apiCall<Tenant>(`/api/v1/tenants/${id}`, { method: 'GET' }),
 
   create: (data: Omit<Tenant, 'id' | 'currentRoom' | 'currentUser'>) =>
-    apiCall<Tenant>('/api/tenants', {
+    apiCall<Tenant>('/api/v1/tenants', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   update: (id: string, data: Partial<Omit<Tenant, 'id' | 'currentRoom' | 'currentUser'>>) =>
-    apiCall<Tenant>(`/api/tenants/${id}`, {
+    apiCall<Tenant>(`/api/v1/tenants/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
 
   delete: (id: string) =>
-    apiCall<{ success: boolean }>(`/api/tenants/${id}`, { method: 'DELETE' }),
+    apiCall<{ success: boolean }>(`/api/v1/tenants/${id}`, { method: 'DELETE' }),
 };

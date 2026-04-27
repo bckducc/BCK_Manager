@@ -4,13 +4,17 @@ import { pageEnterAnimation } from '../../styles/animations';
 
 interface PageTransitionProps {
   children: ReactNode;
-  key?: string | number;
+  customKey?: string | number;
 }
 
 const PageTransitionWrapper = styled.div`
   ${pageEnterAnimation}
 `;
 
-export const PageTransition = ({ children, key }: PageTransitionProps) => {
-  return <PageTransitionWrapper key={key}>{children}</PageTransitionWrapper>;
+export const PageTransition = ({ children, customKey }: PageTransitionProps) => {
+  return (
+    <PageTransitionWrapper key={customKey}>
+      {children}
+    </PageTransitionWrapper>
+  );
 };

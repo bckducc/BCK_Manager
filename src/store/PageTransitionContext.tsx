@@ -6,6 +6,7 @@ interface PageTransitionContextType {
   triggerTransition: () => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const PageTransitionContext = createContext<PageTransitionContextType | undefined>(undefined);
 
 export const PageTransitionProvider = ({ children }: { children: ReactNode }) => {

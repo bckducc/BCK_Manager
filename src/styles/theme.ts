@@ -1,8 +1,3 @@
-/**
- * Theme configuration for styled-components
- * Centralized design tokens for the entire app
- */
-
 export const theme = {
   colors: {
     primary: '#3498db',
@@ -36,7 +31,6 @@ export const theme = {
     white: '#ffffff',
   },
 
-  // Spacing
   spacing: {
     xs: '0.25rem',
     sm: '0.5rem',
@@ -46,7 +40,6 @@ export const theme = {
     '2xl': '3rem',
   },
 
-  // Border radius
   radius: {
     sm: '4px',
     md: '8px',
@@ -54,7 +47,6 @@ export const theme = {
     full: '9999px',
   },
 
-  // Font sizes
   fontSize: {
     sm: '0.85rem',
     base: '1rem',
@@ -63,28 +55,24 @@ export const theme = {
     '2xl': '1.5rem',
   },
 
-  // Font weights
   fontWeight: {
     normal: 400,
     semibold: 600,
     bold: 700,
   },
 
-  // Shadows
   shadow: {
     sm: '0 1px 3px rgba(0, 0, 0, 0.1)',
     md: '0 2px 4px rgba(0, 0, 0, 0.1)',
     lg: '0 4px 6px rgba(0, 0, 0, 0.1)',
   },
 
-  // Transitions
   transition: {
     fast: '0.2s',
     base: '0.3s',
     slow: '0.5s',
   },
 
-  // Z-index
   zIndex: {
     dropdown: 1000,
     sticky: 1020,
@@ -93,7 +81,6 @@ export const theme = {
     modal: 1050,
   },
 
-  // Breakpoints
   breakpoints: {
     mobile: '640px',
     tablet: '768px',
