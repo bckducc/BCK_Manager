@@ -1,6 +1,6 @@
 import type { ApiResponse } from '../types';
 
-const API_BASE_URL = 'http://localhost:5002';
+const API_BASE_URL = 'http://localhost:5000';
 
 interface RequestOptions extends RequestInit {
   headers?: Record<string, string>;
@@ -39,9 +39,15 @@ export const apiCall = async <T = Record<string, unknown>>(
       window.location.href = '/login';
     }
 
+    if (!response.ok) {
+      const errorMessage = data?.message || `HTTP Error ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
     return data;
   } catch (error) {
-    console.error(`API call failed: ${endpoint}`, error);
-    throw error;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`API call failed: ${endpoint}`, errorMessage);
+    throw new Error(errorMessage);
   }
 };

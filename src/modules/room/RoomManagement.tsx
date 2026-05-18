@@ -4,7 +4,7 @@ import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
 import { Header, Button, Card, Modal } from '../../components/common';
 import { Table } from '../../components/Table';
-import { Form, FormGroup, Input, Select } from '../../components/forms/Form';
+import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
 import { useAuth } from '../auth/useAuth';
 import { useFetch } from '../../hooks/useFetch';
 import { roomService } from './roomService';
@@ -39,6 +39,7 @@ export const RoomManagement = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rooms, setRooms] = useState<Record<string, unknown>[]>([]);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Record<string, unknown> | null>(null);
   const [formData, setFormData] = useState({
     roomNumber: '',
     area: '',
@@ -55,7 +56,6 @@ export const RoomManagement = () => {
       if (dataObj.rooms && Array.isArray(dataObj.rooms)) {
         setRooms(dataObj.rooms);
       } 
-      // Handle direct array response: [...]
       else if (Array.isArray(responseData)) {
         setRooms(responseData as Record<string, unknown>[]);
       }
@@ -82,18 +82,29 @@ export const RoomManagement = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await roomService.create({
+      const roomPayload = {
         room_number: formData.roomNumber,
         area: parseFloat(formData.area),
         floor: parseInt(formData.floor),
         price: parseFloat(formData.price),
         status: formData.status as 'available' | 'rented' | 'maintenance',
         description: formData.description,
-      });
+      };
+
+      let response: { success?: boolean };
+
+      if (editingRoom && 'id' in editingRoom) {
+        // Update existing room
+        response = await roomService.update(String(editingRoom.id), roomPayload);
+      } else {
+        // Create new room
+        response = await roomService.create(roomPayload);
+      }
 
       if (response.success) {
         await execute();
         setIsModalOpen(false);
+        setEditingRoom(null);
         setFormData({
           roomNumber: '',
           area: '',
@@ -102,13 +113,55 @@ export const RoomManagement = () => {
           status: '',
           description: '',
         });
-        alert('Tạo phòng thành công');
+        alert(editingRoom ? 'Cập nhật phòng thành công' : 'Tạo phòng thành công');
       }
     } catch (err) {
-      alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể tạo phòng'}`);
+      alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể lưu phòng'}`);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditRoom = (room: Record<string, unknown>) => {
+    setEditingRoom(room);
+    setFormData({
+      roomNumber: String(room.room_number || ''),
+      area: String(room.area || ''),
+      floor: String(room.floor || ''),
+      price: String(room.price || ''),
+      status: String(room.status || ''),
+      description: String(room.description || ''),
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteRoom = async (room: Record<string, unknown>) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa phòng ${room.room_number}?`)) {
+      return;
+    }
+
+    try {
+      const response = await roomService.delete(String(room.id));
+      if (response.success) {
+        await execute();
+        alert('Xóa phòng thành công');
+      }
+    } catch (err) {
+      alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể xóa phòng'}`);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingRoom(null);
+    setFormData({
+      roomNumber: '',
+      area: '',
+      floor: '',
+      price: '',
+      status: '',
+      description: '',
+    });
   };
 
   const columns: TableColumn[] = [
@@ -131,10 +184,10 @@ export const RoomManagement = () => {
     {
       key: 'actions',
       title: 'Hành Động',
-      render: () => (
+      render: (_, row) => (
         <ActionButtons>
-          <Button>Sửa</Button>
-          <Button variant="danger">Xóa</Button>
+          <Button onClick={() => handleEditRoom(row as Record<string, unknown>)}>Sửa</Button>
+          <Button variant="danger" onClick={() => handleDeleteRoom(row as Record<string, unknown>)}>Xóa</Button>
         </ActionButtons>
       ),
     },
@@ -159,12 +212,12 @@ export const RoomManagement = () => {
 
       <Modal
         isOpen={isModalOpen}
-        title="Thêm Phòng Mới"
-        onClose={() => setIsModalOpen(false)}
+        title={editingRoom ? 'Cập Nhật Phòng' : 'Thêm Phòng Mới'}
+        onClose={handleCloseModal}
         onConfirm={() => {
           handleAddRoom({ preventDefault: () => {} } as React.FormEvent);
         }}
-        confirmText="Tạo"
+        confirmText={editingRoom ? 'Cập Nhật' : 'Tạo'}
       >
         <Form onSubmit={handleAddRoom}>
           <FormGroup label="Số Phòng" required>

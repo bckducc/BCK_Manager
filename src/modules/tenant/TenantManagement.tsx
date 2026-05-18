@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
-import { Header, Button, Card } from '../../components/common';
+import { Header, Button, Card, Alert, Loading } from '../../components/common';
 import { Table } from '../../components/Table';
 import { useTenant } from '../../store/TenantContext';
 import { AddTenantModal } from './AddTenantModal';
@@ -31,6 +31,21 @@ const ActionButtons = styled.div`
   }
 `;
 
+const ErrorContainer = styled.div`
+  display: flex;
+  gap: ${theme.spacing.md};
+  align-items: flex-start;
+  
+  > div {
+    flex: 1;
+  }
+  
+  button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+`;
+
 const MOCK_ROOMS = [
   { id: 'room_1', roomNumber: '101' },
   { id: 'room_2', roomNumber: '102' },
@@ -44,30 +59,34 @@ const MOCK_ROOMS = [
 
 export const TenantManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { tenants, users, deleteTenant } = useTenant();
+  const { tenants, loading, error, deleteTenant, fetchTenants } = useTenant();
+
+  useEffect(() => {
+    fetchTenants();
+  }, [fetchTenants]);
 
   const tenantDisplayData = useMemo(() => {
     return tenants.map((tenant) => {
-      const user = users.find((u) => u.id === tenant.userId);
-      const room = MOCK_ROOMS.find((r) => r.id === tenant.roomId);
-
       const genderMap = {
         male: 'Nam',
         female: 'Nữ',
         other: 'Khác',
       };
 
+      const user = tenant.currentUser;
+      const room = tenant.currentRoom;
+
       return {
         id: tenant.id,
         name: user?.name || 'N/A',
         idNumber: user?.idNumber || 'N/A',
-        gender: genderMap[user?.gender as keyof typeof genderMap] || 'N/A',
+        gender: user?.gender ? genderMap[user.gender as keyof typeof genderMap] : 'N/A',
         phone: user?.phone || 'N/A',
         roomNumber: room?.roomNumber || 'N/A',
         leaseStart: new Date(tenant.startDate).toLocaleDateString('vi-VN'),
       };
     });
-  }, [tenants, users]);
+  }, [tenants]);
 
   const columns: TableColumn[] = [
     { key: 'name', title: 'Tên Người Thuê' },
@@ -104,12 +123,27 @@ export const TenantManagement = () => {
             </Button>
           }
         />
+        {error && (
+          <ErrorContainer>
+            <Alert 
+              message={`❌ Lỗi: ${error}\n⚠️ Backend không kết nối được. Kiểm tra:\n✓ Backend http://localhost:5000\n✓ Database kết nối\n✓ Endpoint GET /api/v1/tenants`}
+              type="error"
+            />
+            <Button onClick={() => fetchTenants()} variant="primary">
+              ↻ Thử Lại
+            </Button>
+          </ErrorContainer>
+        )}
         <Card>
-          <Table 
-            columns={columns} 
-            data={tenantDisplayData} 
-            emptyText="Chưa có người thuê nào" 
-          />
+          {loading ? (
+            <Loading />
+          ) : (
+            <Table 
+              columns={columns} 
+              data={tenantDisplayData} 
+              emptyText="Chưa có người thuê nào" 
+            />
+          )}
         </Card>
       </Container>
 

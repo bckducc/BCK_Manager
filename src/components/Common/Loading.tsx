@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 
 interface LoadingWrapperProps {
-  fullPage?: boolean;
+  $fullPage?: boolean;
 }
 
 const LoadingWrapper = styled.div<LoadingWrapperProps>`
@@ -14,7 +14,7 @@ const LoadingWrapper = styled.div<LoadingWrapperProps>`
   text-align: center;
 
   ${(props) =>
-    props.fullPage &&
+    props.$fullPage &&
     `
     position: fixed;
     top: 0;
@@ -48,7 +48,7 @@ interface LoadingProps {
 
 export const Loading = ({ fullPage = false }: LoadingProps) => {
   return (
-    <LoadingWrapper fullPage={fullPage}>
+    <LoadingWrapper $fullPage={fullPage}>
       <Spinner />
       <p>Loading...</p>
     </LoadingWrapper>

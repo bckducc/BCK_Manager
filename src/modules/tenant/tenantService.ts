@@ -6,7 +6,7 @@ export const tenantService = {
   getDashboard: () => apiCall<{ profile: User; dashboard: Record<string, unknown> }>('/api/v1/tenant/dashboard', { method: 'GET' }),
 
   updateProfile: (data: Partial<User>) =>
-    apiCall<User>('/api/v1/tenant/profile', {
+    apiCall<User>('/api/v1/tenants/profile', {
       method: 'PUT',
       body: JSON.stringify(data),
     }),

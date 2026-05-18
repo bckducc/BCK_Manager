@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import { useAuth } from './useAuth';
 import { AuthLayout } from '../../layouts/AuthLayout';
-import { Form, FormGroup, Input } from '../../components/forms/Form';
+import { Form, FormGroup, Input } from '../../components/Forms/Form';
 import { Button } from '../../components/common';
 
 const LoginContainer = styled.div`
