@@ -1,13 +1,17 @@
 export interface UtilityReading {
-  id: string;
-  roomId: string;
-  roomNumber: string;
+  id: string | number;
+  roomId: string | number;
+  roomNumber?: string;
   month: number;
   year: number;
-  electricityReading: number; // kWh
-  waterReading: number; // m³
-  readingDate: string;
-  notes?: string;
+  electricOld: number;
+  electricNew: number;
+  electricPrice: number;
+  waterOld: number;
+  waterNew: number;
+  waterPrice: number;
+  recordedDate?: string;
+  note?: string;
 }
 
 export interface UtilityFilter {

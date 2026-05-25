@@ -48,14 +48,6 @@ const UserName = styled.span`
   font-weight: ${theme.fontWeight.semibold};
 `;
 
-const UserRole = styled.span`
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: ${theme.spacing.xs} 0.75rem;
-  border-radius: ${theme.radius.full};
-  font-size: ${theme.fontSize.sm};
-  text-transform: uppercase;
-`;
-
 const LogoutBtn = styled.button`
   background-color: ${theme.colors.danger};
   color: ${theme.colors.white};
@@ -93,7 +85,6 @@ export const Navbar = () => {
           <>
             <UserOutlined />
             <UserName>{user.name}</UserName>
-            <UserRole>{user.role}</UserRole>
             <LogoutBtn onClick={handleLogout}>
               <LogoutOutlined />
               Đăng xuất

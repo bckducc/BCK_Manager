@@ -2,14 +2,20 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import type { Tenant, User } from '../types';
 import { tenantService } from '../modules/tenant/tenantService';
 
+const parseDate = (value: unknown): Date => {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') return new Date(value);
+  return new Date();
+};
+
 interface TenantContextType {
   tenants: Tenant[];
   users: User[];
   loading: boolean;
   error: string | null;
-  addTenant: (tenant: Omit<Tenant, 'id' | 'userId'>, user: Omit<User, 'id' | 'createdAt' | 'role'>) => void;
-  updateTenant: (id: string, tenant: Partial<Tenant>) => void;
-  deleteTenant: (id: string) => void;
+  addTenant: (tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: string }) => Promise<void>;
+  updateTenant: (id: string, tenant: Partial<Tenant>) => Promise<void>;
+  deleteTenant: (id: string) => Promise<void>;
   getTenantById: (id: string) => Tenant | undefined;
   fetchTenants: () => Promise<void>;
 }
@@ -22,50 +28,6 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const addTenant = useCallback((tenant: Omit<Tenant, 'id' | 'userId'>, user: Omit<User, 'id' | 'createdAt' | 'role'>) => {
-    const newTenantId = `tenant_${Date.now()}`;
-    const newUserId = `user_${Date.now()}`;
-
-    const newUser: User = {
-      id: newUserId,
-      ...user,
-      role: 'tenant',
-      createdAt: new Date(),
-    };
-
-    const newTenant: Tenant = {
-      id: newTenantId,
-      userId: newUserId,
-      roomId: tenant.roomId,
-      startDate: tenant.startDate,
-    };
-
-    setUsers((prev) => [...prev, newUser]);
-    setTenants((prev) => [...prev, newTenant]);
-
-    // Lưu vào localStorage
-    localStorage.setItem('tenants', JSON.stringify([...tenants, newTenant]));
-    localStorage.setItem('users', JSON.stringify([...users, newUser]));
-  }, [tenants, users]);
-
-  const updateTenant = useCallback((id: string, updates: Partial<Tenant>) => {
-    setTenants((prev) =>
-      prev.map((tenant) => (tenant.id === id ? { ...tenant, ...updates } : tenant))
-    );
-  }, []);
-
-  const deleteTenant = useCallback((id: string) => {
-    const tenant = tenants.find((t) => t.id === id);
-    if (tenant) {
-      setUsers((prev) => prev.filter((u) => u.id !== tenant.userId));
-    }
-    setTenants((prev) => prev.filter((t) => t.id !== id));
-  }, [tenants]);
-
-  const getTenantById = useCallback((id: string) => {
-    return tenants.find((t) => t.id === id);
-  }, [tenants]);
-
   const fetchTenants = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -73,41 +35,44 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const response = await tenantService.getAll();
       
       let tenantsList: Tenant[] = [];
-      let usersList: User[] = [];
+      const usersList: User[] = [];
       
-      if (response.data && Array.isArray(response.data)) {
-        tenantsList = response.data.map((item: any) => {
+      // Handle response.data.tenants or response.data as array
+      const responseData = response.data as Record<string, unknown> | unknown[];
+      const data = Array.isArray(responseData) ? responseData : ((responseData as Record<string, unknown>)?.tenants as unknown[] || []);
+      
+      if (Array.isArray(data)) {
+        tenantsList = (data as Array<Record<string, unknown>>).map((item: Record<string, unknown>) => {
           // Create user object from tenant data
           const user: User = {
-            id: String(item.user_id),
-            username: item.username || 'N/A',
-            name: item.full_name || 'N/A',
-            phone: item.phone || undefined,
-            idNumber: item.identity_card || undefined,
-            gender: item.gender || 'other',
+            id: String(item.user_id || item.userId || ''),
+            username: (item.username as string | undefined) || 'N/A',
+            name: ((item.full_name || item.name) as string | undefined) || 'N/A',
+            phone: (item.phone as string | undefined),
+            idNumber: ((item.identity_card || item.idNumber) as string | undefined),
+            gender: ((item.gender as string | undefined) || 'other') as 'male' | 'female' | 'other',
             role: 'tenant',
-            createdAt: new Date(item.created_at),
+            createdAt: parseDate(item.created_at || item.createdAt),
           };
           
-          if (!usersList.find(u => u.id === user.id)) {
+          if (user.id && !usersList.find(u => u.id === user.id)) {
             usersList.push(user);
           }
 
           // Create tenant object
           const tenant: Tenant = {
-            id: String(item.id || item.user_id),
-            userId: String(item.user_id),
-            roomId: String(item.room_id || '0'),
-            startDate: new Date(),
+            id: String(item.id || ''),
+            userId: String(item.user_id || item.userId || ''),
+            roomId: String(item.room_id || item.roomId || ''),
+            startDate: parseDate(item.start_date || item.startDate),
             currentUser: user,
-            currentRoom: item.room_id && item.room_id !== 0 ? {
-              id: String(item.room_id),
-              roomNumber: String(item.room_number),
-              type: 'standard',
-              area: 0,
-              price: 0,
-              landlordId: '',
-              status: 'occupied',
+            currentRoom: item.room_id || item.roomId ? {
+              id: String(item.room_id || item.roomId || ''),
+              roomNumber: String(item.room_number || item.roomNumber || ''),
+              area: (item.area as number | undefined) || 0,
+              floor: (item.floor as number | undefined) || 0,
+              price: (item.price as number | undefined) || 0,
+              status: ((item.status as string | undefined) || 'available') as 'available' | 'rented' | 'maintenance',
               createdAt: new Date(),
             } : undefined,
           };
@@ -126,6 +91,85 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setLoading(false);
     }
   }, []);
+
+  const addTenant = useCallback(async (tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: string }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Call API to create tenant with user data
+      const response = await tenantService.create({
+        roomId: tenant.roomId,
+        startDate: tenant.startDate,
+        username: userData.username,
+        password: userData.password,
+        name: userData.name,
+        phone: userData.phone,
+        idNumber: userData.idNumber,
+        gender: userData.gender,
+      });
+      
+      if (response.success && response.data) {
+        setTenants((prev) => [...prev, response.data as Tenant]);
+        
+        // Refresh to get full data with room and user info
+        await fetchTenants();
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to create tenant';
+      setError(errorMsg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchTenants]);
+
+  const updateTenant = useCallback(async (id: string, updates: Partial<Tenant>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await tenantService.update(id, updates);
+      
+      if (response.success) {
+        setTenants((prev) =>
+          prev.map((tenant) => (tenant.id === id ? { ...tenant, ...updates } : tenant))
+        );
+        // Refresh to get latest data
+        await fetchTenants();
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to update tenant';
+      setError(errorMsg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchTenants]);
+
+  const deleteTenant = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await tenantService.delete(id);
+      
+      if (response.success) {
+        const tenant = tenants.find((t) => t.id === id);
+        if (tenant) {
+          setUsers((prev) => prev.filter((u) => u.id !== tenant.userId));
+        }
+        setTenants((prev) => prev.filter((t) => t.id !== id));
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to delete tenant';
+      setError(errorMsg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [tenants]);
+
+  const getTenantById = useCallback((id: string) => {
+    return tenants.find((t) => t.id === id);
+  }, [tenants]);
 
   useEffect(() => {
     fetchTenants();

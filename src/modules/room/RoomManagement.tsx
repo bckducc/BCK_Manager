@@ -70,7 +70,7 @@ export const RoomManagement = () => {
       execute();
       setHasInitialized(true);
     }
-  }, [isAuthenticated, hasInitialized]);
+  }, [isAuthenticated, hasInitialized, execute]);
 
   const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,21 +164,22 @@ export const RoomManagement = () => {
     });
   };
 
-  const columns: TableColumn[] = [
+  const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'room_number', title: 'Số Phòng' },
     { key: 'area', title: 'Diện Tích (m²)' },
     { key: 'floor', title: 'Tầng' },
-    { key: 'price', title: 'Giá Thuê/Tháng', render: (val) => `${val.toLocaleString()}đ` },
+    { key: 'price', title: 'Giá Thuê/Tháng', render: (val: unknown) => `${(val as number).toLocaleString()}đ` },
     {
       key: 'status',
       title: 'Trạng Thái',
-      render: (val) => {
+      render: (val: unknown) => {
         const statusLabels: Record<string, string> = {
           available: 'Còn trống',
           rented: 'Đã cho thuê',
           maintenance: 'Bảo trì',
         };
-        return <span style={{ color: val === 'available' ? 'green' : val === 'rented' ? 'orange' : 'red' }}>{statusLabels[val] || val}</span>;
+        const statusStr = val as string;
+        return <span style={{ color: statusStr === 'available' ? 'green' : statusStr === 'rented' ? 'orange' : 'red' }}>{statusLabels[statusStr] || statusStr}</span>;
       },
     },
     {

@@ -2,6 +2,7 @@ export interface Room {
   id?: string | number;
   room_number?: string;
   roomNumber?: string;
+  name?: string;
   area: number; 
   floor: number;
   status: 'available' | 'rented' | 'maintenance';

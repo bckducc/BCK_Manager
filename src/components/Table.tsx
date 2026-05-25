@@ -78,26 +78,26 @@ const EmptyState = styled.div`
   box-shadow: ${theme.shadow.md};
 `;
 
-export interface TableColumn {
+export interface TableColumn<T extends object> {
   key: string;
   title: string;
-  render?: (value: any, record: any) => React.ReactNode;
+  render?: (value: unknown, record: T) => React.ReactNode;
   width?: string;
 }
 
-interface TableProps {
-  columns: TableColumn[];
-  data: any[];
+interface TableProps<T extends object> {
+  columns: TableColumn<T>[];
+  data: T[];
   loading?: boolean;
   emptyText?: string;
 }
 
-export const Table = ({
+export const Table = <T extends object>({
   columns,
   data,
   loading = false,
   emptyText = 'No data',
-}: TableProps) => {
+}: TableProps<T>) => {
   if (loading) {
     return <SkeletonLoader />;
   }
@@ -122,11 +122,14 @@ export const Table = ({
           <tbody>
             {data.map((record, idx) => (
               <tr key={idx}>
-                {columns.map((col) => (
-                  <td key={col.key}>
-                    {col.render ? col.render(record[col.key], record) : record[col.key]}
-                  </td>
-                ))}
+                {columns.map((col) => {
+                  const value = (record as Record<string, unknown>)[col.key];
+                  return (
+                    <td key={col.key}>
+                      {col.render ? col.render(value, record) : (value as React.ReactNode)}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

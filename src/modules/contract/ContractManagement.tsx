@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
-import { Header, Button, Card, Modal } from '../../components/common';
+import { Header, Button, Card, Loading, Alert } from '../../components/common';
 import { Table } from '../../components/Table';
-import { Form, FormGroup, Input, Select } from '../../components/forms/Form';
+import { useContract } from '../../store/contract-context';
+import type { Contract } from './contract.types';
 
 const Container = styled.div`
   display: flex;
@@ -29,142 +30,164 @@ const ActionButtons = styled.div`
   }
 `;
 
+const PrintContainer = styled.div`
+  @media print {
+    padding: ${theme.spacing.lg};
+    background: white;
+  }
+`;
+
 export const ContractManagement = () => {
-  const [contracts] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    tenantName: '',
-    roomNumber: '',
-    startDate: '',
-    endDate: '',
-    rentAmount: '',
-    status: '',
-  });
+  const { contracts, loading, deleteContract } = useContract();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const handleCreateContract = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsModalOpen(false);
-    setFormData({ tenantName: '', roomNumber: '', startDate: '', endDate: '', rentAmount: '', status: '' });
-  };
+  const handleDeleteContract = useCallback(async (id: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa hợp đồng này?')) {
+      try {
+        await deleteContract(id);
+      } catch (err) {
+        setDeleteError(err instanceof Error ? err.message : 'Failed to delete contract');
+      }
+    }
+  }, [deleteContract]);
 
-  const columns: TableColumn[] = [
-    { key: 'id', title: 'Mã HĐ' },
-    { key: 'tenantName', title: 'Người Thuê' },
-    { key: 'roomNumber', title: 'Phòng' },
-    { key: 'startDate', title: 'Ngày Bắt Đầu' },
-    { key: 'endDate', title: 'Ngày Kết Thúc' },
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
+
+  const columns: TableColumn[] = useMemo(() => [
+    { key: 'id', title: 'Mã HĐ', width: '12%' },
+    { 
+      key: 'tenantName', 
+      title: 'Tên Người Thuê',
+      width: '18%',
+      render: (_: unknown, row: unknown) => {
+        const contract = row as Contract;
+        return (
+          contract.tenantName ||
+          contract.tenant?.currentUser?.name ||
+          contract.tenant?.currentUser?.username ||
+          contract.tenant?.currentUser?.email ||
+          contract.tenant?.currentUser?.id ||
+          'N/A'
+        );
+      },
+    },
+    { 
+      key: 'roomNumber', 
+      title: 'Số Phòng',
+      width: '12%',
+      render: (_: unknown, row: unknown) => {
+        const contract = row as Contract;
+        return (
+          contract.roomNumber ||
+          contract.room?.roomNumber ||
+          contract.room?.room_number ||
+          contract.room?.name ||
+          'N/A'
+        );
+      },
+    },
+    { 
+      key: 'startDate', 
+      title: 'Ngày Bắt Đầu',
+      width: '13%',
+      render: (val: unknown) => {
+        const date = val instanceof Date ? val : new Date(val as string);
+        return date.toLocaleDateString('vi-VN');
+      },
+    },
+    { 
+      key: 'endDate', 
+      title: 'Ngày Kết Thúc',
+      width: '13%',
+      render: (val: unknown) => {
+        const date = val instanceof Date ? val : new Date(val as string);
+        return date.toLocaleDateString('vi-VN');
+      },
+    },
+    { 
+      key: 'price', 
+      title: 'Giá Thuê (VNĐ)',
+      width: '13%',
+      render: (val: unknown) => {
+        const price = typeof val === 'number' ? val : 0;
+        return new Intl.NumberFormat('vi-VN').format(price);
+      },
+    },
     {
       key: 'status',
       title: 'Trạng Thái',
-      render: (val) => {
+      width: '13%',
+      render: (val: unknown) => {
+        const status = val as string;
         const colors: Record<string, string> = {
-          active: 'green',
-          expired: 'red',
-          terminated: 'orange',
+          active: theme.colors.success,
+          expired: theme.colors.danger,
+          terminated: theme.colors.warning,
         };
-        return <span style={{ color: colors[val] || 'black' }}>{val}</span>;
+        const labels: Record<string, string> = {
+          active: 'Còn Hiệu Lực',
+          expired: 'Hết Hiệu Lực',
+          terminated: 'Đã Chấm Dứt',
+        };
+        return <span style={{ color: colors[status] || 'black' }}>{labels[status] || status}</span>;
       },
     },
     {
       key: 'actions',
       title: 'Hành Động',
-      render: () => (
-        <ActionButtons>
-          <Button>Xem</Button>
-          <Button variant="danger">Xóa</Button>
-        </ActionButtons>
-      ),
+      width: '6%',
+      render: (_: unknown, row: unknown) => {
+        const contract = row as Contract;
+        return (
+          <ActionButtons>
+            <Button
+              variant="danger"
+              onClick={() => handleDeleteContract(contract.id)}
+            >
+              ✕ Xóa
+            </Button>
+          </ActionButtons>
+        );
+      },
     },
-  ];
+  ], [handleDeleteContract]);
+
+  if (loading && contracts.length === 0) {
+    return <Loading />;
+  }
 
   return (
     <PageWrapper>
       <Container>
+        {deleteError && (
+          <Alert 
+            type="error" 
+            message={deleteError}
+          />
+        )}
+        
         <Header
           title="Quản Lý Hợp Đồng"
           actions={
-            <Button onClick={() => setIsModalOpen(true)}>
-              + Tạo Hợp Đồng
+            <Button onClick={handlePrint} variant="secondary">
+              🖨 In Danh Sách
             </Button>
           }
         />
-        <Card>
-          <Table columns={columns} data={contracts} emptyText="Chưa có hợp đồng nào" />
-        </Card>
 
-        <Modal
-          isOpen={isModalOpen}
-          title="Tạo Hợp Đồng Mới"
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => {
-            handleCreateContract({ preventDefault: () => {} } as React.FormEvent);
-          }}
-          confirmText="Tạo"
-        >
-          <Form onSubmit={handleCreateContract}>
-            <FormGroup label="Người Thuê" required>
-              <Input
-                type="text"
-                value={formData.tenantName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, tenantName: e.target.value })
-                }
-                placeholder="Chọn người thuê"
-              />
-            </FormGroup>
-            <FormGroup label="Phòng" required>
-              <Input
-                type="text"
-                value={formData.roomNumber}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, roomNumber: e.target.value })
-                }
-                placeholder="Chọn phòng"
-              />
-            </FormGroup>
-            <FormGroup label="Ngày Bắt Đầu" required>
-              <Input
-                type="date"
-                value={formData.startDate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, startDate: e.target.value })
-                }
-              />
-            </FormGroup>
-            <FormGroup label="Ngày Kết Thúc" required>
-              <Input
-                type="date"
-                value={formData.endDate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, endDate: e.target.value })
-                }
-              />
-            </FormGroup>
-            <FormGroup label="Tiền Thuê Tháng" required>
-              <Input
-                type="number"
-                value={formData.rentAmount}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, rentAmount: e.target.value })
-                }
-              />
-            </FormGroup>
-            <FormGroup label="Trạng Thái" required>
-              <Select
-                value={formData.status}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setFormData({ ...formData, status: e.target.value })
-                }
-                options={[
-                  { value: 'active', label: 'Còn Hiệu Lực' },
-                  { value: 'expired', label: 'Hết Hiệu Lực' },
-                  { value: 'terminated', label: 'Đã Chấm Dứt' },
-                ]}
-                placeholder="Chọn trạng thái..."
-              />
-            </FormGroup>
-          </Form>
-        </Modal>
+        <Card>
+          <PrintContainer>
+            {contracts.length > 0 ? (
+              <Table columns={columns} data={contracts} />
+            ) : (
+              <div style={{ textAlign: 'center', padding: theme.spacing.lg, color: theme.colors.textSecondary }}>
+                Chưa có hợp đồng nào
+              </div>
+            )}
+          </PrintContainer>
+        </Card>
       </Container>
     </PageWrapper>
   );

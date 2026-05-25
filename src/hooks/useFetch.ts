@@ -7,7 +7,7 @@ interface UseFetchState<T> {
   error: Error | null;
 }
 
-export const useFetch = <T = any>(
+export const useFetch = <T = unknown>(
   fetchFn: () => Promise<ApiResponse<T>>
 ) => {
   const [state, setState] = useState<UseFetchState<T>>({

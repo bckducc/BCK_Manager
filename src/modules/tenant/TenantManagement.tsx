@@ -6,6 +6,7 @@ import { Header, Button, Card, Alert, Loading } from '../../components/common';
 import { Table } from '../../components/Table';
 import { useTenant } from '../../store/TenantContext';
 import { AddTenantModal } from './AddTenantModal';
+import type { Tenant } from './tenant.types';
 import { DeleteOutlined } from '@ant-design/icons';
 
 const Container = styled.div`
@@ -59,11 +60,22 @@ const MOCK_ROOMS = [
 
 export const TenantManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const { tenants, loading, error, deleteTenant, fetchTenants } = useTenant();
 
   useEffect(() => {
     fetchTenants();
   }, [fetchTenants]);
+
+  const handleEditTenant = (tenant: Tenant) => {
+    setEditingTenant(tenant);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingTenant(null);
+  };
 
   const tenantDisplayData = useMemo(() => {
     return tenants.map((tenant) => {
@@ -88,7 +100,7 @@ export const TenantManagement = () => {
     });
   }, [tenants]);
 
-  const columns: TableColumn[] = [
+  const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'name', title: 'Tên Người Thuê' },
     { key: 'idNumber', title: 'CMND/CCCD' },
     { key: 'gender', title: 'Giới Tính' },
@@ -98,17 +110,29 @@ export const TenantManagement = () => {
     {
       key: 'actions',
       title: 'Hành Động',
-      render: (_, row: Record<string, unknown>) => (
-        <ActionButtons>
-          <Button>Xem Chi Tiết</Button>
-          <Button 
-            variant="danger" 
-            onClick={() => deleteTenant(String(row.id))}
-          >
-            <DeleteOutlined />
-          </Button>
-        </ActionButtons>
-      ),
+      render: (_: unknown, row: Record<string, unknown>) => {
+        const tenant = tenants.find(t => String(t.id) === String(row.id));
+        return (
+          <ActionButtons>
+            <Button onClick={() => tenant && handleEditTenant(tenant)}>Sửa</Button>
+            <Button 
+              variant="danger" 
+              onClick={async () => {
+                if (window.confirm(`Bạn có chắc chắn muốn xóa người thuê ${row.name}?`)) {
+                  try {
+                    await deleteTenant(String(row.id));
+                    alert('Xóa người thuê thành công');
+                  } catch (err) {
+                    alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể xóa'}`);
+                  }
+                }
+              }}
+            >
+              <DeleteOutlined />
+            </Button>
+          </ActionButtons>
+        );
+      },
     },
   ];
 
@@ -149,8 +173,9 @@ export const TenantManagement = () => {
 
       <AddTenantModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         rooms={MOCK_ROOMS}
+        editingTenant={editingTenant || undefined}
       />
     </PageWrapper>
   );

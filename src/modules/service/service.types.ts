@@ -1,19 +1,22 @@
+export type ServiceUnit = 'month' | 'time' | 'vehicle' | 'kwh' | 'm3' | 'piece';
+export type ServiceType = 'required' | 'optional';
+
 export interface Service {
-  id: string;
+  id: string | number;
   name: string;
-  description: string;
+  description?: string;
   price: number;
-  unit: 'month' | 'unit' | 'kwh' | 'm3';
-  type: 'optional' | 'required';
+  unit: ServiceUnit;
+  type: ServiceType;
   createdAt: Date;
 }
 
-export interface TenantService {
-  id: string;
-  tenantId: string;
-  serviceId: string;
-  startDate: Date;
-  endDate?: Date;
-  status: 'active' | 'inactive';
+export interface RoomService {
+  id: string | number;
+  roomId: string | number;
+  serviceId: string | number;
+  quantity: number;
+  appliedDate: Date;
+
   service?: Service;
 }
