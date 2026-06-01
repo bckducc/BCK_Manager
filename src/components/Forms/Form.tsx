@@ -12,6 +12,10 @@ const FormWrapper = styled.form`
     color: ${theme.colors.dark};
     font-size: ${theme.fontSize.xl};
   }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    gap: ${theme.spacing.sm};
+  }
 `;
 
 const FormGroupWrapper = styled.div`
@@ -46,6 +50,7 @@ const StyledInput = styled.input<{ $error?: boolean }>`
   transition: border-color ${theme.transition.base};
   background-color: ${theme.colors.white};
   color: ${theme.colors.text};
+  width: 100%;
 
   &::placeholder {
     color: ${theme.colors.textSecondary};
@@ -76,6 +81,7 @@ const StyledSelect = styled.select<{ $error?: boolean }>`
   background-color: ${theme.colors.white};
   color: ${theme.colors.text};
   cursor: pointer;
+  width: 100%;
 
   &:focus {
     outline: none;
@@ -103,6 +109,7 @@ const StyledTextArea = styled.textarea<{ $error?: boolean }>`
   color: ${theme.colors.text};
   resize: vertical;
   min-height: 100px;
+  width: 100%;
 
   &::placeholder {
     color: ${theme.colors.textSecondary};

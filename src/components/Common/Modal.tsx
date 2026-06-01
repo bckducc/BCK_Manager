@@ -12,6 +12,12 @@ const ModalOverlay = styled.div`
   align-items: center;
   justify-content: center;
   z-index: ${theme.zIndex.modal};
+  padding: ${theme.spacing.md};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    align-items: flex-end;
+    padding: ${theme.spacing.sm};
+  }
 `;
 
 const ModalContent = styled.div`
@@ -20,10 +26,18 @@ const ModalContent = styled.div`
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   box-shadow: ${theme.shadow.lg};
   display: flex;
   flex-direction: column;
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    width: 100%;
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: ${theme.radius.md} ${theme.radius.md} ${theme.radius.sm} ${theme.radius.sm};
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -37,6 +51,14 @@ const ModalHeader = styled.div`
     margin: 0;
     color: ${theme.colors.dark};
     font-size: ${theme.fontSize.xl};
+
+    @media (max-width: ${theme.breakpoints.mobile}) {
+      font-size: ${theme.fontSize.lg};
+    }
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
   }
 `;
 
@@ -59,6 +81,10 @@ const ModalBody = styled.div`
   padding: ${theme.spacing.lg};
   flex: 1;
   overflow-y: auto;
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+  }
 `;
 
 const ModalFooter = styled.div`
@@ -68,6 +94,15 @@ const ModalFooter = styled.div`
   padding: ${theme.spacing.lg};
   border-top: 1px solid ${theme.colors.borderLight};
   background-color: ${theme.colors.lightBg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
 `;
 
 interface ModalProps {

@@ -1,8 +1,7 @@
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '../../modules/auth/useAuth';
 import { Logo } from './Logo';
+import { AccountMenu } from './AccountMenu';
 import { theme } from '../../styles/theme';
 
 const NavbarWrapper = styled.nav`
@@ -19,12 +18,17 @@ const NavbarWrapper = styled.nav`
   padding: ${theme.spacing.md} ${theme.spacing.xl};
 
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 
   box-shadow: ${theme.shadow.md};
 
   z-index: 1000;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    height: 56px;
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
+  }
 `;
 
 const NavbarBrand = styled.div`
@@ -42,38 +46,14 @@ const NavbarUser = styled.div`
   display: flex;
   align-items: center;
   gap: ${theme.spacing.md};
-`;
 
-const UserName = styled.span`
-  font-weight: ${theme.fontWeight.semibold};
-`;
-
-const LogoutBtn = styled.button`
-  background-color: ${theme.colors.danger};
-  color: ${theme.colors.white};
-  border: none;
-  padding: ${theme.spacing.sm} ${theme.spacing.md};
-  border-radius: ${theme.radius.sm};
-  cursor: pointer;
-  transition: background-color ${theme.transition.base};
-  font-weight: ${theme.fontWeight.semibold};
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  &:hover {
-    background-color: ${theme.colors.dangerDark};
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    gap: ${theme.spacing.sm};
   }
 `;
 
 export const Navbar = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const { user } = useAuth();
 
   return (
     <NavbarWrapper>
@@ -81,16 +61,7 @@ export const Navbar = () => {
           <Logo showText={true} size="sm" />
       </NavbarBrand>
       <NavbarUser>
-        {user && (
-          <>
-            <UserOutlined />
-            <UserName>{user.name}</UserName>
-            <LogoutBtn onClick={handleLogout}>
-              <LogoutOutlined />
-              Đăng xuất
-            </LogoutBtn>
-          </>
-        )}
+        {user && <AccountMenu />}
       </NavbarUser>
     </NavbarWrapper>
   );

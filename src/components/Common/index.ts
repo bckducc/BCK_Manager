@@ -9,3 +9,4 @@ export { Loading } from './Loading';
 export { Modal } from './Modal';
 export { Logo } from './Logo';
 export { PageTransition } from './PageTransition';
+export { AccountMenu } from './AccountMenu';

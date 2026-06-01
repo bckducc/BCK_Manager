@@ -8,6 +8,10 @@ const StyledCard = styled.div`
   box-shadow: ${theme.shadow.md};
   overflow: hidden;
   ${fadeInAnimation}
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    border-radius: ${theme.radius.sm};
+  }
 `;
 
 const CardTitle = styled.h3`
@@ -17,10 +21,19 @@ const CardTitle = styled.h3`
   border-bottom: 1px solid ${theme.colors.borderLight};
   font-size: ${theme.fontSize.lg};
   color: ${theme.colors.dark};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+    font-size: ${theme.fontSize.base};
+  }
 `;
 
 const CardContent = styled.div`
   padding: ${theme.spacing.lg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+  }
 `;
 
 interface CardProps {

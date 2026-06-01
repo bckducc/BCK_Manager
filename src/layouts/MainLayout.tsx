@@ -7,6 +7,7 @@ import { theme } from '../styles/theme';
 
 const MainLayoutWrapper = styled.div`
   height: 100vh;
+  height: 100dvh;
   background-color: ${theme.colors.lightBg};
   overflow: hidden;
 `;
@@ -32,8 +33,12 @@ const MainLayoutMain = styled.main<MainLayoutMainProps>`
   transition: margin-left 0.25s ease, width 0.25s ease;
 
   @media (max-width: ${theme.breakpoints.tablet}) {
+    margin-top: 56px;
     margin-left: 0;
     width: 100%;
+    height: calc(100vh - 128px);
+    height: calc(100dvh - 128px);
+    padding-bottom: 72px;
   }
 `;
 

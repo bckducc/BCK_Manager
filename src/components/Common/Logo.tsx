@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import logo from '../../assets/images/logo.png';
+import { theme } from '../../styles/theme';
 
 const LogoImg = styled.img<{ $size?: 'sm' | 'md' | 'lg' }>`
   height: ${(p) => {
@@ -20,6 +21,7 @@ const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
 `;
 
 const LogoText = styled.span<{ $size?: 'sm' | 'md' | 'lg' }>`
@@ -35,6 +37,12 @@ const LogoText = styled.span<{ $size?: 'sm' | 'md' | 'lg' }>`
   }};
   font-weight: 700;
   white-space: nowrap;
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
 interface LogoProps {

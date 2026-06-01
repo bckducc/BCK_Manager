@@ -6,14 +6,17 @@ const TableContainer = styled.div`
   border-radius: ${theme.radius.md};
   box-shadow: ${theme.shadow.md};
   overflow: hidden;
+  max-width: 100%;
 `;
 
 const TableScroll = styled.div`
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const StyledTable = styled.table`
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: ${theme.fontSize.base};
 
@@ -41,6 +44,18 @@ const StyledTable = styled.table`
   td {
     padding: ${theme.spacing.md} ${theme.spacing.lg};
     color: ${theme.colors.text};
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    min-width: 640px;
+    font-size: ${theme.fontSize.sm};
+
+    th,
+    td {
+      padding: ${theme.spacing.sm} ${theme.spacing.md};
+    }
   }
 `;
 
@@ -76,6 +91,10 @@ const EmptyState = styled.div`
   background-color: ${theme.colors.white};
   border-radius: ${theme.radius.md};
   box-shadow: ${theme.shadow.md};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.lg} ${theme.spacing.md};
+  }
 `;
 
 export interface TableColumn<T extends object> {

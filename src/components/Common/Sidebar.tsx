@@ -34,11 +34,28 @@ const SidebarWrapper = styled.aside<SidebarProps>`
   overflow: hidden;
 
   z-index: 900;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    top: auto;
+    right: 0;
+    width: 100%;
+    height: 72px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    transition: none;
+  }
 `;
 
 const SidebarNav = styled.nav`
   display: flex;
   flex-direction: column;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    height: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
 `;
 
 interface NavItemProps {
@@ -62,6 +79,15 @@ const NavItem = styled(Link)<NavItemProps>`
   &:hover {
     background: rgba(255, 255, 255, 0.08);
   }
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    min-width: 76px;
+    height: 72px;
+    flex-direction: column;
+    justify-content: center;
+    padding: ${theme.spacing.xs};
+    gap: ${theme.spacing.xs};
+  }
 `;
 
 const NavIcon = styled.div`
@@ -72,6 +98,12 @@ const NavIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+  }
 `;
 
 interface NavLabelProps {
@@ -93,6 +125,20 @@ const NavLabel = styled.span<NavLabelProps>`
 
   pointer-events: none;
   overflow: hidden;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    flex: 0 1 auto;
+    width: 100%;
+    opacity: 1;
+    transform: none;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
 `;
 
 const ToggleItem = styled.div<SidebarProps>`
@@ -107,6 +153,10 @@ const ToggleItem = styled.div<SidebarProps>`
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    display: none;
   }
 `;
 
@@ -127,7 +177,7 @@ export const Sidebar = () => {
     { label: 'Hợp đồng', path: '/owner/contracts', icon: <FileProtectOutlined /> },
     { label: 'Dịch vụ', path: '/owner/services', icon: <ToolOutlined /> },
     { label: 'Điện nước', path: '/owner/utilities', icon: <ThunderboltOutlined /> },
-    { label: 'Hóa đơn', path: '/owner/bills', icon: <FileTextOutlined /> },
+    { label: 'Hóa đơn', path: '/owner/invoices', icon: <FileTextOutlined /> },
     { label: 'Thanh toán', path: '/owner/payments', icon: <CreditCardOutlined /> },
   ];
 

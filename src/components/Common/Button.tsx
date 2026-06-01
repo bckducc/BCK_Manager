@@ -51,6 +51,8 @@ const StyledButton = styled.button<ButtonStyledProps>`
   justify-content: center;
   gap: 0.5rem;
   text-align: center;
+  min-height: 40px;
+  white-space: nowrap;
 
   ${(props) => getVariantStyles(props.$variant || 'primary')}
 
@@ -65,6 +67,12 @@ const StyledButton = styled.button<ButtonStyledProps>`
     width: 100%;
     display: flex;
   `}
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    font-size: ${theme.fontSize.sm};
+    white-space: normal;
+  }
 `;
 
 const SpinnerIcon = styled.span`
