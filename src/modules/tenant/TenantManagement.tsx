@@ -20,11 +20,16 @@ const PageWrapper = styled.div`
   flex-direction: column;
   height: 100%;
   padding: ${theme.spacing.lg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+  }
 `;
 
 const ActionButtons = styled.div`
   display: flex;
   gap: ${theme.spacing.sm};
+  flex-wrap: wrap;
 
   button {
     padding: ${theme.spacing.sm} ${theme.spacing.md};
@@ -44,6 +49,15 @@ const ErrorContainer = styled.div`
   button {
     white-space: nowrap;
     flex-shrink: 0;
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      white-space: normal;
+    }
   }
 `;
 

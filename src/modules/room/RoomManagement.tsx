@@ -20,11 +20,16 @@ const PageWrapper = styled.div`
   flex-direction: column;
   height: 100%;
   padding: ${theme.spacing.lg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+  }
 `;
 
 const ActionButtons = styled.div`
   display: flex;
   gap: ${theme.spacing.sm};
+  flex-wrap: wrap;
 
   button {
     padding: ${theme.spacing.sm} ${theme.spacing.md};

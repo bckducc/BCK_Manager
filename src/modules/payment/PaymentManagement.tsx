@@ -4,7 +4,7 @@ import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
 import { Header, Button, Card, Modal } from '../../components/common';
 import { Table } from '../../components/Table';
-import { Form, FormGroup, Input, Select } from '../../components/forms/Form';
+import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
 
 const Container = styled.div`
   display: flex;
@@ -17,11 +17,16 @@ const PageWrapper = styled.div`
   flex-direction: column;
   height: 100%;
   padding: ${theme.spacing.lg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+  }
 `;
 
 const ActionButtons = styled.div`
   display: flex;
   gap: ${theme.spacing.sm};
+  flex-wrap: wrap;
 
   button {
     padding: ${theme.spacing.sm} ${theme.spacing.md};
@@ -44,22 +49,23 @@ export const PaymentManagement = () => {
     setFormData({ billNumber: '', amount: '', paymentMethod: '' });
   };
 
-  const columns: TableColumn[] = [
+  const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'billNumber', title: 'Mã HĐ' },
     { key: 'tenantName', title: 'Người Thuê' },
-    { key: 'amount', title: 'Số Tiền', render: (val) => `$${val}` },
+    { key: 'amount', title: 'Số Tiền', render: (val: unknown) => `$${val}` },
     { key: 'paymentDate', title: 'Ngày Thanh Toán' },
     { key: 'paymentMethod', title: 'Phương Thức' },
     {
       key: 'status',
       title: 'Trạng Thái',
-      render: (val) => {
+      render: (val: unknown) => {
         const colors: Record<string, string> = {
           pending: 'orange',
           confirmed: 'green',
           failed: 'red',
         };
-        return <span style={{ color: colors[val] || 'black' }}>{val}</span>;
+        const status = String(val);
+        return <span style={{ color: colors[status] || 'black' }}>{status}</span>;
       },
     },
     {

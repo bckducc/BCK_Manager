@@ -11,6 +11,11 @@ const Dashboard = styled.div`
   max-width: 100%;
 
   padding: ${theme.spacing.lg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    gap: ${theme.spacing.md};
+    padding: ${theme.spacing.md};
+  }
 `;
 
 const WelcomeSection = styled.div`
@@ -33,6 +38,14 @@ const WelcomeSection = styled.div`
   p {
     margin: 0;
     opacity: 0.9;
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+
+    h1 {
+      font-size: ${theme.fontSize.lg};
+    }
   }
 `;
 

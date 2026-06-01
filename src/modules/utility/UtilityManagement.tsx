@@ -22,6 +22,10 @@ const PageWrapper = styled.div`
   flex-direction: column;
   height: 100%;
   padding: ${theme.spacing.lg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+  }
 `;
 
 const Toolbar = styled.div`
@@ -30,6 +34,14 @@ const Toolbar = styled.div`
   gap: ${theme.spacing.md};
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    align-items: stretch;
+
+    > * {
+      width: 100%;
+    }
+  }
 `;
 
 const Tabs = styled.div`
@@ -490,16 +502,6 @@ export const UtilityManagement = () => {
                     />
                   </FormGroup>
                   <FormGroup label="Chỉ Số Nước Mới" required>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={entryForm.waterNew}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setEntryForm({ ...entryForm, waterNew: e.target.value })
-                      }
-                      disabled={isSubmitting || !!existingReading}
-                    />
-                  </FormGroup><FormGroup label="Chỉ Số Nước Mới" required>
                     <Input
                       type="number"
                       min="0"
