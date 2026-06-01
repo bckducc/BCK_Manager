@@ -32,7 +32,7 @@ src/
 │   ├── auth/
 │   ├── room/
 │   ├── tenant/
-│   ├── bill/
+│   ├── invoice/
 │   ├── contract/
 │   ├── payment/
 │   ├── service/

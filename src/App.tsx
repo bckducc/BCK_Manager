@@ -14,12 +14,12 @@ import { TenantManagement } from './modules/tenant/TenantManagement';
 import { ContractManagement } from './modules/contract/ContractManagement';
 import { ServiceManagement } from './modules/service/ServiceManagement';
 import { UtilityManagement } from './modules/utility/UtilityManagement';
-import { BillManagement } from './modules/bill/BillManagement';
+import { InvoiceManagement } from './modules/invoice/InvoiceManagement';
 import { PaymentManagement } from './modules/payment/PaymentManagement';
 import { TenantDashboard } from './modules/tenant/TenantDashboard';
 import { MyRoom } from './modules/tenant/MyRoom';
 import { MyContracts } from './modules/contract/MyContracts';
-import { MyBills } from './modules/bill/MyBills';
+import { MyInvoices } from './modules/invoice/MyInvoices';
 import { Notifications } from './modules/tenant/Notifications';
 
 function App() {
@@ -94,11 +94,11 @@ function App() {
             }
           />
           <Route
-            path="/owner/bills"
+            path="/owner/invoices"
             element={
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
-                  <BillManagement />
+                  <InvoiceManagement />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -145,11 +145,11 @@ function App() {
             }
           />
           <Route
-            path="/tenant/bills"
+            path="/tenant/invoices"
             element={
               <ProtectedRoute requiredRole="tenant">
                 <MainLayout>
-                  <MyBills />
+                  <MyInvoices />
                 </MainLayout>
               </ProtectedRoute>
             }

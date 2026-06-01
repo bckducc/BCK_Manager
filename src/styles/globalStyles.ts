@@ -13,6 +13,7 @@ export const GlobalStyle = createGlobalStyle`
   #root {
     width: 100%;
     height: 100%;
+    min-width: 0;
   }
 
   body {
@@ -23,6 +24,14 @@ export const GlobalStyle = createGlobalStyle`
     -moz-osx-font-smoothing: grayscale;
     color: ${theme.colors.text};
     background-color: ${theme.colors.white};
+    overflow-x: hidden;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
   }
 
   a {
@@ -39,6 +48,19 @@ export const GlobalStyle = createGlobalStyle`
   select,
   textarea {
     font-family: inherit;
+    max-width: 100%;
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    body {
+      font-size: 14px;
+    }
+
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 
   /* Scrollbar styling */
