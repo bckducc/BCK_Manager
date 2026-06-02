@@ -11,23 +11,24 @@ const Container = styled.div`
 `;
 
 export const MyContracts = () => {
-  const contracts: any[] = [];
+  const contracts: Record<string, unknown>[] = [];
 
-  const columns: TableColumn[] = [
+  const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'id', title: 'Mã HĐ' },
     { key: 'startDate', title: 'Ngày Bắt Đầu' },
     { key: 'endDate', title: 'Ngày Kết Thúc' },
-    { key: 'price', title: 'Giá Thuê', render: (val) => `$${val}` },
+    { key: 'price', title: 'Giá Thuê', render: (value: unknown) => `$${value}` },
     {
       key: 'status',
       title: 'Trạng Thái',
-      render: (val) => {
+      render: (value: unknown) => {
+        const status = String(value);
         const colors: Record<string, string> = {
           active: 'green',
           expired: 'red',
           terminated: 'orange',
         };
-        return <span style={{ color: colors[val] || 'black' }}>{val}</span>;
+        return <span style={{ color: colors[status] || 'black' }}>{status}</span>;
       },
     },
     {

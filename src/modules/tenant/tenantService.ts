@@ -15,21 +15,27 @@ export const tenantService = {
 
   getById: (id: string) => apiCall<Tenant>(`/api/v1/tenants/${id}`, { method: 'GET' }),
 
-  create: (data: { roomId: string; startDate: Date; username?: string; password?: string; name?: string; phone?: string; idNumber?: string; gender?: string }) =>
+  create: (data: { username?: string; password?: string; name?: string; phone?: string; idNumber?: string; gender?: string }) =>
     apiCall<Tenant>('/api/v1/tenants', {
       method: 'POST',
       body: JSON.stringify({
-        ...data,
-        startDate: data.startDate instanceof Date ? data.startDate.toISOString().split('T')[0] : data.startDate,
+        username: data.username,
+        password: data.password,
+        full_name: data.name,
+        phone: data.phone,
+        identity_card: data.idNumber,
+        gender: data.gender,
       }),
     }),
 
-  update: (id: string, data: Partial<Omit<Tenant, 'id' | 'currentRoom' | 'currentUser'>>) =>
+  update: (id: string, data: Partial<Omit<Tenant, 'id' | 'currentRoom' | 'currentUser'>> & { name?: string; phone?: string; idNumber?: string; gender?: string }) =>
     apiCall<Tenant>(`/api/v1/tenants/${id}`, {
       method: 'PUT',
       body: JSON.stringify({
-        ...data,
-        startDate: data.startDate instanceof Date ? data.startDate.toISOString().split('T')[0] : data.startDate,
+        full_name: data.name,
+        phone: data.phone,
+        identity_card: data.idNumber,
+        gender: data.gender,
       }),
     }),
 

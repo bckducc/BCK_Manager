@@ -21,5 +21,5 @@ export const roomService = {
   delete: (id: string) =>
     apiCall<{ success: boolean }>(`/api/v1/rooms/${id}`, { method: 'DELETE' }),
 
-  getAvailable: () => apiCall<{ rooms: Room[] }>('/api/v1/rooms/available', { method: 'GET' }),
+  getAvailable: () => apiCall<Room[]>('/api/v1/rooms?status=available', { method: 'GET' }),
 };

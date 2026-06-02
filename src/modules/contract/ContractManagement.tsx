@@ -1,11 +1,16 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
-import { Header, Button, Card, Loading, Alert } from '../../components/common';
+import { Header, Button, Card, Loading, Alert, Modal } from '../../components/common';
 import { Table } from '../../components/Table';
+import { Form, FormGroup, Input, Select, TextArea } from '../../components/Forms/Form';
 import { useContract } from '../../store/contract-context';
 import type { Contract } from './contract.types';
+import { tenantService } from '../tenant/tenantService';
+import { roomService } from '../room/roomService';
+import type { Tenant } from '../tenant/tenant.types';
+import type { Room } from '../room/room.types';
 
 const Container = styled.div`
   display: flex;
@@ -21,6 +26,27 @@ const PageWrapper = styled.div`
 
   @media (max-width: ${theme.breakpoints.mobile}) {
     padding: ${theme.spacing.md};
+  }
+`;
+
+const Toolbar = styled.div`
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) auto;
+  gap: ${theme.spacing.md};
+  align-items: flex-end;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: ${theme.spacing.md};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -42,122 +68,196 @@ const PrintContainer = styled.div`
   }
 `;
 
-export const ContractManagement = () => {
-  const { contracts, loading, deleteContract } = useContract();
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+const initialContractForm = {
+  tenantId: '',
+  roomId: '',
+  contractCode: '',
+  startDate: '',
+  endDate: '',
+  depositAmount: '',
+  monthlyRent: '',
+  signedDate: '',
+  terms: '',
+};
 
-  const handleDeleteContract = useCallback(async (id: string) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa hợp đồng này?')) {
+const statusLabels: Record<Contract['status'], string> = {
+  active: 'Còn hiệu lực',
+  expired: 'Hết hiệu lực',
+  terminated: 'Đã kết thúc',
+};
+
+const statusColors: Record<Contract['status'], string> = {
+  active: theme.colors.success,
+  expired: theme.colors.danger,
+  terminated: theme.colors.warning,
+};
+
+const formatDate = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('vi-VN');
+};
+
+const formatCurrency = (value: unknown) => {
+  const amount = Number(value || 0);
+  return `${amount.toLocaleString('vi-VN')} đ`;
+};
+
+export const ContractManagement = () => {
+  const { contracts, loading, error, addContract, deleteContract, fetchContracts } = useContract();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [formData, setFormData] = useState(initialContractForm);
+
+  useEffect(() => {
+    const loadOptions = async () => {
       try {
-        await deleteContract(id);
+        const [tenantResponse, roomResponse] = await Promise.all([
+          tenantService.getAll(),
+          roomService.getAvailable(),
+        ]);
+
+        const tenantData = tenantResponse.data as unknown;
+        const roomData = roomResponse.data as unknown;
+        setTenants(
+          Array.isArray(tenantData)
+            ? tenantData as Tenant[]
+            : Array.isArray((tenantData as Record<string, unknown> | undefined)?.tenants)
+              ? (tenantData as Record<string, unknown>).tenants as Tenant[]
+              : []
+        );
+        setRooms(
+          Array.isArray(roomData)
+            ? roomData as Room[]
+            : Array.isArray((roomData as Record<string, unknown> | undefined)?.rooms)
+              ? (roomData as Record<string, unknown>).rooms as Room[]
+              : []
+        );
       } catch (err) {
-        setDeleteError(err instanceof Error ? err.message : 'Failed to delete contract');
+        setActionError(err instanceof Error ? err.message : 'Không tải được dữ liệu tạo hợp đồng');
       }
+    };
+
+    loadOptions();
+  }, []);
+
+  const tenantOptions = tenants.map((tenant) => {
+    const record = tenant as Tenant & {
+      user_id?: string | number;
+      full_name?: string;
+      username?: string;
+    };
+    const id = String(record.user_id || tenant.userId || tenant.id);
+    const label = record.full_name || tenant.currentUser?.name || record.username || id;
+    return { value: id, label };
+  });
+
+  const roomOptions = rooms.map((room) => ({
+    value: String(room.id),
+    label: `Phòng ${room.room_number || room.roomNumber || room.name || room.id}`,
+  }));
+
+  const filteredContracts = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase();
+    return contracts.filter((contract) => {
+      const matchesStatus = !statusFilter || contract.status === statusFilter;
+      const searchContent = [
+        contract.contract_code,
+        contract.tenantName,
+        contract.tenantPhone,
+        contract.roomNumber,
+      ].join(' ').toLowerCase();
+      return matchesStatus && (!keyword || searchContent.includes(keyword));
+    });
+  }, [contracts, searchText, statusFilter]);
+
+  const handleTerminateContract = useCallback(async (contract: Contract) => {
+    if (contract.status === 'terminated') return;
+    if (!window.confirm('Bạn có chắc chắn muốn kết thúc hợp đồng này?')) return;
+
+    try {
+      setActionError(null);
+      await deleteContract(contract.id);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Không kết thúc được hợp đồng');
     }
   }, [deleteContract]);
+
+  const handleCreateContract = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.tenantId || !formData.roomId || !formData.startDate || !formData.endDate || !formData.depositAmount || !formData.monthlyRent) {
+      alert('Vui lòng nhập đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setActionError(null);
+      await addContract({
+        tenantId: formData.tenantId,
+        roomId: formData.roomId,
+        contractCode: formData.contractCode || undefined,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        depositAmount: Number(formData.depositAmount),
+        monthlyRent: Number(formData.monthlyRent),
+        signedDate: formData.signedDate || undefined,
+        terms: formData.terms || undefined,
+      });
+
+      setIsModalOpen(false);
+      setFormData(initialContractForm);
+      await fetchContracts();
+      alert('Tạo hợp đồng thành công');
+    } catch (err) {
+      alert(`Lỗi: ${err instanceof Error ? err.message : 'Không tạo được hợp đồng'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
 
-  const columns: TableColumn = useMemo(() => [
-    { key: 'id', title: 'Mã HĐ', width: '12%' },
-    { 
-      key: 'tenantName', 
-      title: 'Tên Người Thuê',
-      width: '18%',
-      render: (_: unknown, row: unknown) => {
-        const contract = row as Contract;
-        return (
-          contract.tenantName ||
-          contract.tenant?.currentUser?.name ||
-          contract.tenant?.currentUser?.username ||
-          contract.tenant?.currentUser?.email ||
-          contract.tenant?.currentUser?.id ||
-          'N/A'
-        );
-      },
-    },
-    { 
-      key: 'roomNumber', 
-      title: 'Số Phòng',
-      width: '12%',
-      render: (_: unknown, row: unknown) => {
-        const contract = row as Contract;
-        return (
-          contract.roomNumber ||
-          contract.room?.roomNumber ||
-          contract.room?.room_number ||
-          contract.room?.name ||
-          'N/A'
-        );
-      },
-    },
-    { 
-      key: 'startDate', 
-      title: 'Ngày Bắt Đầu',
-      width: '13%',
-      render: (val: unknown) => {
-        const date = val instanceof Date ? val : new Date(val as string);
-        return date.toLocaleDateString('vi-VN');
-      },
-    },
-    { 
-      key: 'endDate', 
-      title: 'Ngày Kết Thúc',
-      width: '13%',
-      render: (val: unknown) => {
-        const date = val instanceof Date ? val : new Date(val as string);
-        return date.toLocaleDateString('vi-VN');
-      },
-    },
-    { 
-      key: 'price', 
-      title: 'Giá Thuê (VNĐ)',
-      width: '13%',
-      render: (val: unknown) => {
-        const price = typeof val === 'number' ? val : 0;
-        return new Intl.NumberFormat('vi-VN').format(price);
-      },
-    },
+  const columns: TableColumn<Contract>[] = useMemo(() => [
+    { key: 'contract_code', title: 'Mã HĐ', width: '12%', render: (value) => String(value || 'N/A') },
+    { key: 'tenantName', title: 'Tên Người Thuê', width: '18%', render: (_, row) => row.tenantName || 'N/A' },
+    { key: 'roomNumber', title: 'Số Phòng', width: '12%', render: (_, row) => row.roomNumber || 'N/A' },
+    { key: 'startDate', title: 'Ngày Bắt Đầu', width: '13%', render: (value) => formatDate(value as Date | string) },
+    { key: 'endDate', title: 'Ngày Kết Thúc', width: '13%', render: (value) => formatDate(value as Date | string) },
+    { key: 'price', title: 'Giá Phòng', width: '13%', render: (value) => formatCurrency(value) },
     {
       key: 'status',
       title: 'Trạng Thái',
       width: '13%',
-      render: (val: unknown) => {
-        const status = val as string;
-        const colors: Record<string, string> = {
-          active: theme.colors.success,
-          expired: theme.colors.danger,
-          terminated: theme.colors.warning,
-        };
-        const labels: Record<string, string> = {
-          active: 'Còn Hiệu Lực',
-          expired: 'Hết Hiệu Lực',
-          terminated: 'Đã Chấm Dứt',
-        };
-        return <span style={{ color: colors[status] || 'black' }}>{labels[status] || status}</span>;
+      render: (value) => {
+        const status = value as Contract['status'];
+        return <span style={{ color: statusColors[status] || theme.colors.text }}>{statusLabels[status] || status}</span>;
       },
     },
     {
       key: 'actions',
       title: 'Hành Động',
-      width: '6%',
-      render: (_: unknown, row: unknown) => {
-        const contract = row as Contract;
-        return (
-          <ActionButtons>
-            <Button
-              variant="danger"
-              onClick={() => handleDeleteContract(contract.id)}
-            >
-              ✕ Xóa
-            </Button>
-          </ActionButtons>
-        );
-      },
+      width: '10%',
+      render: (_, contract) => (
+        <ActionButtons>
+          <Button
+            variant="secondary"
+            onClick={() => handleTerminateContract(contract)}
+            disabled={contract.status === 'terminated'}
+          >
+            Kết thúc
+          </Button>
+        </ActionButtons>
+      ),
     },
-  ], [handleDeleteContract]);
+  ], [handleTerminateContract]);
 
   if (loading && contracts.length === 0) {
     return <Loading />;
@@ -166,33 +266,169 @@ export const ContractManagement = () => {
   return (
     <PageWrapper>
       <Container>
-        {deleteError && (
-          <Alert 
-            type="error" 
-            message={deleteError}
-          />
+        {(actionError || error) && (
+          <Alert type="error" message={actionError || error || ''} />
         )}
-        
+
         <Header
           title="Quản Lý Hợp Đồng"
           actions={
-            <Button onClick={handlePrint} variant="secondary">
-              🖨 In Danh Sách
-            </Button>
+            <ActionButtons>
+              <Button onClick={() => setIsModalOpen(true)}>
+                + Tạo Hợp Đồng
+              </Button>
+              <Button onClick={handlePrint} variant="secondary">
+                In Danh Sách
+              </Button>
+            </ActionButtons>
           }
         />
 
         <Card>
+          <Toolbar>
+            <FormGroup label="Tìm kiếm">
+              <Input
+                value={searchText}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
+                placeholder="Tên người thuê, phòng, mã hợp đồng..."
+              />
+            </FormGroup>
+            <FormGroup label="Trạng thái">
+              <Select
+                value={statusFilter}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
+                options={[
+                  { value: '', label: 'Tất cả' },
+                  { value: 'active', label: 'Còn hiệu lực' },
+                  { value: 'expired', label: 'Hết hiệu lực' },
+                  { value: 'terminated', label: 'Đã kết thúc' },
+                ]}
+              />
+            </FormGroup>
+            <Button onClick={fetchContracts} disabled={loading}>
+              Tải lại
+            </Button>
+          </Toolbar>
+        </Card>
+
+        <Card>
           <PrintContainer>
-            {contracts.length > 0 ? (
-              <Table columns={columns} data={contracts} />
-            ) : (
-              <div style={{ textAlign: 'center', padding: theme.spacing.lg, color: theme.colors.textSecondary }}>
-                Chưa có hợp đồng nào
-              </div>
-            )}
+            <Table columns={columns} data={filteredContracts} emptyText="Chưa có hợp đồng nào" />
           </PrintContainer>
         </Card>
+
+        <Modal
+          isOpen={isModalOpen}
+          title="Tạo Hợp Đồng Mới"
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={() => {
+            handleCreateContract({ preventDefault: () => undefined } as React.FormEvent);
+          }}
+          confirmText={isSubmitting ? 'Đang tạo...' : 'Tạo'}
+          cancelText="Hủy"
+        >
+          <Form onSubmit={handleCreateContract}>
+            <FormGrid>
+              <FormGroup label="Người thuê" required>
+                <Select
+                  value={formData.tenantId}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setFormData({ ...formData, tenantId: e.target.value })
+                  }
+                  options={tenantOptions}
+                  placeholder="Chọn người thuê..."
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+              <FormGroup label="Phòng" required>
+                <Select
+                  value={formData.roomId}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    const room = rooms.find((item) => String(item.id) === e.target.value);
+                    setFormData({
+                      ...formData,
+                      roomId: e.target.value,
+                      monthlyRent: room?.price ? String(room.price) : formData.monthlyRent,
+                    });
+                  }}
+                  options={roomOptions}
+                  placeholder="Chọn phòng..."
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+              <FormGroup label="Mã hợp đồng">
+                <Input
+                  value={formData.contractCode}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, contractCode: e.target.value })
+                  }
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+              <FormGroup label="Ngày ký">
+                <Input
+                  type="date"
+                  value={formData.signedDate}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, signedDate: e.target.value })
+                  }
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+              <FormGroup label="Ngày bắt đầu" required>
+                <Input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, startDate: e.target.value })
+                  }
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+              <FormGroup label="Ngày kết thúc" required>
+                <Input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, endDate: e.target.value })
+                  }
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+              <FormGroup label="Tiền cọc" required>
+                <Input
+                  type="number"
+                  min="0"
+                  value={formData.depositAmount}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, depositAmount: e.target.value })
+                  }
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+              <FormGroup label="Giá phòng/tháng" required>
+                <Input
+                  type="number"
+                  min="0"
+                  value={formData.monthlyRent}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, monthlyRent: e.target.value })
+                  }
+                  disabled={isSubmitting}
+                />
+              </FormGroup>
+            </FormGrid>
+            <FormGroup label="Điều khoản">
+              <TextArea
+                value={formData.terms}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setFormData({ ...formData, terms: e.target.value })
+                }
+                disabled={isSubmitting}
+              />
+            </FormGroup>
+          </Form>
+        </Modal>
       </Container>
     </PageWrapper>
   );

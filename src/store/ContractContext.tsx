@@ -4,6 +4,7 @@ import type { User, UserRole } from '../types';
 import type { Room } from '../modules/room/room.types';
 import { ContractContext } from './contract-context';
 import { contractService } from '../modules/contract/contractService';
+import type { CreateContractPayload } from '../modules/contract/contractService';
 
 const parseDate = (value: unknown): Date => {
   if (value instanceof Date) return value;
@@ -95,7 +96,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const responseData = response.data ?? response;
       const payload = Array.isArray(responseData)
         ? responseData
-        : (responseData as Record<string, unknown>);
+        : (responseData as unknown as Record<string, unknown>);
 
       const data = Array.isArray(payload)
         ? payload
@@ -118,16 +119,21 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
           const contract: Contract = {
             id: getString(item.id || item.contractId || item.contract_id),
+            contract_code: getString(item.contractCode || item.contract_code || item.code || ''),
             tenantId: getString(item.tenantId || item.tenant_id),
             roomId: getString(item.roomId || item.room_id),
             startDate: parseDate(item.startDate || item.start_date),
             endDate: parseDate(item.endDate || item.end_date),
-            price: parsePrice(item.price || item.rent || item.roomPrice || item.room_price),
+            price: parsePrice(item.monthly_rent || item.price || item.rent || item.roomPrice || item.room_price),
+            depositAmount: parsePrice(item.deposit_amount || item.depositAmount),
+            signedDate: item.signed_date || item.signedDate ? parseDate(item.signed_date || item.signedDate) : undefined,
             status: getStatus(item.status || item.contractStatus || item.status_text || item.state),
             terms: getString(item.terms || item.description || item.note || '') || undefined,
             createdAt: parseDate(item.createdAt || item.created_at),
             tenantName: tenantName || undefined,
+            tenantPhone: getString(item.tenant_phone || item.tenantPhone || '') || undefined,
             roomNumber: roomNumber || undefined,
+            floor: typeof item.floor === 'number' ? item.floor : Number(item.floor) || undefined,
             tenant: parseTenant(tenantData),
             room: parseRoom(roomData),
           };
@@ -148,7 +154,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     fetchContracts();
   }, [fetchContracts]);
 
-  const addContract = useCallback(async (contract: Omit<Contract, 'id' | 'createdAt'>) => {
+  const addContract = useCallback(async (contract: CreateContractPayload) => {
     setLoading(true);
     setError(null);
     try {
@@ -192,10 +198,13 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLoading(true);
     setError(null);
     try {
-      const response = await contractService.delete(id);
+      const response = await contractService.terminate(id);
 
       if (response.success) {
-        setContracts((prev) => prev.filter((contract) => contract.id !== id));
+        setContracts((prev) =>
+          prev.map((contract) => (contract.id === id ? { ...contract, status: 'terminated' } : contract))
+        );
+        await fetchContracts();
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to delete contract';
@@ -204,7 +213,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchContracts]);
 
   return (
     <ContractContext.Provider

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Tenant, User } from '../types';
 import { tenantService } from '../modules/tenant/tenantService';
@@ -14,7 +15,7 @@ interface TenantContextType {
   loading: boolean;
   error: string | null;
   addTenant: (tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: string }) => Promise<void>;
-  updateTenant: (id: string, tenant: Partial<Tenant>) => Promise<void>;
+  updateTenant: (id: string, tenant: Partial<Tenant> & { name?: string; phone?: string; idNumber?: string; gender?: string }) => Promise<void>;
   deleteTenant: (id: string) => Promise<void>;
   getTenantById: (id: string) => Tenant | undefined;
   fetchTenants: () => Promise<void>;
@@ -37,13 +38,11 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       let tenantsList: Tenant[] = [];
       const usersList: User[] = [];
       
-      // Handle response.data.tenants or response.data as array
       const responseData = response.data as Record<string, unknown> | unknown[];
       const data = Array.isArray(responseData) ? responseData : ((responseData as Record<string, unknown>)?.tenants as unknown[] || []);
       
       if (Array.isArray(data)) {
         tenantsList = (data as Array<Record<string, unknown>>).map((item: Record<string, unknown>) => {
-          // Create user object from tenant data
           const user: User = {
             id: String(item.user_id || item.userId || ''),
             username: (item.username as string | undefined) || 'N/A',
@@ -59,9 +58,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             usersList.push(user);
           }
 
-          // Create tenant object
           const tenant: Tenant = {
-            id: String(item.id || ''),
+            id: String(item.id || item.user_id || item.userId || ''),
             userId: String(item.user_id || item.userId || ''),
             roomId: String(item.room_id || item.roomId || ''),
             startDate: parseDate(item.start_date || item.startDate),
@@ -92,14 +90,11 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, []);
 
-  const addTenant = useCallback(async (tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: string }) => {
+  const addTenant = useCallback(async (_tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: string }) => {
     setLoading(true);
     setError(null);
     try {
-      // Call API to create tenant with user data
       const response = await tenantService.create({
-        roomId: tenant.roomId,
-        startDate: tenant.startDate,
         username: userData.username,
         password: userData.password,
         name: userData.name,
@@ -111,7 +106,6 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (response.success && response.data) {
         setTenants((prev) => [...prev, response.data as Tenant]);
         
-        // Refresh to get full data with room and user info
         await fetchTenants();
       }
     } catch (err) {
@@ -123,7 +117,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [fetchTenants]);
 
-  const updateTenant = useCallback(async (id: string, updates: Partial<Tenant>) => {
+  const updateTenant = useCallback(async (id: string, updates: Partial<Tenant> & { name?: string; phone?: string; idNumber?: string; gender?: string }) => {
     setLoading(true);
     setError(null);
     try {
@@ -133,7 +127,6 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setTenants((prev) =>
           prev.map((tenant) => (tenant.id === id ? { ...tenant, ...updates } : tenant))
         );
-        // Refresh to get latest data
         await fetchTenants();
       }
     } catch (err) {
@@ -189,3 +182,5 @@ export const useTenant = () => {
   }
   return context;
 };
+
+export default TenantProvider;

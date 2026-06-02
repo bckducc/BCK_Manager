@@ -2,38 +2,26 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import { Button } from '../../components/common';
-import { Form, FormGroup, Input } from '../../components/Forms/Form';
+import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
 import { useTenant } from '../../store/TenantContext';
 import type { Tenant } from './tenant.types';
 
 interface AddTenantModalProps {
   isOpen: boolean;
   onClose: () => void;
-  rooms: Array<{ id: string; roomNumber: string }>;
+  rooms?: Array<{ id: string; roomNumber: string }>;
   editingTenant?: Tenant;
 }
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   display: ${(p) => (p.$isOpen ? 'flex' : 'none')};
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: ${theme.zIndex.modal};
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.2s ease;
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+  padding: ${theme.spacing.md};
 `;
 
 const ModalContent = styled.div`
@@ -45,23 +33,16 @@ const ModalContent = styled.div`
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: ${theme.shadow.lg};
-  animation: slideUp 0.3s ease;
-
-  @keyframes slideUp {
-    from {
-      transform: translateY(20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
 
   h2 {
     margin: 0 0 ${theme.spacing.lg} 0;
     color: ${theme.colors.dark};
     font-size: ${theme.fontSize.lg};
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    width: 100%;
+    padding: ${theme.spacing.md};
   }
 `;
 
@@ -90,6 +71,14 @@ const ModalFooter = styled.div`
   button {
     min-width: 120px;
   }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
 `;
 
 const CredentialsBox = styled.div`
@@ -113,6 +102,7 @@ const CredentialsBox = styled.div`
     margin-bottom: ${theme.spacing.xs};
     font-size: ${theme.fontSize.sm};
     color: ${theme.colors.textSecondary};
+    overflow-wrap: anywhere;
 
     .label {
       font-weight: ${theme.fontWeight.semibold};
@@ -126,11 +116,19 @@ const CredentialsBox = styled.div`
   }
 `;
 
+const ErrorBox = styled.div`
+  background: ${theme.colors.dangerLight};
+  color: ${theme.colors.dangerDark};
+  padding: ${theme.spacing.md};
+  border-radius: ${theme.radius.sm};
+  margin-bottom: ${theme.spacing.md};
+`;
+
 const generateUsername = (name: string): string => {
   return name
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, '')
     .substring(0, 20);
 };
@@ -144,59 +142,46 @@ const generatePassword = (): string => {
   return password;
 };
 
-export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, rooms, editingTenant }) => {
+export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, editingTenant }) => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     idNumber: '',
     gender: 'other',
-    roomId: '',
-    startDate: new Date().toISOString().split('T')[0],
   });
-
   const [generatedCredentials, setGeneratedCredentials] = useState<{
     username: string;
     password: string;
   } | null>(null);
-
   const [error, setError] = useState('');
   const { addTenant, updateTenant } = useTenant();
 
-  // Initialize form with editing tenant data or reset
   React.useEffect(() => {
-    if (isOpen) {
-      if (editingTenant?.currentUser) {
-        setFormData({
-          name: editingTenant.currentUser.name || '',
-          phone: editingTenant.currentUser.phone || '',
-          idNumber: editingTenant.currentUser.idNumber || '',
-          gender: editingTenant.currentUser.gender || 'other',
-          roomId: String(editingTenant.currentRoom?.id || ''),
-          startDate: new Date().toISOString().split('T')[0],
-        });
-        // For edit mode, no need to generate credentials again
-        setGeneratedCredentials(null);
-      } else {
-        setFormData({
-          name: '',
-          phone: '',
-          idNumber: '',
-          gender: 'other',
-          roomId: '',
-          startDate: new Date().toISOString().split('T')[0],
-        });
-        setGeneratedCredentials(null);
-      }
-      setError('');
+    if (!isOpen) return;
+
+    if (editingTenant?.currentUser) {
+      setFormData({
+        name: editingTenant.currentUser.name || '',
+        phone: editingTenant.currentUser.phone || '',
+        idNumber: editingTenant.currentUser.idNumber || '',
+        gender: editingTenant.currentUser.gender || 'other',
+      });
+      setGeneratedCredentials(null);
+    } else {
+      setFormData({
+        name: '',
+        phone: '',
+        idNumber: '',
+        gender: 'other',
+      });
+      setGeneratedCredentials(null);
     }
+    setError('');
   }, [isOpen, editingTenant]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleGenerateCredentials = () => {
@@ -205,10 +190,10 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
       return;
     }
 
-    const username = generateUsername(formData.name);
-    const password = generatePassword();
-
-    setGeneratedCredentials({ username, password });
+    setGeneratedCredentials({
+      username: generateUsername(formData.name),
+      password: generatePassword(),
+    });
     setError('');
   };
 
@@ -226,37 +211,18 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
       return;
     }
 
-    if (!formData.roomId) {
-      setError('Vui lòng chọn phòng');
-      return;
-    }
-
     try {
       if (editingTenant) {
-        // Update existing tenant
         await updateTenant(editingTenant.id, {
-          roomId: formData.roomId,
-          startDate: new Date(formData.startDate),
+          name: formData.name,
+          phone: formData.phone,
+          idNumber: formData.idNumber,
+          gender: formData.gender,
         });
-
-        setFormData({
-          name: '',
-          phone: '',
-          idNumber: '',
-          gender: 'other',
-          roomId: '',
-          startDate: new Date().toISOString().split('T')[0],
-        });
-        setGeneratedCredentials(null);
         alert('Cập nhật người thuê thành công');
-        onClose();
       } else {
-        // Create new tenant
         await addTenant(
-          {
-            roomId: formData.roomId,
-            startDate: new Date(formData.startDate),
-          },
+          { roomId: '', startDate: new Date() },
           {
             username: generatedCredentials!.username,
             password: generatedCredentials!.password,
@@ -266,21 +232,12 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
             gender: formData.gender,
           }
         );
-
-        setFormData({
-          name: '',
-          phone: '',
-          idNumber: '',
-          gender: 'other',
-          roomId: '',
-          startDate: new Date().toISOString().split('T')[0],
-        });
-        setGeneratedCredentials(null);
         alert('Thêm người thuê thành công');
-        onClose();
       }
-    } catch {
-      setError(editingTenant ? 'Có lỗi xảy ra khi cập nhật người thuê' : 'Có lỗi xảy ra khi thêm người thuê');
+
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi lưu người thuê');
     }
   };
 
@@ -289,19 +246,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <h2>{editingTenant ? 'Cập Nhật Người Thuê' : 'Thêm Người Thuê Mới'}</h2>
 
-        {error && (
-          <div
-            style={{
-              background: '#f8d7da',
-              color: '#721c24',
-              padding: theme.spacing.md,
-              borderRadius: theme.radius.sm,
-              marginBottom: theme.spacing.md,
-            }}
-          >
-            {error}
-          </div>
-        )}
+        {error && <ErrorBox>{error}</ErrorBox>}
 
         <Form onSubmit={handleSubmit}>
           <FormGrid>
@@ -330,24 +275,17 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
             </FormGroup>
 
             <FormGroup label="Giới Tính" required>
-              <select
+              <Select
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
+                options={[
+                  { value: 'male', label: 'Nam' },
+                  { value: 'female', label: 'Nữ' },
+                  { value: 'other', label: 'Khác' },
+                ]}
                 required
-                style={{
-                  width: '100%',
-                  padding: `${theme.spacing.sm} ${theme.spacing.md}`,
-                  borderRadius: theme.radius.sm,
-                  border: `1px solid ${theme.colors.borderLight}`,
-                  fontSize: theme.fontSize.sm,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <option value="male">Nam</option>
-                <option value="female">Nữ</option>
-                <option value="other">Khác</option>
-              </select>
+              />
             </FormGroup>
 
             <FormGroup label="Điện Thoại">
@@ -360,53 +298,14 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
               />
             </FormGroup>
 
-            <FormGroup label="Phòng" required>
-              <select
-                name="roomId"
-                value={formData.roomId}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: '100%',
-                  padding: `${theme.spacing.sm} ${theme.spacing.md}`,
-                  borderRadius: theme.radius.sm,
-                  border: `1px solid ${theme.colors.borderLight}`,
-                  fontSize: theme.fontSize.sm,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <option value="">-- Chọn phòng --</option>
-                {rooms.map((room) => (
-                  <option key={room.id} value={room.id}>
-                    {room.roomNumber}
-                  </option>
-                ))}
-              </select>
-            </FormGroup>
-
-            <FormGroup label="Ngày Bắt Đầu" required>
-              <Input
-                type="date"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleInputChange}
-                required
-              />
-            </FormGroup>
-
             <FullWidthField>
               {editingTenant ? (
                 <p style={{ fontSize: theme.fontSize.sm, color: theme.colors.textSecondary }}>
-                  ℹ Chỉnh sửa thông tin cơ bản của người thuê. Để thay đổi tài khoản đăng nhập, vui lòng liên hệ quản trị viên.
+                  Phòng sẽ được hiển thị sau khi tạo hợp đồng cho người thuê.
                 </p>
               ) : (
-                <Button
-                  type="button"
-                  onClick={handleGenerateCredentials}
-                  variant="primary"
-                  fullWidth
-                >
-                  {generatedCredentials ? '↻ Tạo Lại Tài Khoản' : 'Tạo Tài Khoản Đăng Nhập'}
+                <Button type="button" onClick={handleGenerateCredentials} variant="primary" fullWidth>
+                  {generatedCredentials ? 'Tạo Lại Tài Khoản' : 'Tạo Tài Khoản Đăng Nhập'}
                 </Button>
               )}
             </FullWidthField>
@@ -414,23 +313,14 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
             {generatedCredentials && (
               <FullWidthField>
                 <CredentialsBox>
-                  <div className="credentials-title">📋 Thông tin đăng nhập tự động tạo:</div>
+                  <div className="credentials-title">Thông tin đăng nhập tự động tạo:</div>
                   <div className="credential-item">
-                    <span className="label">Tên Tài Khoản:</span>
+                    <span className="label">Tài khoản:</span>
                     <span className="value">{generatedCredentials.username}</span>
                   </div>
                   <div className="credential-item">
-                    <span className="label">Mật Khẩu:</span>
+                    <span className="label">Mật khẩu:</span>
                     <span className="value">{generatedCredentials.password}</span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      color: theme.colors.textSecondary,
-                      marginTop: theme.spacing.sm,
-                    }}
-                  >
-                    ℹ Lưu thông tin này để gửi cho người thuê
                   </div>
                 </CredentialsBox>
               </FullWidthField>

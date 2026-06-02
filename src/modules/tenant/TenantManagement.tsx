@@ -5,6 +5,7 @@ import type { TableColumn } from '../../components/Table';
 import { Header, Button, Card, Alert, Loading } from '../../components/common';
 import { Table } from '../../components/Table';
 import { useTenant } from '../../store/TenantContext';
+import { useContract } from '../../store/contract-context';
 import { AddTenantModal } from './AddTenantModal';
 import type { Tenant } from './tenant.types';
 import { DeleteOutlined } from '@ant-design/icons';
@@ -76,10 +77,12 @@ export const TenantManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const { tenants, loading, error, deleteTenant, fetchTenants } = useTenant();
+  const { contracts, fetchContracts } = useContract();
 
   useEffect(() => {
     fetchTenants();
-  }, [fetchTenants]);
+    fetchContracts();
+  }, [fetchContracts, fetchTenants]);
 
   const handleEditTenant = (tenant: Tenant) => {
     setEditingTenant(tenant);
@@ -101,6 +104,13 @@ export const TenantManagement = () => {
 
       const user = tenant.currentUser;
       const room = tenant.currentRoom;
+      const activeContract = contracts.find((contract) => {
+        const tenantUserId = String(tenant.userId || tenant.id);
+        return (
+          contract.status === 'active' &&
+          (String(contract.tenantId) === tenantUserId || String(contract.tenant?.userId) === tenantUserId)
+        );
+      });
 
       return {
         id: tenant.id,
@@ -108,17 +118,23 @@ export const TenantManagement = () => {
         idNumber: user?.idNumber || 'N/A',
         gender: user?.gender ? genderMap[user.gender as keyof typeof genderMap] : 'N/A',
         phone: user?.phone || 'N/A',
-        roomNumber: room?.roomNumber || 'N/A',
+        roomNumber:
+          activeContract?.roomNumber ||
+          activeContract?.room?.roomNumber ||
+          (activeContract?.room as { room_number?: string } | undefined)?.room_number ||
+          room?.roomNumber ||
+          (room as { room_number?: string } | undefined)?.room_number ||
+          'N/A',
         leaseStart: new Date(tenant.startDate).toLocaleDateString('vi-VN'),
       };
     });
-  }, [tenants]);
+  }, [contracts, tenants]);
 
   const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'name', title: 'Tên Người Thuê' },
+    { key: 'phone', title: 'Điện Thoại' },
     { key: 'idNumber', title: 'CMND/CCCD' },
     { key: 'gender', title: 'Giới Tính' },
-    { key: 'phone', title: 'Điện Thoại' },
     { key: 'roomNumber', title: 'Phòng' },
     { key: 'leaseStart', title: 'Ngày Bắt Đầu' },
     {
