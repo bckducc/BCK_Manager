@@ -81,41 +81,6 @@ const ModalFooter = styled.div`
   }
 `;
 
-const CredentialsBox = styled.div`
-  background: #f0f4ff;
-  border: 1px solid ${theme.colors.primary};
-  border-radius: ${theme.radius.sm};
-  padding: ${theme.spacing.md};
-  margin-bottom: ${theme.spacing.lg};
-  font-family: 'Courier New', monospace;
-
-  .credentials-title {
-    font-weight: ${theme.fontWeight.bold};
-    color: ${theme.colors.dark};
-    margin-bottom: ${theme.spacing.sm};
-    font-size: ${theme.fontSize.sm};
-  }
-
-  .credential-item {
-    display: flex;
-    gap: ${theme.spacing.md};
-    margin-bottom: ${theme.spacing.xs};
-    font-size: ${theme.fontSize.sm};
-    color: ${theme.colors.textSecondary};
-    overflow-wrap: anywhere;
-
-    .label {
-      font-weight: ${theme.fontWeight.semibold};
-      min-width: 100px;
-    }
-
-    .value {
-      color: ${theme.colors.dark};
-      font-weight: ${theme.fontWeight.bold};
-    }
-  }
-`;
-
 const ErrorBox = styled.div`
   background: ${theme.colors.dangerLight};
   color: ${theme.colors.dangerDark};
@@ -124,58 +89,56 @@ const ErrorBox = styled.div`
   margin-bottom: ${theme.spacing.md};
 `;
 
-const generateUsername = (name: string): string => {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '')
-    .substring(0, 20);
-};
+const HintText = styled.p`
+  color: ${theme.colors.textSecondary};
+  font-size: ${theme.fontSize.sm};
+  margin: 0;
+`;
 
-const generatePassword = (): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$';
-  let password = '';
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
+const normalizePhone = (phone: string) => phone.replace(/\D/g, '');
+
+const isValidVietnamPhone = (phone: string) => /^0(3|5|7|8|9)\d{8}$/.test(phone);
+
+const isSameTenant = (tenant: Tenant, editingTenant?: Tenant) => {
+  if (!editingTenant) return false;
+  return String(tenant.id) === String(editingTenant.id) || String(tenant.userId) === String(editingTenant.userId);
 };
 
 export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, editingTenant }) => {
   const [formData, setFormData] = useState({
+    username: '',
+    password: '',
     name: '',
     phone: '',
     idNumber: '',
     gender: 'other',
   });
-  const [generatedCredentials, setGeneratedCredentials] = useState<{
-    username: string;
-    password: string;
-  } | null>(null);
   const [error, setError] = useState('');
-  const { addTenant, updateTenant } = useTenant();
+  const { addTenant, updateTenant, tenants } = useTenant();
 
   React.useEffect(() => {
     if (!isOpen) return;
 
     if (editingTenant?.currentUser) {
       setFormData({
+        username: '',
+        password: '',
         name: editingTenant.currentUser.name || '',
         phone: editingTenant.currentUser.phone || '',
         idNumber: editingTenant.currentUser.idNumber || '',
         gender: editingTenant.currentUser.gender || 'other',
       });
-      setGeneratedCredentials(null);
     } else {
       setFormData({
+        username: '',
+        password: '',
         name: '',
         phone: '',
         idNumber: '',
         gender: 'other',
       });
-      setGeneratedCredentials(null);
     }
+
     setError('');
   }, [isOpen, editingTenant]);
 
@@ -184,39 +147,59 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGenerateCredentials = () => {
-    if (!formData.name.trim()) {
-      setError('Vui lòng nhập tên người thuê');
-      return;
+  const validateForm = () => {
+    const phone = normalizePhone(formData.phone);
+
+    if (!formData.name.trim() || !formData.idNumber.trim() || !phone) {
+      return 'Vui lòng điền đầy đủ thông tin bắt buộc';
     }
 
-    setGeneratedCredentials({
-      username: generateUsername(formData.name),
-      password: generatePassword(),
+    if (!isValidVietnamPhone(phone)) {
+      return 'Số điện thoại phải gồm 10 số và đúng định dạng số điện thoại Việt Nam';
+    }
+
+    const duplicatedPhone = tenants.some((tenant) => {
+      if (isSameTenant(tenant, editingTenant)) return false;
+      return normalizePhone(tenant.currentUser?.phone || '') === phone;
     });
-    setError('');
+
+    if (duplicatedPhone) {
+      return 'Số điện thoại này đã được sử dụng bởi người dùng khác';
+    }
+
+    if (!editingTenant && (!formData.username.trim() || !formData.password.trim())) {
+      return 'Vui lòng nhập tài khoản và mật khẩu cho người thuê mới';
+    }
+
+    if (!editingTenant && /\s/.test(formData.username.trim())) {
+      return 'Tài khoản không được chứa khoảng trắng';
+    }
+
+    if (!editingTenant && formData.password.trim().length < 6) {
+      return 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+
+    return '';
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.name.trim() || !formData.idNumber.trim()) {
-      setError('Vui lòng điền đầy đủ thông tin bắt buộc');
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    if (!editingTenant && !generatedCredentials) {
-      setError('Vui lòng tạo tài khoản cho người thuê mới');
-      return;
-    }
+    const phone = normalizePhone(formData.phone);
 
     try {
       if (editingTenant) {
         await updateTenant(editingTenant.id, {
-          name: formData.name,
-          phone: formData.phone,
-          idNumber: formData.idNumber,
+          name: formData.name.trim(),
+          phone,
+          idNumber: formData.idNumber.trim(),
           gender: formData.gender,
         });
         alert('Cập nhật người thuê thành công');
@@ -224,11 +207,11 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
         await addTenant(
           { roomId: '', startDate: new Date() },
           {
-            username: generatedCredentials!.username,
-            password: generatedCredentials!.password,
-            name: formData.name,
-            phone: formData.phone,
-            idNumber: formData.idNumber,
+            username: formData.username.trim(),
+            password: formData.password,
+            name: formData.name.trim(),
+            phone,
+            idNumber: formData.idNumber.trim(),
             gender: formData.gender,
           }
         );
@@ -263,6 +246,34 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
               </FormGroup>
             </FullWidthField>
 
+            {!editingTenant && (
+              <>
+                <FormGroup label="Tài Khoản" required>
+                  <Input
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    placeholder="Nhập tài khoản đăng nhập"
+                    autoComplete="username"
+                    required
+                  />
+                </FormGroup>
+
+                <FormGroup label="Mật Khẩu" required>
+                  <Input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Nhập mật khẩu"
+                    autoComplete="new-password"
+                    required
+                  />
+                </FormGroup>
+              </>
+            )}
+
             <FormGroup label="CMND/CCCD" required>
               <Input
                 type="text"
@@ -288,50 +299,29 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
               />
             </FormGroup>
 
-            <FormGroup label="Điện Thoại">
+            <FormGroup label="Điện Thoại" required>
               <Input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                placeholder="Nhập điện thoại"
+                placeholder="Ví dụ: 0912345678"
+                inputMode="numeric"
+                maxLength={10}
+                required
               />
             </FormGroup>
 
             <FullWidthField>
-              {editingTenant ? (
-                <p style={{ fontSize: theme.fontSize.sm, color: theme.colors.textSecondary }}>
-                  Phòng sẽ được hiển thị sau khi tạo hợp đồng cho người thuê.
-                </p>
-              ) : (
-                <Button type="button" onClick={handleGenerateCredentials} variant="primary" fullWidth>
-                  {generatedCredentials ? 'Tạo Lại Tài Khoản' : 'Tạo Tài Khoản Đăng Nhập'}
-                </Button>
-              )}
+              <HintText>Phòng sẽ được hiển thị sau khi tạo hợp đồng cho người thuê.</HintText>
             </FullWidthField>
-
-            {generatedCredentials && (
-              <FullWidthField>
-                <CredentialsBox>
-                  <div className="credentials-title">Thông tin đăng nhập tự động tạo:</div>
-                  <div className="credential-item">
-                    <span className="label">Tài khoản:</span>
-                    <span className="value">{generatedCredentials.username}</span>
-                  </div>
-                  <div className="credential-item">
-                    <span className="label">Mật khẩu:</span>
-                    <span className="value">{generatedCredentials.password}</span>
-                  </div>
-                </CredentialsBox>
-              </FullWidthField>
-            )}
           </FormGrid>
 
           <ModalFooter>
             <Button type="button" onClick={onClose}>
               Hủy
             </Button>
-            <Button type="submit" variant="primary" disabled={editingTenant ? false : !generatedCredentials}>
+            <Button type="submit" variant="primary">
               {editingTenant ? 'Cập Nhật' : 'Thêm Người Thuê'}
             </Button>
           </ModalFooter>

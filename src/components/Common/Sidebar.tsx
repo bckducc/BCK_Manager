@@ -9,7 +9,6 @@ import {
   ToolOutlined,
   ThunderboltOutlined,
   FileTextOutlined,
-  CreditCardOutlined,
   HomeOutlined,
 } from '@ant-design/icons';
 import { useSidebar } from '../../store/SidebarContext';
@@ -178,7 +177,6 @@ export const Sidebar = () => {
     { label: 'Dịch vụ', path: '/owner/services', icon: <ToolOutlined /> },
     { label: 'Điện nước', path: '/owner/utilities', icon: <ThunderboltOutlined /> },
     { label: 'Hóa đơn', path: '/owner/invoices', icon: <FileTextOutlined /> },
-    { label: 'Thanh toán', path: '/owner/payments', icon: <CreditCardOutlined /> },
   ];
 
   return (

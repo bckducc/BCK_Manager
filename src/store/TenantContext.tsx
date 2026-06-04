@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import type { Tenant, User } from '../types';
 import { tenantService } from '../modules/tenant/tenantService';
 
@@ -28,8 +28,13 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
 
   const fetchTenants = useCallback(async () => {
+    if (isFetchingRef.current) {
+      return;
+    }
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -86,6 +91,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setError(errorMsg);
       console.error('Error fetching tenants:', err);
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
   }, []);

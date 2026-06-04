@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
@@ -77,12 +77,7 @@ export const TenantManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const { tenants, loading, error, deleteTenant, fetchTenants } = useTenant();
-  const { contracts, fetchContracts } = useContract();
-
-  useEffect(() => {
-    fetchTenants();
-    fetchContracts();
-  }, [fetchContracts, fetchTenants]);
+  const { contracts } = useContract();
 
   const handleEditTenant = (tenant: Tenant) => {
     setEditingTenant(tenant);
@@ -124,7 +119,7 @@ export const TenantManagement = () => {
           (activeContract?.room as { room_number?: string } | undefined)?.room_number ||
           room?.roomNumber ||
           (room as { room_number?: string } | undefined)?.room_number ||
-          'N/A',
+          'Chưa có phòng',
         leaseStart: new Date(tenant.startDate).toLocaleDateString('vi-VN'),
       };
     });

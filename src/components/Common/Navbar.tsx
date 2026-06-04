@@ -52,7 +52,11 @@ const NavbarUser = styled.div`
   }
 `;
 
-export const Navbar = () => {
+interface NavbarProps {
+  onProfileClick?: () => void;
+}
+
+export const Navbar = ({ onProfileClick }: NavbarProps) => {
   const { user } = useAuth();
 
   return (
@@ -61,7 +65,7 @@ export const Navbar = () => {
           <Logo showText={true} size="sm" />
       </NavbarBrand>
       <NavbarUser>
-        {user && <AccountMenu />}
+        {user && <AccountMenu onProfileClick={onProfileClick} />}
       </NavbarUser>
     </NavbarWrapper>
   );

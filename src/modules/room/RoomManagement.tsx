@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { Pagination } from 'antd';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
@@ -37,12 +38,57 @@ const ActionButtons = styled.div`
   }
 `;
 
+const StatusSummary = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: ${theme.spacing.md};
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const SummaryItem = styled.div<{ $tone?: 'available' | 'rented' | 'maintenance' }>`
+  padding: ${theme.spacing.md};
+  border: 1px solid ${theme.colors.borderLight};
+  border-left: 4px solid
+    ${({ $tone }) =>
+      $tone === 'available'
+        ? theme.colors.success
+        : $tone === 'rented'
+          ? theme.colors.warning
+          : $tone === 'maintenance'
+            ? theme.colors.danger
+            : theme.colors.primary};
+  border-radius: ${theme.radius.sm};
+  background: ${theme.colors.white};
+  box-shadow: ${theme.shadow.sm};
+`;
+
+const SummaryLabel = styled.div`
+  color: ${theme.colors.textSecondary};
+  font-size: ${theme.fontSize.sm};
+`;
+
+const SummaryValue = styled.div`
+  color: ${theme.colors.dark};
+  font-size: ${theme.fontSize.xl};
+  font-weight: ${theme.fontWeight.bold};
+  margin-top: ${theme.spacing.xs};
+`;
+
 export const RoomManagement = () => {
   const { isAuthenticated } = useAuth();
   const { data: responseData, loading, error, execute } = useFetch(() => roomService.getAll());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rooms, setRooms] = useState<Record<string, unknown>[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
   const [hasInitialized, setHasInitialized] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Record<string, unknown> | null>(null);
   const [formData, setFormData] = useState({
@@ -68,6 +114,8 @@ export const RoomManagement = () => {
         setRooms([]);
       }
     }
+    // reset to first page when full list changes
+    setCurrentPage(1);
   }, [responseData]);
 
   useEffect(() => {
@@ -99,10 +147,8 @@ export const RoomManagement = () => {
       let response: { success?: boolean };
 
       if (editingRoom && 'id' in editingRoom) {
-        // Update existing room
         response = await roomService.update(String(editingRoom.id), roomPayload);
       } else {
-        // Create new room
         response = await roomService.create(roomPayload);
       }
 
@@ -169,6 +215,30 @@ export const RoomManagement = () => {
     });
   };
 
+  const roomStats = rooms.reduce<{ total: number; available: number; rented: number; maintenance: number }>(
+    (stats, room) => {
+      const status = String(room.status || '');
+      stats.total += 1;
+      if (status === 'available') stats.available += 1;
+      if (status === 'rented') stats.rented += 1;
+      if (status === 'maintenance') stats.maintenance += 1;
+      return stats;
+    },
+    { total: 0, available: 0, rented: 0, maintenance: 0 }
+  );
+
+  const totalPages = Math.max(1, Math.ceil(rooms.length / PAGE_SIZE));
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const pagedRooms = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return rooms.slice(start, start + PAGE_SIZE);
+  }, [rooms, currentPage]);
+
   const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'room_number', title: 'Số Phòng' },
     { key: 'area', title: 'Diện Tích (m²)' },
@@ -211,9 +281,38 @@ export const RoomManagement = () => {
         }
       />
 
+      <StatusSummary>
+        <SummaryItem>
+          <SummaryLabel>Tổng số phòng</SummaryLabel>
+          <SummaryValue>{roomStats.total}</SummaryValue>
+        </SummaryItem>
+        <SummaryItem $tone="available">
+          <SummaryLabel>Còn trống</SummaryLabel>
+          <SummaryValue>{roomStats.available}</SummaryValue>
+        </SummaryItem>
+        <SummaryItem $tone="rented">
+          <SummaryLabel>Đã cho thuê</SummaryLabel>
+          <SummaryValue>{roomStats.rented}</SummaryValue>
+        </SummaryItem>
+        <SummaryItem $tone="maintenance">
+          <SummaryLabel>Bảo trì</SummaryLabel>
+          <SummaryValue>{roomStats.maintenance}</SummaryValue>
+        </SummaryItem>
+      </StatusSummary>
+
       <Card>
         {error && <p style={{ color: 'red' }}>Lỗi: {String(error)}</p>}
-        <Table columns={columns} data={rooms as unknown as Record<string, string | number>[]} emptyText="Chưa có phòng nào" />
+        <Table columns={columns} data={pagedRooms as unknown as Record<string, string | number>[]} emptyText="Chưa có phòng nào" />
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+          <Pagination
+            current={currentPage}
+            pageSize={PAGE_SIZE}
+            total={rooms.length}
+            onChange={(page) => setCurrentPage(page)}
+            showSizeChanger={false}
+            showQuickJumper
+          />
+        </div>
       </Card>
 
       <Modal

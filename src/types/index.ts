@@ -11,6 +11,10 @@ export interface User {
   idNumber?: string; // CMND/CCCD
   gender?: 'male' | 'female' | 'other';
   landlord_id?: string | number;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountName?: string;
+  birthday?: string;
   createdAt: Date;
 }
 
@@ -145,6 +149,7 @@ export interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<User>;
   logout: () => void;
+  updateUser: (user: User) => void;
   isAuthenticated: boolean;
 }
 

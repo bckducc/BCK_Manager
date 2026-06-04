@@ -15,7 +15,6 @@ import { ContractManagement } from './modules/contract/ContractManagement';
 import { ServiceManagement } from './modules/service/ServiceManagement';
 import { UtilityManagement } from './modules/utility/UtilityManagement';
 import { InvoiceManagement } from './modules/invoice/InvoiceManagement';
-import { PaymentManagement } from './modules/payment/PaymentManagement';
 import { TenantDashboard } from './modules/tenant/TenantDashboard';
 import { MyRoom } from './modules/tenant/MyRoom';
 import { MyContracts } from './modules/contract/MyContracts';
@@ -99,16 +98,6 @@ function App() {
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
                   <InvoiceManagement />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/owner/payments"
-            element={
-              <ProtectedRoute requiredRole="owner">
-                <MainLayout>
-                  <PaymentManagement />
                 </MainLayout>
               </ProtectedRoute>
             }
