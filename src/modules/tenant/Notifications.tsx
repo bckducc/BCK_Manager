@@ -11,9 +11,9 @@ const Container = styled.div`
 `;
 
 export const Notifications = () => {
-  const notifications: any[] = [];
+  const notifications: Record<string, unknown>[] = [];
 
-  const columns: TableColumn[] = [
+  const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'type', title: 'Loại', width: '100px' },
     { key: 'title', title: 'Tiêu Đề' },
     { key: 'message', title: 'Nội Dung' },
@@ -21,9 +21,9 @@ export const Notifications = () => {
     {
       key: 'read',
       title: 'Trạng Thái',
-      render: (val) => (
-        <Badge variant={val ? 'success' : 'warning'}>
-          {val ? 'Đã Đọc' : 'Chưa Đọc'}
+      render: (value: unknown) => (
+        <Badge variant={value ? 'success' : 'warning'}>
+          {value ? 'Đã Đọc' : 'Chưa Đọc'}
         </Badge>
       ),
     },
@@ -33,10 +33,10 @@ export const Notifications = () => {
     <Container>
       <Header title="Thông Báo" />
       <Card>
-        <Table 
-          columns={columns} 
-          data={notifications} 
-          emptyText="Chưa có thông báo nào" 
+        <Table
+          columns={columns}
+          data={notifications}
+          emptyText="Chưa có thông báo nào"
         />
       </Card>
     </Container>

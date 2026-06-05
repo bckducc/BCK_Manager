@@ -150,12 +150,25 @@ const toInvoiceListResponse = (
 ): ApiResponse<InvoiceListData> => ({
   ...response,
   data: {
-    invoices: Array.isArray(response.data) ? response.data.map(toInvoice) : [],
-    total: toNumber(response.total as string | number | undefined),
-    page: toNumber(response.page as string | number | undefined) || 1,
-    limit: toNumber(response.limit as string | number | undefined) || 100,
+    invoices: getInvoiceRows(response).map(toInvoice),
+    total: toNumber((response.total ?? (response.data as Record<string, unknown> | undefined)?.total) as string | number | undefined),
+    page: toNumber((response.page ?? (response.data as Record<string, unknown> | undefined)?.page) as string | number | undefined) || 1,
+    limit: toNumber((response.limit ?? (response.data as Record<string, unknown> | undefined)?.limit) as string | number | undefined) || 100,
   },
 });
+
+const getInvoiceRows = (
+  response: ApiResponse<BackendInvoice[]> & { total?: unknown; page?: unknown; limit?: unknown }
+) => {
+  if (Array.isArray(response.data)) return response.data;
+
+  const dataObject = response.data as Record<string, unknown> | undefined;
+  if (Array.isArray(dataObject?.invoices)) return dataObject.invoices as BackendInvoice[];
+  if (Array.isArray(dataObject?.items)) return dataObject.items as BackendInvoice[];
+  if (Array.isArray(dataObject?.data)) return dataObject.data as BackendInvoice[];
+
+  return [];
+};
 
 const downloadTextResponse = async (endpoint: string) => {
   const token = localStorage.getItem('token');

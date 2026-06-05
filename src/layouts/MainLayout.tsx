@@ -1,7 +1,9 @@
 import styled from 'styled-components';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Navbar, Sidebar, PageTransition } from '../components/common';
+import { ProfileModal } from '../components/common/ProfileModal';
 import { useSidebar } from '../store/SidebarContext';
 import { theme } from '../styles/theme';
 
@@ -49,10 +51,11 @@ interface MainLayoutProps {
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const { collapsed } = useSidebar();
   const location = useLocation();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
     <MainLayoutWrapper>
-      <Navbar />
+      <Navbar onProfileClick={() => setIsProfileOpen(true)} />
       <MainLayoutContent>
         <Sidebar />
         <MainLayoutMain $sidebarCollapsed={collapsed}>
@@ -61,6 +64,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           </PageTransition>
         </MainLayoutMain>
       </MainLayoutContent>
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </MainLayoutWrapper>
   );
 };

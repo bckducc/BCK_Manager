@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { Contract } from '../modules/contract/contract.types';
 import type { User, UserRole } from '../types';
 import type { Room } from '../modules/room/room.types';
@@ -86,8 +86,13 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
 
   const fetchContracts = useCallback(async () => {
+    if (isFetchingRef.current) {
+      return;
+    }
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -146,6 +151,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setError(errorMsg);
       console.error('Error fetching contracts:', err);
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
   }, []);

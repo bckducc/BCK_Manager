@@ -1,6 +1,6 @@
 export interface UtilityReading {
   id: string | number;
-  roomId: string | number;
+  contractId: string | number;
   roomNumber?: string;
   month: number;
   year: number;
@@ -15,7 +15,7 @@ export interface UtilityReading {
 }
 
 export interface UtilityFilter {
-  roomId?: string;
+  contractId?: string;
   startMonth: number;
   startYear: number;
   endMonth: number;

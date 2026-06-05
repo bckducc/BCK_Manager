@@ -108,14 +108,17 @@ export const utilityService = {
   },
 
   getReading: async (roomId: string, month: number, year: number) => {
-    const response = await apiCall<BackendUtilityReading>(
-      `/api/v1/utilities/reading${buildQuery({ room_id: roomId, month, year })}`,
+    const response = await apiCall<BackendUtilityReading[]>(
+      `/api/v1/utilities/room/${roomId}`,
       { method: 'GET' }
     );
+    const reading = Array.isArray(response.data)
+      ? response.data.find((item) => toNumber(item.month) === month && toNumber(item.year) === year)
+      : undefined;
 
     return {
       ...response,
-      data: response.data ? toReading(response.data) : undefined,
+      data: reading ? toReading(reading) : undefined,
     };
   },
 

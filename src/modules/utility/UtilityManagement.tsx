@@ -266,25 +266,31 @@ export const UtilityManagement = () => {
     setExistingReading(null);
 
     try {
-      const currentResponse = await utilityService.getReading(entryForm.roomId, month, year);
-      setExistingReading(currentResponse.data || null);
-    } catch {
-      setExistingReading(null);
-    }
-
-    try {
-      const previousResponse = await utilityService.getReading(
-        entryForm.roomId,
-        previousPeriod.month,
-        previousPeriod.year
+      const response = await utilityService.getRoomReadings(entryForm.roomId);
+      const roomReadings = Array.isArray(response.data) ? response.data : [];
+      const currentReading = roomReadings.find(
+        (reading) => reading.month === month && reading.year === year
       );
-      if (previousResponse.data) {
+      const previousReading = roomReadings.find(
+        (reading) => reading.month === previousPeriod.month && reading.year === previousPeriod.year
+      );
+
+      setExistingReading(currentReading || null);
+
+      if (previousReading) {
         setEntryForm((prev) => ({
           ...prev,
-          electricOld: String(previousResponse.data?.electricNew ?? 0),
-          waterOld: String(previousResponse.data?.waterNew ?? 0),
+          electricOld: String(previousReading.electricNew ?? 0),
+          waterOld: String(previousReading.waterNew ?? 0),
         }));
+        return;
       }
+
+      setEntryForm((prev) => ({
+        ...prev,
+        electricOld: '0',
+        waterOld: '0',
+      }));
     } catch {
       setEntryForm((prev) => ({
         ...prev,
