@@ -121,7 +121,6 @@ interface AccountMenuProps {
 
 export const AccountMenu = ({
   onProfileClick,
-  onChangePasswordClick,
 }: AccountMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
@@ -138,13 +137,6 @@ export const AccountMenu = ({
     setIsOpen(false);
     if (onProfileClick) {
       onProfileClick();
-    }
-  };
-
-  const handleChangePasswordClick = () => {
-    setIsOpen(false);
-    if (onChangePasswordClick) {
-      onChangePasswordClick();
     }
   };
 
@@ -187,14 +179,9 @@ export const AccountMenu = ({
             <span>Thông tin tài khoản</span>
           </MenuItem>
 
-          <MenuItem onClick={handleChangePasswordClick}>
-            <MenuIcon>🔑</MenuIcon>
-            <span>Đổi mật khẩu</span>
-          </MenuItem>
-
           <MenuItem $isDanger onClick={handleLogout}>
             <MenuIcon>🚪</MenuIcon>
-            <span>Đóng phiên làm việc</span>
+            <span>Đăng xuất</span>
           </MenuItem>
         </MenuItemsContainer>
       </DropdownMenu>

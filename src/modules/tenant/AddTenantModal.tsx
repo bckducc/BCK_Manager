@@ -99,6 +99,8 @@ const normalizePhone = (phone: string) => phone.replace(/\D/g, '');
 
 const isValidVietnamPhone = (phone: string) => /^0(3|5|7|8|9)\d{8}$/.test(phone);
 
+const normalizeUsername = (username: string) => username.trim().toLowerCase();
+
 const isSameTenant = (tenant: Tenant, editingTenant?: Tenant) => {
   if (!editingTenant) return false;
   return String(tenant.id) === String(editingTenant.id) || String(tenant.userId) === String(editingTenant.userId);
@@ -173,6 +175,22 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
 
     if (!editingTenant && /\s/.test(formData.username.trim())) {
       return 'Tài khoản không được chứa khoảng trắng';
+    }
+
+    if (!editingTenant) {
+      const username = normalizeUsername(formData.username);
+      const duplicatedUsername = tenants.some((tenant) => {
+        if (isSameTenant(tenant, editingTenant)) return false;
+        const tenantUsername =
+          tenant.currentUser?.username ||
+          ((tenant as unknown as Record<string, unknown>).username as string | undefined) ||
+          '';
+        return normalizeUsername(tenantUsername) === username;
+      });
+
+      if (duplicatedUsername) {
+        return 'Tên tài khoản đã tồn tại';
+      }
     }
 
     if (!editingTenant && formData.password.trim().length < 6) {
@@ -322,7 +340,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
               Hủy
             </Button>
             <Button type="submit" variant="primary">
-              {editingTenant ? 'Cập Nhật' : 'Thêm Người Thuê'}
+              {editingTenant ? 'Cập Nhật' : 'Tạo'}
             </Button>
           </ModalFooter>
         </Form>

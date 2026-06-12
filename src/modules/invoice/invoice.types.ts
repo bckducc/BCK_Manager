@@ -3,8 +3,6 @@ export type PaymentMethod = 'cash' | 'bank_transfer' | 'other';
 
 export interface Invoice {
   id: number;
-  room_id: number;
-  tenant_id: number;
   contract_id: number;
   month: number;
   year: number;
@@ -14,9 +12,6 @@ export interface Invoice {
   electric_fee: number;
   water_fee: number;
   other_fees: number;
-  subtotal_amount: number;
-  vat_percent: number;
-  vat_amount: number;
   discount: number;
   total_amount: number;
   final_amount: number;

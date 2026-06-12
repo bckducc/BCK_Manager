@@ -125,23 +125,55 @@ export const RoomManagement = () => {
     }
   }, [isAuthenticated, hasInitialized, execute]);
 
+  const getRoomNumber = (room: Record<string, unknown>) => String(room.room_number || room.roomNumber || '').trim();
+
   const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.roomNumber || !formData.price || !formData.status) {
+
+    const roomNumber = formData.roomNumber.trim();
+    const area = Number(formData.area);
+    const floor = Number(formData.floor);
+    const price = Number(formData.price);
+
+    if (!roomNumber || !formData.area || !formData.floor || !formData.price || !formData.status) {
       alert('Vui lòng điền tất cả các trường bắt buộc');
+      return;
+    }
+
+    if (!Number.isFinite(area) || area <= 0) {
+      alert('Diện tích phòng phải lớn hơn 0');
+      return;
+    }
+
+    if (!Number.isFinite(floor) || floor < 0) {
+      alert('Tầng phải là số không âm');
+      return;
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+      alert('Giá thuê phải lớn hơn 0');
+      return;
+    }
+
+    const duplicatedRoom = rooms.some((room) => {
+      const isEditingSameRoom = editingRoom && String(room.id) === String(editingRoom.id);
+      return !isEditingSameRoom && getRoomNumber(room).toLowerCase() === roomNumber.toLowerCase();
+    });
+
+    if (duplicatedRoom) {
+      alert('Số phòng đã tồn tại');
       return;
     }
 
     setIsSubmitting(true);
     try {
       const roomPayload = {
-        room_number: formData.roomNumber,
-        area: parseFloat(formData.area),
-        floor: parseInt(formData.floor),
-        price: parseFloat(formData.price),
+        room_number: roomNumber,
+        area,
+        floor,
+        price,
         status: formData.status as 'available' | 'rented' | 'maintenance',
-        description: formData.description,
+        description: formData.description.trim(),
       };
 
       let response: { success?: boolean };
@@ -187,6 +219,11 @@ export const RoomManagement = () => {
   };
 
   const handleDeleteRoom = async (room: Record<string, unknown>) => {
+    if (String(room.status) === 'rented') {
+      alert('Không thể xóa phòng đang có người thuê');
+      return;
+    }
+
     if (!window.confirm(`Bạn có chắc chắn muốn xóa phòng ${room.room_number}?`)) {
       return;
     }
@@ -323,6 +360,7 @@ export const RoomManagement = () => {
           handleAddRoom({ preventDefault: () => {} } as React.FormEvent);
         }}
         confirmText={editingRoom ? 'Cập Nhật' : 'Tạo'}
+        cancelText="Hủy"
       >
         <Form onSubmit={handleAddRoom}>
           <FormGroup label="Số Phòng" required>
@@ -339,6 +377,8 @@ export const RoomManagement = () => {
           <FormGroup label="Diện Tích (m²)" required>
             <Input
               type="number"
+              min="0.1"
+              step="0.1"
               value={formData.area}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, area: e.target.value })
@@ -349,6 +389,8 @@ export const RoomManagement = () => {
           <FormGroup label="Tầng" required>
             <Input
               type="number"
+              min="0"
+              step="1"
               value={formData.floor}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, floor: e.target.value })
@@ -359,6 +401,8 @@ export const RoomManagement = () => {
           <FormGroup label="Giá Thuê/Tháng (VNĐ)" required>
             <Input
               type="number"
+              min="1"
+              step="1000"
               value={formData.price}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, price: e.target.value })

@@ -355,8 +355,12 @@ export const MyInvoices = () => {
                 <SummaryValue>{formatCurrency(selectedInvoice.water_fee)}</SummaryValue>
               </SummaryItem>
               <SummaryItem>
-                <SummaryLabel>VAT {selectedInvoice.vat_percent}%</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.vat_amount)}</SummaryValue>
+                <SummaryLabel>PhÃ­ khÃ¡c</SummaryLabel>
+                <SummaryValue>{formatCurrency(selectedInvoice.other_fees)}</SummaryValue>
+              </SummaryItem>
+              <SummaryItem>
+                <SummaryLabel>Tá»•ng cá»™ng</SummaryLabel>
+                <SummaryValue>{formatCurrency(selectedInvoice.total_amount)}</SummaryValue>
               </SummaryItem>
               <SummaryItem>
                 <SummaryLabel>Giảm giá</SummaryLabel>

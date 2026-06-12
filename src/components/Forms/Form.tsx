@@ -134,11 +134,12 @@ interface FormProps {
   children: ReactNode;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
   title?: string;
+  noValidate?: boolean;
 }
 
-export const Form = ({ children, onSubmit, title }: FormProps) => {
+export const Form = ({ children, onSubmit, title, noValidate = true }: FormProps) => {
   return (
-    <FormWrapper onSubmit={onSubmit}>
+    <FormWrapper onSubmit={onSubmit} noValidate={noValidate}>
       {title && <h3>{title}</h3>}
       {children}
     </FormWrapper>

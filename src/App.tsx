@@ -1,8 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './store/AuthContext';
 import { SidebarProvider } from './store/SidebarContext';
-import { TenantProvider } from './store/TenantContext';
-import { ContractProvider } from './store/ContractContext';
 import { PageTransitionProvider } from './store/PageTransitionContext';
 import { ProtectedRoute } from './utils/ProtectedRoute';
 import { MainLayout } from './layouts/MainLayout';
@@ -25,12 +23,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <TenantProvider>
-          <ContractProvider>
-            <SidebarProvider>
-              <PageTransitionProvider>
-              <Routes>
-          <Route path="/login" element={<Login />} />
+        <SidebarProvider>
+          <PageTransitionProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
 
           <Route
             path="/owner"
@@ -164,11 +160,9 @@ function App() {
           />
 
           <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-            </PageTransitionProvider>
+            </Routes>
+          </PageTransitionProvider>
         </SidebarProvider>
-          </ContractProvider>
-        </TenantProvider>
       </AuthProvider>
     </Router>
   );

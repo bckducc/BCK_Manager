@@ -124,7 +124,6 @@ const getDefaultDueDate = (month: number, year: number) => {
 const initialGenerateForm = {
   month: String(currentMonth),
   year: String(currentYear),
-  vatPercent: '10',
   otherFees: '0',
   discount: '0',
   dueDate: getDefaultDueDate(currentMonth, currentYear),
@@ -183,7 +182,6 @@ export const InvoiceManagement = () => {
       const response = await invoiceService.generate({
         month: Number(formData.month),
         year: Number(formData.year),
-        vat_percent: Number(formData.vatPercent || 0),
         other_fees: Number(formData.otherFees || 0),
         discount: Number(formData.discount || 0),
         due_date: formData.dueDate || undefined,
@@ -370,17 +368,6 @@ export const InvoiceManagement = () => {
                   disabled={isSaving}
                 />
               </FormGroup>
-              <FormGroup label="VAT (%)">
-                <Input
-                  type="number"
-                  min="0"
-                  value={formData.vatPercent}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, vatPercent: e.target.value })
-                  }
-                  disabled={isSaving}
-                />
-              </FormGroup>
               <FormGroup label="Phí Khác">
                 <Input
                   type="number"
@@ -524,8 +511,12 @@ export const InvoiceManagement = () => {
                 <DetailValue>{formatCurrency(selectedInvoice.water_fee)}</DetailValue>
               </DetailItem>
               <DetailItem>
-                <DetailLabel>VAT {selectedInvoice.vat_percent}%</DetailLabel>
-                <DetailValue>{formatCurrency(selectedInvoice.vat_amount)}</DetailValue>
+                <DetailLabel>PhÃ­ khÃ¡c</DetailLabel>
+                <DetailValue>{formatCurrency(selectedInvoice.other_fees)}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>Tá»•ng cá»™ng</DetailLabel>
+                <DetailValue>{formatCurrency(selectedInvoice.total_amount)}</DetailValue>
               </DetailItem>
               <DetailItem>
                 <DetailLabel>Giảm giá</DetailLabel>

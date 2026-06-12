@@ -6,8 +6,8 @@ const API_BASE_URL = 'http://localhost:5000';
 
 type BackendInvoice = Partial<Omit<Invoice, 'status'>> & {
   id: string | number;
-  room_id: string | number;
-  tenant_id: string | number;
+  room_id?: string | number;
+  tenant_id?: string | number;
   contract_id: string | number;
   month: string | number;
   year: string | number;
@@ -33,7 +33,6 @@ export type InvoiceFilters = {
 export type GenerateInvoicePayload = {
   month: number;
   year: number;
-  vat_percent?: number;
   other_fees?: number;
   discount?: number;
   due_date?: string;
@@ -87,8 +86,6 @@ const toNumber = (value: string | number | undefined | null) => {
 
 const toInvoice = (invoice: BackendInvoice): Invoice => ({
   id: toNumber(invoice.id),
-  room_id: toNumber(invoice.room_id),
-  tenant_id: toNumber(invoice.tenant_id),
   contract_id: toNumber(invoice.contract_id),
   month: toNumber(invoice.month),
   year: toNumber(invoice.year),
@@ -98,9 +95,6 @@ const toInvoice = (invoice: BackendInvoice): Invoice => ({
   electric_fee: toNumber(invoice.electric_fee),
   water_fee: toNumber(invoice.water_fee),
   other_fees: toNumber(invoice.other_fees),
-  subtotal_amount: toNumber(invoice.subtotal_amount),
-  vat_percent: toNumber(invoice.vat_percent),
-  vat_amount: toNumber(invoice.vat_amount),
   discount: toNumber(invoice.discount),
   total_amount: toNumber(invoice.total_amount),
   final_amount: toNumber(invoice.final_amount),

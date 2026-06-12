@@ -87,11 +87,21 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isFetchingRef = useRef(false);
+  const lastFetchRef = useRef<number>(0);
+  const MIN_FETCH_INTERVAL = 2000; // Minimum 2 seconds between fetches
 
   const fetchContracts = useCallback(async () => {
     if (isFetchingRef.current) {
       return;
     }
+    
+    // Throttle: only allow fetch every 2 seconds
+    const now = Date.now();
+    if (now - lastFetchRef.current < MIN_FETCH_INTERVAL) {
+      return;
+    }
+    lastFetchRef.current = now;
+    
     isFetchingRef.current = true;
     setLoading(true);
     setError(null);

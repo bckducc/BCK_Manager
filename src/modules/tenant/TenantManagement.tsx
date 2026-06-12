@@ -8,7 +8,7 @@ import { useTenant } from '../../store/TenantContext';
 import { useContract } from '../../store/contract-context';
 import { AddTenantModal } from './AddTenantModal';
 import type { Tenant } from './tenant.types';
-import { DeleteOutlined } from '@ant-design/icons';
+import { LockOutlined } from '@ant-design/icons';
 
 const Container = styled.div`
   display: flex;
@@ -62,6 +62,28 @@ const ErrorContainer = styled.div`
   }
 `;
 
+const SearchPanel = styled.div`
+  display: flex;
+  gap: ${theme.spacing.sm};
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const SearchInput = styled.input`
+  width: min(420px, 100%);
+  padding: 0.75rem;
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.sm};
+  font-size: ${theme.fontSize.base};
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  }
+`;
+
 const MOCK_ROOMS = [
   { id: 'room_1', roomNumber: '101' },
   { id: 'room_2', roomNumber: '102' },
@@ -76,6 +98,7 @@ const MOCK_ROOMS = [
 export const TenantManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [searchText, setSearchText] = useState('');
   const { tenants, loading, error, deleteTenant, fetchTenants } = useTenant();
   const { contracts } = useContract();
 
@@ -109,6 +132,7 @@ export const TenantManagement = () => {
 
       return {
         id: tenant.id,
+        username: user?.username || '',
         name: user?.name || 'N/A',
         idNumber: user?.idNumber || 'N/A',
         gender: user?.gender ? genderMap[user.gender as keyof typeof genderMap] : 'N/A',
@@ -124,6 +148,17 @@ export const TenantManagement = () => {
       };
     });
   }, [contracts, tenants]);
+
+  const filteredTenantData = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase();
+    if (!keyword) return tenantDisplayData;
+
+    return tenantDisplayData.filter((tenant) =>
+      [tenant.username, tenant.name, tenant.phone, tenant.idNumber, tenant.roomNumber]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(keyword))
+    );
+  }, [searchText, tenantDisplayData]);
 
   const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'name', title: 'Tên Người Thuê' },
@@ -143,17 +178,17 @@ export const TenantManagement = () => {
             <Button 
               variant="danger" 
               onClick={async () => {
-                if (window.confirm(`Bạn có chắc chắn muốn xóa người thuê ${row.name}?`)) {
+                if (window.confirm(`Bạn có chắc chắn muốn khóa tài khoản người thuê ${row.name}?`)) {
                   try {
                     await deleteTenant(String(row.id));
-                    alert('Xóa người thuê thành công');
+                    alert('Khóa tài khoản người thuê thành công');
                   } catch (err) {
-                    alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể xóa'}`);
+                    alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể khóa tài khoản'}`);
                   }
                 }
               }}
             >
-              <DeleteOutlined />
+              <LockOutlined /> Khóa tài khoản
             </Button>
           </ActionButtons>
         );
@@ -184,13 +219,28 @@ export const TenantManagement = () => {
           </ErrorContainer>
         )}
         <Card>
+          <SearchPanel>
+            <SearchInput
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Tìm kiếm người thuê theo tên, tài khoản, SĐT, CCCD hoặc phòng"
+              aria-label="Tìm kiếm người thuê"
+            />
+            {searchText && (
+              <Button type="button" onClick={() => setSearchText('')}>
+                Xóa tìm kiếm
+              </Button>
+            )}
+          </SearchPanel>
+        </Card>
+        <Card>
           {loading ? (
             <Loading />
           ) : (
             <Table 
               columns={columns} 
-              data={tenantDisplayData} 
-              emptyText="Chưa có người thuê nào" 
+              data={filteredTenantData} 
+              emptyText={searchText.trim() ? 'Không tìm thấy người thuê phù hợp' : 'Chưa có người thuê nào'} 
             />
           )}
         </Card>
