@@ -378,9 +378,17 @@ export const ServiceManagement = () => {
       return;
     }
 
+    const roomId = roomService.roomId ? String(roomService.roomId) : selectedRoomId;
+    const serviceId = roomService.serviceId ? String(roomService.serviceId) : '';
+
+    if (!roomId || !serviceId) {
+      alert('Không xác định được phòng hoặc dịch vụ cần gỡ');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const response = await serviceService.removeFromRoom(String(roomService.roomId), String(roomService.serviceId));
+      const response = await serviceService.removeFromRoom(roomId, serviceId);
       if (!response.success) {
         throw new Error(response.message || 'Không gỡ được dịch vụ khỏi phòng');
       }

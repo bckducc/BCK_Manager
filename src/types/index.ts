@@ -6,6 +6,7 @@ export interface User {
   email?: string;
   name: string;
   role: UserRole;
+  isActive?: boolean;
   phone?: string;
   address?: string;
   idNumber?: string; // CMND/CCCD

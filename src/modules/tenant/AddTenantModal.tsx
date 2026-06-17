@@ -5,6 +5,7 @@ import { Button } from '../../components/common';
 import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
 import { useTenant } from '../../store/TenantContext';
 import type { Tenant } from './tenant.types';
+import type { User } from '../../types';
 
 interface AddTenantModalProps {
   isOpen: boolean;
@@ -104,6 +105,10 @@ const normalizeUsername = (username: string) => username.trim().toLowerCase();
 const isSameTenant = (tenant: Tenant, editingTenant?: Tenant) => {
   if (!editingTenant) return false;
   return String(tenant.id) === String(editingTenant.id) || String(tenant.userId) === String(editingTenant.userId);
+};
+
+const normalizeGender = (gender: string): User['gender'] => {
+  return gender === 'male' || gender === 'female' || gender === 'other' ? gender : 'other';
 };
 
 export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, editingTenant }) => {
@@ -218,7 +223,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
           name: formData.name.trim(),
           phone,
           idNumber: formData.idNumber.trim(),
-          gender: formData.gender,
+          gender: normalizeGender(formData.gender),
         });
         alert('Cập nhật người thuê thành công');
       } else {
@@ -230,7 +235,7 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
             name: formData.name.trim(),
             phone,
             idNumber: formData.idNumber.trim(),
-            gender: formData.gender,
+            gender: normalizeGender(formData.gender),
           }
         );
         alert('Thêm người thuê thành công');

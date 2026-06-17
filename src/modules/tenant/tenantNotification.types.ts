@@ -6,5 +6,5 @@ export interface Notification {
   message: string;
   read: boolean;
   createdAt: Date;
-  relatedId?: string; // ID của bill, room, contract, etc.
+  relatedId?: string;
 }

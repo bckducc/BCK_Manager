@@ -14,11 +14,11 @@ interface TenantContextType {
   users: User[];
   loading: boolean;
   error: string | null;
-  addTenant: (tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: string }) => Promise<void>;
-  updateTenant: (id: string, tenant: Partial<Tenant> & { name?: string; phone?: string; idNumber?: string; gender?: string }) => Promise<void>;
+  addTenant: (tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: User['gender'] }) => Promise<void>;
+  updateTenant: (id: string, tenant: Partial<Tenant> & { name?: string; phone?: string; idNumber?: string; gender?: User['gender'] }) => Promise<void>;
   deleteTenant: (id: string) => Promise<void>;
   getTenantById: (id: string) => Tenant | undefined;
-  fetchTenants: () => Promise<void>;
+  fetchTenants: (force?: boolean) => Promise<void>;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -30,16 +30,15 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [error, setError] = useState<string | null>(null);
   const isFetchingRef = useRef(false);
   const lastFetchRef = useRef<number>(0);
-  const MIN_FETCH_INTERVAL = 2000; // Minimum 2 seconds between fetches
+  const MIN_FETCH_INTERVAL = 2000;
 
-  const fetchTenants = useCallback(async () => {
+  const fetchTenants = useCallback(async (force = false) => {
     if (isFetchingRef.current) {
       return;
     }
     
-    // Throttle: only allow fetch every 2 seconds
     const now = Date.now();
-    if (now - lastFetchRef.current < MIN_FETCH_INTERVAL) {
+    if (!force && now - lastFetchRef.current < MIN_FETCH_INTERVAL) {
       return;
     }
     lastFetchRef.current = now;
@@ -66,6 +65,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             idNumber: ((item.identity_card || item.idNumber) as string | undefined),
             gender: ((item.gender as string | undefined) || 'other') as 'male' | 'female' | 'other',
             role: 'tenant',
+            isActive: Boolean(item.is_active ?? item.isActive ?? true),
             createdAt: parseDate(item.created_at || item.createdAt),
           };
           
@@ -106,7 +106,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, []);
 
-  const addTenant = useCallback(async (_tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: string }) => {
+  const addTenant = useCallback(async (_tenant: Omit<Tenant, 'id' | 'userId'>, userData: { username: string; password: string; name: string; phone?: string; idNumber?: string; gender?: User['gender'] }) => {
     setLoading(true);
     setError(null);
     try {
@@ -119,10 +119,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         gender: userData.gender,
       });
       
-      if (response.success && response.data) {
-        setTenants((prev) => [...prev, response.data as Tenant]);
-        
-        await fetchTenants();
+      if (response.success) {
+        await fetchTenants(true);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to create tenant';
@@ -133,7 +131,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [fetchTenants]);
 
-  const updateTenant = useCallback(async (id: string, updates: Partial<Tenant> & { name?: string; phone?: string; idNumber?: string; gender?: string }) => {
+  const updateTenant = useCallback(async (id: string, updates: Partial<Tenant> & { name?: string; phone?: string; idNumber?: string; gender?: User['gender'] }) => {
     setLoading(true);
     setError(null);
     try {
@@ -141,9 +139,24 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       if (response.success) {
         setTenants((prev) =>
-          prev.map((tenant) => (tenant.id === id ? { ...tenant, ...updates } : tenant))
+          prev.map((tenant) => (
+            tenant.id === id || tenant.userId === id
+              ? {
+                  ...tenant,
+                  currentUser: tenant.currentUser
+                    ? {
+                        ...tenant.currentUser,
+                        name: updates.name ?? tenant.currentUser.name,
+                        phone: updates.phone ?? tenant.currentUser.phone,
+                        idNumber: updates.idNumber ?? tenant.currentUser.idNumber,
+                        gender: updates.gender ?? tenant.currentUser.gender,
+                      }
+                    : tenant.currentUser,
+                }
+              : tenant
+          ))
         );
-        await fetchTenants();
+        await fetchTenants(true);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to update tenant';
@@ -161,11 +174,21 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const response = await tenantService.delete(id);
       
       if (response.success) {
-        const tenant = tenants.find((t) => t.id === id);
-        if (tenant) {
-          setUsers((prev) => prev.filter((u) => u.id !== tenant.userId));
-        }
-        setTenants((prev) => prev.filter((t) => t.id !== id));
+        const isActive = Boolean(response.data?.is_active);
+        setUsers((prev) =>
+          prev.map((user) => (user.id === id ? { ...user, isActive } : user))
+        );
+        setTenants((prev) =>
+          prev.map((tenant) => (
+            tenant.id === id || tenant.userId === id
+              ? {
+                  ...tenant,
+                  currentUser: tenant.currentUser ? { ...tenant.currentUser, isActive } : tenant.currentUser,
+                }
+              : tenant
+          ))
+        );
+        await fetchTenants(true);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to delete tenant';
@@ -174,7 +197,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } finally {
       setLoading(false);
     }
-  }, [tenants]);
+  }, [fetchTenants]);
 
   const getTenantById = useCallback((id: string) => {
     return tenants.find((t) => t.id === id);

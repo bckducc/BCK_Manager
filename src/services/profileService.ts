@@ -56,4 +56,16 @@ export const profileService = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+
+  updateTenant: (data: {
+    full_name: string;
+    phone?: string;
+    identity_card?: string;
+    birthday?: string;
+    gender?: User['gender'];
+  }) =>
+    apiCall<BackendProfile>('/api/v1/tenants/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 };

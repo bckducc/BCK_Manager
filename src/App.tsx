@@ -12,6 +12,7 @@ import { TenantManagement } from './modules/tenant/TenantManagement';
 import { ContractManagement } from './modules/contract/ContractManagement';
 import { ServiceManagement } from './modules/service/ServiceManagement';
 import { UtilityManagement } from './modules/utility/UtilityManagement';
+import { TenantUtilities } from './modules/utility/TenantUtilities';
 import { InvoiceManagement } from './modules/invoice/InvoiceManagement';
 import { TenantDashboard } from './modules/tenant/TenantDashboard';
 import { MyRoom } from './modules/tenant/MyRoom';
@@ -135,6 +136,16 @@ function App() {
               <ProtectedRoute requiredRole="tenant">
                 <MainLayout>
                   <MyInvoices />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tenant/utilities"
+            element={
+              <ProtectedRoute requiredRole="tenant">
+                <MainLayout>
+                  <TenantUtilities />
                 </MainLayout>
               </ProtectedRoute>
             }

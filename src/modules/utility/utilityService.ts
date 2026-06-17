@@ -2,6 +2,7 @@ import { apiCall } from '../../services/apiClient';
 
 export interface UtilityReading {
   id: string | number;
+  contractId?: string | number;
   roomId: string | number;
   roomNumber?: string;
   floor?: string | number;
@@ -33,6 +34,7 @@ export interface RecordUtilityReadingPayload {
 
 type BackendUtilityReading = {
   id: string | number;
+  contract_id?: string | number;
   room_id: string | number;
   room_number?: string;
   floor?: string | number;
@@ -52,6 +54,7 @@ const toNumber = (value: number | string | undefined) => Number(value ?? 0);
 
 const toReading = (reading: BackendUtilityReading): UtilityReading => ({
   id: reading.id,
+  contractId: reading.contract_id,
   roomId: reading.room_id,
   roomNumber: reading.room_number,
   floor: reading.floor,
@@ -140,6 +143,23 @@ export const utilityService = {
         month: filters.month,
         year: filters.year,
         limit: filters.limit ?? 1000,
+      })}`,
+      { method: 'GET' }
+    );
+
+    return {
+      ...response,
+      data: Array.isArray(response.data) ? response.data.map(toReading) : [],
+    };
+  },
+
+  listMyReadings: async (filters: { month?: number; year?: number; contractId?: string; limit?: number } = {}) => {
+    const response = await apiCall<BackendUtilityReading[]>(
+      `/api/v1/utilities/my/readings${buildQuery({
+        contract_id: filters.contractId,
+        month: filters.month,
+        year: filters.year,
+        limit: filters.limit ?? 100,
       })}`,
       { method: 'GET' }
     );

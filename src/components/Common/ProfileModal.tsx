@@ -5,7 +5,7 @@ import { useAuth } from '../../modules/auth/useAuth';
 import { profileService, toUser } from '../../services/profileService';
 import type { BackendProfile } from '../../services/profileService';
 import { Modal } from './Modal';
-import { Form, FormGroup, Input } from '../Forms/Form';
+import { Form, FormGroup, Input, Select } from '../Forms/Form';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -51,12 +51,17 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
+    idNumber: '',
+    birthday: '',
+    gender: '',
     bankName: '',
     bankAccountNumber: '',
     bankAccountName: '',
   });
 
-  const canEdit = user?.role === 'owner';
+  const isOwner = user?.role === 'owner';
+  const isTenant = user?.role === 'tenant';
+  const canEdit = isOwner || isTenant;
   const isMountedRef = useRef(true);
   const hasLoadedRef = useRef(false);
 
@@ -70,6 +75,7 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           setError(null);
           const response = await profileService.getMe();
           const nextProfile = response.data?.user || (response as unknown as { user?: BackendProfile }).user;
+
           if (!response.success || !nextProfile) {
             throw new Error(response.message || 'Không tải được thông tin cá nhân');
           }
@@ -81,6 +87,9 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
             setFormData({
               fullName: nextUser.name || '',
               phone: nextUser.phone || '',
+              idNumber: nextUser.idNumber || '',
+              birthday: nextUser.birthday || '',
+              gender: nextUser.gender || '',
               bankName: nextUser.bankName || '',
               bankAccountNumber: nextUser.bankAccountNumber || '',
               bankAccountName: nextUser.bankAccountName || '',
@@ -123,13 +132,21 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
     try {
       setSaving(true);
       setError(null);
-      const response = await profileService.updateLandlord({
-        full_name: formData.fullName.trim(),
-        phone: formData.phone.trim() || undefined,
-        bank_name: formData.bankName.trim() || undefined,
-        bank_account_number: formData.bankAccountNumber.trim() || undefined,
-        bank_account_name: formData.bankAccountName.trim() || undefined,
-      });
+      const response = isTenant
+        ? await profileService.updateTenant({
+            full_name: formData.fullName.trim(),
+            phone: formData.phone.trim() || undefined,
+            identity_card: formData.idNumber.trim() || undefined,
+            birthday: formData.birthday || undefined,
+            gender: (formData.gender || undefined) as typeof user.gender,
+          })
+        : await profileService.updateLandlord({
+            full_name: formData.fullName.trim(),
+            phone: formData.phone.trim() || undefined,
+            bank_name: formData.bankName.trim() || undefined,
+            bank_account_number: formData.bankAccountNumber.trim() || undefined,
+            bank_account_name: formData.bankAccountName.trim() || undefined,
+          });
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Không cập nhật được thông tin cá nhân');
@@ -161,7 +178,6 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
       {displayProfile && (
         <Form onSubmit={(event) => event.preventDefault()}>
           <Grid>
-
             {canEdit ? (
               <>
                 <FormGroup label="Họ tên" required>
@@ -180,30 +196,71 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                     }
                   />
                 </FormGroup>
-                <FormGroup label="Ngân hàng">
-                  <Input
-                    value={formData.bankName}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setFormData({ ...formData, bankName: event.target.value })
-                    }
-                  />
-                </FormGroup>
-                <FormGroup label="Số tài khoản">
-                  <Input
-                    value={formData.bankAccountNumber}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setFormData({ ...formData, bankAccountNumber: event.target.value })
-                    }
-                  />
-                </FormGroup>
-                <FormGroup label="Tên chủ tài khoản">
-                  <Input
-                    value={formData.bankAccountName}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setFormData({ ...formData, bankAccountName: event.target.value })
-                    }
-                  />
-                </FormGroup>
+
+                {isTenant && (
+                  <>
+                    <FormGroup label="CCCD/CMND">
+                      <Input
+                        value={formData.idNumber}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({ ...formData, idNumber: event.target.value })
+                        }
+                      />
+                    </FormGroup>
+                    <FormGroup label="Ngày sinh">
+                      <Input
+                        type="date"
+                        value={formData.birthday}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({ ...formData, birthday: event.target.value })
+                        }
+                      />
+                    </FormGroup>
+                    <FormGroup label="Giới tính">
+                      <Select
+                        value={formData.gender}
+                        onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                          setFormData({ ...formData, gender: event.target.value })
+                        }
+                        options={[
+                          { value: '', label: 'Chưa cập nhật' },
+                          { value: 'male', label: 'Nam' },
+                          { value: 'female', label: 'Nữ' },
+                          { value: 'other', label: 'Khác' },
+                        ]}
+                      />
+                    </FormGroup>
+                  </>
+                )}
+
+                {isOwner && (
+                  <>
+                    <FormGroup label="Ngân hàng">
+                      <Input
+                        value={formData.bankName}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({ ...formData, bankName: event.target.value })
+                        }
+                      />
+                    </FormGroup>
+                    <FormGroup label="Số tài khoản">
+                      <Input
+                        value={formData.bankAccountNumber}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({ ...formData, bankAccountNumber: event.target.value })
+                        }
+                      />
+                    </FormGroup>
+                    <FormGroup label="Tên chủ tài khoản">
+                      <Input
+                        value={formData.bankAccountName}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({ ...formData, bankAccountName: event.target.value })
+                        }
+                      />
+                    </FormGroup>
+                  </>
+                )}
               </>
             ) : (
               <>
@@ -213,14 +270,11 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                 <FormGroup label="Điện thoại">
                   <ReadonlyValue>{displayProfile.phone || 'N/A'}</ReadonlyValue>
                 </FormGroup>
-                <FormGroup label="Ngân hàng">
-                  <ReadonlyValue>{displayProfile.bankName || 'N/A'}</ReadonlyValue>
+                <FormGroup label="CCCD/CMND">
+                  <ReadonlyValue>{displayProfile.idNumber || 'N/A'}</ReadonlyValue>
                 </FormGroup>
-                <FormGroup label="Số tài khoản">
-                  <ReadonlyValue>{displayProfile.bankAccountNumber || 'N/A'}</ReadonlyValue>
-                </FormGroup>
-                <FormGroup label="Tên chủ tài khoản">
-                  <ReadonlyValue>{displayProfile.bankAccountName || 'N/A'}</ReadonlyValue>
+                <FormGroup label="Ngày sinh">
+                  <ReadonlyValue>{displayProfile.birthday || 'N/A'}</ReadonlyValue>
                 </FormGroup>
               </>
             )}

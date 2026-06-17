@@ -137,6 +137,8 @@ export const TenantManagement = () => {
         idNumber: user?.idNumber || 'N/A',
         gender: user?.gender ? genderMap[user.gender as keyof typeof genderMap] : 'N/A',
         phone: user?.phone || 'N/A',
+        isActive: user?.isActive !== false,
+        accountStatus: user?.isActive === false ? 'Đã khóa' : 'Đang hoạt động',
         roomNumber:
           activeContract?.roomNumber ||
           activeContract?.room?.roomNumber ||
@@ -165,6 +167,14 @@ export const TenantManagement = () => {
     { key: 'phone', title: 'Điện Thoại' },
     { key: 'idNumber', title: 'CMND/CCCD' },
     { key: 'gender', title: 'Giới Tính' },
+    {
+      key: 'accountStatus',
+      title: 'Trạng Thái',
+      render: (value: unknown, row: Record<string, unknown>) => {
+        const isActive = row.isActive !== false;
+        return <span style={{ color: isActive ? theme.colors.success : theme.colors.danger }}>{String(value)}</span>;
+      },
+    },
     { key: 'roomNumber', title: 'Phòng' },
     { key: 'leaseStart', title: 'Ngày Bắt Đầu' },
     {
@@ -175,20 +185,22 @@ export const TenantManagement = () => {
         return (
           <ActionButtons>
             <Button onClick={() => tenant && handleEditTenant(tenant)}>Sửa</Button>
-            <Button 
-              variant="danger" 
+            <Button
+              variant="danger"
               onClick={async () => {
-                if (window.confirm(`Bạn có chắc chắn muốn khóa tài khoản người thuê ${row.name}?`)) {
+                const isActive = row.isActive !== false;
+                const actionLabel = isActive ? 'khóa' : 'mở khóa';
+                if (window.confirm(`Bạn có chắc chắn muốn ${actionLabel} tài khoản người thuê ${row.name}?`)) {
                   try {
                     await deleteTenant(String(row.id));
-                    alert('Khóa tài khoản người thuê thành công');
+                    alert(`${isActive ? 'Khóa' : 'Mở khóa'} tài khoản người thuê thành công`);
                   } catch (err) {
-                    alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể khóa tài khoản'}`);
+                    alert(`Lỗi: ${err instanceof Error ? err.message : `Không thể ${actionLabel} tài khoản`}`);
                   }
                 }
               }}
             >
-              <LockOutlined /> Khóa tài khoản
+              <LockOutlined /> {row.isActive === false ? 'Kích hoạt tài khoản' : 'Khóa tài khoản'}
             </Button>
           </ActionButtons>
         );
@@ -213,7 +225,7 @@ export const TenantManagement = () => {
               message={`❌ Lỗi: ${error}\n⚠️ Backend không kết nối được. Kiểm tra:\n✓ Backend http://localhost:5000\n✓ Database kết nối\n✓ Endpoint GET /api/v1/tenants`}
               type="error"
             />
-            <Button onClick={() => fetchTenants()} variant="primary">
+            <Button onClick={() => fetchTenants(true)} variant="primary">
               ↻ Thử Lại
             </Button>
           </ErrorContainer>

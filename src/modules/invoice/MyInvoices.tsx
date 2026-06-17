@@ -1,45 +1,68 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { SearchOutlined } from '@ant-design/icons';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
 import { Badge, Button, Card, Header, Modal } from '../../components/common';
 import { Table } from '../../components/Table';
-import { FormGroup, Select } from '../../components/Forms/Form';
+import { FormGroup, Input, Select } from '../../components/Forms/Form';
 import { invoiceService } from './invoiceService';
 import type { Invoice, InvoiceStatus } from './invoice.types';
 
-const Container = styled.div`
+const Page = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.md};
+  gap: ${theme.spacing.lg};
+  min-height: 100%;
+  padding: ${theme.spacing.lg};
+  background: ${theme.colors.lightBg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+  }
 `;
 
 const Toolbar = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(150px, 1fr)) auto;
+  grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(140px, 0.8fr)) auto;
   gap: ${theme.spacing.md};
   align-items: flex-end;
 
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
     grid-template-columns: 1fr;
   }
 `;
 
-const Grid = styled.div`
+const SummaryGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
   gap: ${theme.spacing.md};
 
-  @media (max-width: 720px) {
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
     grid-template-columns: 1fr;
   }
 `;
 
-const SummaryItem = styled.div`
+const SummaryItem = styled.div<{ $tone?: 'danger' | 'success' | 'info' }>`
   padding: ${theme.spacing.md};
-  border: 1px solid ${theme.colors.borderLight};
-  border-radius: ${theme.radius.sm};
-  background: ${theme.colors.lightBg};
+  border: 1px solid
+    ${({ $tone }) =>
+      $tone === 'danger'
+        ? theme.colors.dangerLight
+        : $tone === 'success'
+          ? theme.colors.successLight
+          : theme.colors.borderLight};
+  border-radius: ${theme.radius.md};
+  background: ${theme.colors.white};
+  box-shadow: ${theme.shadow.sm};
 `;
 
 const SummaryLabel = styled.div`
@@ -48,8 +71,9 @@ const SummaryLabel = styled.div`
   margin-bottom: ${theme.spacing.xs};
 `;
 
-const SummaryValue = styled.div`
-  color: ${theme.colors.dark};
+const SummaryValue = styled.div<{ $tone?: 'danger' | 'success' }>`
+  color: ${({ $tone }) => ($tone === 'danger' ? theme.colors.danger : $tone === 'success' ? theme.colors.success : theme.colors.dark)};
+  font-size: ${theme.fontSize.xl};
   font-weight: ${theme.fontWeight.bold};
 `;
 
@@ -59,9 +83,27 @@ const ActionButtons = styled.div`
   flex-wrap: wrap;
 
   button {
+    min-height: 36px;
     padding: ${theme.spacing.sm} ${theme.spacing.md};
     font-size: ${theme.fontSize.sm};
   }
+`;
+
+const DetailGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: ${theme.spacing.md};
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const DetailItem = styled.div`
+  padding: ${theme.spacing.md};
+  border: 1px solid ${theme.colors.borderLight};
+  border-radius: ${theme.radius.sm};
+  background: ${theme.colors.lightBg};
 `;
 
 const ErrorText = styled.p`
@@ -138,6 +180,7 @@ export const MyInvoices = () => {
   const [error, setError] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [filters, setFilters] = useState({
+    search: '',
     status: '',
     month: '',
     year: '',
@@ -171,6 +214,39 @@ export const MyInvoices = () => {
     loadInvoices();
   }, [loadInvoices]);
 
+  const filteredInvoices = useMemo(() => {
+    const keyword = filters.search.trim().toLowerCase();
+    if (!keyword) return invoices;
+
+    return invoices.filter((invoice) => {
+      const content = [
+        invoice.id,
+        invoice.room_number,
+        invoice.landlord_name,
+        invoice.month,
+        invoice.year,
+        statusLabels[invoice.status],
+      ].join(' ').toLowerCase();
+
+      return content.includes(keyword);
+    });
+  }, [filters.search, invoices]);
+
+  const summary = useMemo(() => {
+    return filteredInvoices.reduce(
+      (acc, invoice) => {
+        acc.totalAmount += invoice.final_amount;
+        if (invoice.status === 'paid') acc.paid += 1;
+        if (invoice.status === 'pending' || invoice.status === 'overdue') {
+          acc.unpaid += 1;
+          acc.unpaidAmount += invoice.final_amount;
+        }
+        return acc;
+      },
+      { totalAmount: 0, paid: 0, unpaid: 0, unpaidAmount: 0 }
+    );
+  }, [filteredInvoices]);
+
   const openDetailModal = async (invoice: Invoice) => {
     try {
       setSubmitting(true);
@@ -202,18 +278,6 @@ export const MyInvoices = () => {
       setSubmitting(false);
     }
   };
-
-  const summary = useMemo(() => {
-    return invoices.reduce(
-      (acc, invoice) => {
-        acc.totalAmount += invoice.final_amount;
-        if (invoice.status === 'paid') acc.paid += 1;
-        if (invoice.status === 'pending' || invoice.status === 'overdue') acc.unpaid += 1;
-        return acc;
-      },
-      { totalAmount: 0, paid: 0, unpaid: 0 }
-    );
-  }, [invoices]);
 
   const columns: TableColumn<Invoice>[] = [
     { key: 'id', title: 'Mã HĐ', render: (value) => `#${value}` },
@@ -247,16 +311,52 @@ export const MyInvoices = () => {
   ];
 
   return (
-    <Container>
-      <Header title="Hóa Đơn Của Tôi" />
+    <Page>
+      <Header
+        title="Hóa Đơn Của Tôi"
+        actions={
+          <Button onClick={loadInvoices} disabled={loading || submitting}>
+            Tải lại
+          </Button>
+        }
+      />
+
+      <SummaryGrid>
+        <SummaryItem>
+          <SummaryLabel>Tổng hóa đơn</SummaryLabel>
+          <SummaryValue>{filteredInvoices.length}</SummaryValue>
+        </SummaryItem>
+        <SummaryItem $tone="success">
+          <SummaryLabel>Đã thanh toán</SummaryLabel>
+          <SummaryValue $tone="success">{summary.paid}</SummaryValue>
+        </SummaryItem>
+        <SummaryItem $tone="danger">
+          <SummaryLabel>Chưa thanh toán</SummaryLabel>
+          <SummaryValue $tone="danger">{summary.unpaid}</SummaryValue>
+        </SummaryItem>
+        <SummaryItem $tone="danger">
+          <SummaryLabel>Số tiền cần xử lý</SummaryLabel>
+          <SummaryValue $tone="danger">{formatCurrency(summary.unpaidAmount || summary.totalAmount)}</SummaryValue>
+        </SummaryItem>
+      </SummaryGrid>
 
       <Card>
         <Toolbar>
+          <FormGroup label="Tìm nhanh">
+            <Input
+              value={filters.search}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setFilters({ ...filters, search: event.target.value })
+              }
+              placeholder="Mã hóa đơn, phòng, chủ nhà..."
+              disabled={loading || submitting}
+            />
+          </FormGroup>
           <FormGroup label="Trạng thái">
             <Select
               value={filters.status}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setFilters({ ...filters, status: e.target.value })
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                setFilters({ ...filters, status: event.target.value })
               }
               options={statusOptions}
               disabled={loading || submitting}
@@ -265,8 +365,8 @@ export const MyInvoices = () => {
           <FormGroup label="Tháng">
             <Select
               value={filters.month}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setFilters({ ...filters, month: e.target.value })
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                setFilters({ ...filters, month: event.target.value })
               }
               options={monthOptions}
               disabled={loading || submitting}
@@ -275,42 +375,24 @@ export const MyInvoices = () => {
           <FormGroup label="Năm">
             <Select
               value={filters.year}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setFilters({ ...filters, year: e.target.value })
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                setFilters({ ...filters, year: event.target.value })
               }
               options={yearOptions}
               disabled={loading || submitting}
             />
           </FormGroup>
           <Button onClick={loadInvoices} disabled={loading || submitting}>
-            Tải lại
+            <SearchOutlined />
+            Tìm
           </Button>
         </Toolbar>
       </Card>
 
-      <Grid>
-        <SummaryItem>
-          <SummaryLabel>Tổng hóa đơn</SummaryLabel>
-          <SummaryValue>{invoices.length}</SummaryValue>
-        </SummaryItem>
-        <SummaryItem>
-          <SummaryLabel>Đã thanh toán</SummaryLabel>
-          <SummaryValue>{summary.paid}</SummaryValue>
-        </SummaryItem>
-        <SummaryItem>
-          <SummaryLabel>Chưa thanh toán</SummaryLabel>
-          <SummaryValue>{summary.unpaid}</SummaryValue>
-        </SummaryItem>
-        <SummaryItem>
-          <SummaryLabel>Tổng tiền</SummaryLabel>
-          <SummaryValue>{formatCurrency(summary.totalAmount)}</SummaryValue>
-        </SummaryItem>
-      </Grid>
-
       {error && <ErrorText>Lỗi: {error}</ErrorText>}
 
       <Card>
-        <Table columns={columns} data={invoices} loading={loading} emptyText="Chưa có hóa đơn nào" />
+        <Table columns={columns} data={filteredInvoices} loading={loading} emptyText="Chưa có hóa đơn nào" />
       </Card>
 
       <Modal
@@ -320,64 +402,62 @@ export const MyInvoices = () => {
         cancelText="Đóng"
       >
         {selectedInvoice && (
-          <Container>
-            <Grid>
-              <SummaryItem>
-                <SummaryLabel>Mã hóa đơn</SummaryLabel>
-                <SummaryValue>#{selectedInvoice.id}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Kỳ</SummaryLabel>
-                <SummaryValue>{selectedInvoice.month}/{selectedInvoice.year}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Phòng</SummaryLabel>
-                <SummaryValue>{selectedInvoice.room_number}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Trạng thái</SummaryLabel>
-                <SummaryValue>{statusLabels[selectedInvoice.status]}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Tiền phòng</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.room_fee)}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Dịch vụ</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.service_fee)}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Điện</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.electric_fee)}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Nước</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.water_fee)}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>PhÃ­ khÃ¡c</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.other_fees)}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Tá»•ng cá»™ng</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.total_amount)}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Giảm giá</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.discount)}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Thành tiền</SummaryLabel>
-                <SummaryValue>{formatCurrency(selectedInvoice.final_amount)}</SummaryValue>
-              </SummaryItem>
-              <SummaryItem>
-                <SummaryLabel>Hạn thanh toán</SummaryLabel>
-                <SummaryValue>{formatDate(selectedInvoice.due_date)}</SummaryValue>
-              </SummaryItem>
-            </Grid>
-          </Container>
+          <DetailGrid>
+            <DetailItem>
+              <SummaryLabel>Mã hóa đơn</SummaryLabel>
+              <SummaryValue>#{selectedInvoice.id}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Kỳ</SummaryLabel>
+              <SummaryValue>{selectedInvoice.month}/{selectedInvoice.year}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Phòng</SummaryLabel>
+              <SummaryValue>{selectedInvoice.room_number || 'N/A'}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Trạng thái</SummaryLabel>
+              <SummaryValue>{statusLabels[selectedInvoice.status]}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Tiền phòng</SummaryLabel>
+              <SummaryValue>{formatCurrency(selectedInvoice.room_fee)}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Dịch vụ</SummaryLabel>
+              <SummaryValue>{formatCurrency(selectedInvoice.service_fee)}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Điện</SummaryLabel>
+              <SummaryValue>{formatCurrency(selectedInvoice.electric_fee)}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Nước</SummaryLabel>
+              <SummaryValue>{formatCurrency(selectedInvoice.water_fee)}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Phí khác</SummaryLabel>
+              <SummaryValue>{formatCurrency(selectedInvoice.other_fees)}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Tổng cộng</SummaryLabel>
+              <SummaryValue>{formatCurrency(selectedInvoice.total_amount)}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Giảm giá</SummaryLabel>
+              <SummaryValue>{formatCurrency(selectedInvoice.discount)}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Thành tiền</SummaryLabel>
+              <SummaryValue $tone="danger">{formatCurrency(selectedInvoice.final_amount)}</SummaryValue>
+            </DetailItem>
+            <DetailItem>
+              <SummaryLabel>Hạn thanh toán</SummaryLabel>
+              <SummaryValue>{formatDate(selectedInvoice.due_date)}</SummaryValue>
+            </DetailItem>
+          </DetailGrid>
         )}
       </Modal>
-    </Container>
+    </Page>
   );
 };

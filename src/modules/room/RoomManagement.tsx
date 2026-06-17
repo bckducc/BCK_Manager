@@ -96,7 +96,7 @@ export const RoomManagement = () => {
     area: '',
     floor: '',
     price: '',
-    status: '',
+    status: 'available',
     description: '',
   });
 
@@ -135,7 +135,7 @@ export const RoomManagement = () => {
     const floor = Number(formData.floor);
     const price = Number(formData.price);
 
-    if (!roomNumber || !formData.area || !formData.floor || !formData.price || !formData.status) {
+    if (!roomNumber || !formData.area || !formData.floor || !formData.price) {
       alert('Vui lòng điền tất cả các trường bắt buộc');
       return;
     }
@@ -172,7 +172,7 @@ export const RoomManagement = () => {
         area,
         floor,
         price,
-        status: formData.status as 'available' | 'rented' | 'maintenance',
+        status: editingRoom ? formData.status as 'available' | 'rented' | 'maintenance' : 'available' as const,
         description: formData.description.trim(),
       };
 
@@ -193,7 +193,7 @@ export const RoomManagement = () => {
           area: '',
           floor: '',
           price: '',
-          status: '',
+          status: 'available',
           description: '',
         });
         alert(editingRoom ? 'Cập nhật phòng thành công' : 'Tạo phòng thành công');
@@ -231,7 +231,10 @@ export const RoomManagement = () => {
     try {
       const response = await roomService.delete(String(room.id));
       if (response.success) {
-        await execute();
+        setRooms((currentRooms) => currentRooms.filter((currentRoom) => String(currentRoom.id) !== String(room.id)));
+        execute().catch((refreshError) => {
+          console.error('Failed to refresh rooms after deletion:', refreshError);
+        });
         alert('Xóa phòng thành công');
       }
     } catch (err) {
@@ -247,7 +250,7 @@ export const RoomManagement = () => {
       area: '',
       floor: '',
       price: '',
-      status: '',
+      status: 'available',
       description: '',
     });
   };
@@ -410,21 +413,21 @@ export const RoomManagement = () => {
               disabled={isSubmitting}
             />
           </FormGroup>
-          <FormGroup label="Trạng thái phòng" required>
-            <Select
-              value={formData.status}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setFormData({ ...formData, status: e.target.value })
-              }
-              options={[
-                { value: '', label: 'Chọn trạng thái...' },
-                { value: 'available', label: 'Còn trống' },
-                { value: 'rented', label: 'Đã cho thuê' },
-                { value: 'maintenance', label: 'Bảo trì' },
-              ]}
-              disabled={isSubmitting}
-            />
-          </FormGroup>
+          {editingRoom ? (
+            <FormGroup label="Trạng thái phòng" required>
+              <Select
+                value={formData.status}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
+                options={[
+                  { value: 'available', label: 'Còn trống' },
+                  { value: 'maintenance', label: 'Bảo trì' },
+                ]}
+                disabled={isSubmitting}
+              />
+            </FormGroup>
+          ) : null}
           <FormGroup label="Mô Tả">
             <Input
               type="text"

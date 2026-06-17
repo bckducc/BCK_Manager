@@ -64,9 +64,9 @@ const toBackendPayload = (service: Partial<ServicePayload>) => {
   return JSON.stringify(payload);
 };
 
-const toRoomService = (roomService: BackendRoomService): RoomService => ({
+const toRoomService = (roomService: BackendRoomService, fallbackRoomId?: string | number): RoomService => ({
   id: roomService.id,
-  roomId: roomService.room_id,
+  roomId: roomService.room_id ?? fallbackRoomId ?? '',
   serviceId: roomService.service_id,
   quantity: Number(roomService.quantity),
   appliedDate: roomService.applied_date ? new Date(roomService.applied_date) : new Date(),
@@ -161,7 +161,7 @@ export const serviceService = {
     return {
       ...response,
       data: {
-        roomServices: Array.isArray(response.data) ? response.data.map(toRoomService) : [],
+        roomServices: Array.isArray(response.data) ? response.data.map((item) => toRoomService(item, roomId)) : [],
       },
     };
   },

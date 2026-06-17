@@ -1,4 +1,5 @@
 import { apiCall } from '../../services/apiClient';
+import type { ApiResponse } from '../../types';
 import type { Contract } from './contract.types';
 
 export type ContractFilters = {
@@ -65,11 +66,90 @@ const serializePartialContract = (data: Partial<Omit<Contract, 'id' | 'createdAt
   });
 };
 
-export const contractService = {
-  getAll: (filters: ContractFilters = {}) =>
-    apiCall<Contract[]>(`/api/v1/contracts${buildQuery(filters)}`, { method: 'GET' }),
+type BackendContract = Partial<Contract> & {
+  id: string | number;
+  tenant_id?: string | number;
+  room_id?: string | number;
+  contract_code?: string;
+  start_date?: string;
+  end_date?: string;
+  monthly_rent?: string | number;
+  deposit_amount?: string | number;
+  signed_date?: string;
+  created_at?: string;
+  tenant_name?: string;
+  tenant_phone?: string;
+  room_number?: string;
+  room_price?: string | number;
+  landlord_name?: string;
+  landlord_phone?: string;
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
+  area?: string | number;
+  floor?: string | number;
+  description?: string;
+};
 
-  getById: (id: string) => apiCall<Contract>(`/api/v1/contracts/${id}`, { method: 'GET' }),
+const toNumber = (value: unknown) => {
+  const numberValue = Number(value ?? 0);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
+export const toContract = (contract: BackendContract): Contract => ({
+  ...contract,
+  id: String(contract.id),
+  tenantId: String(contract.tenant_id ?? contract.tenantId ?? ''),
+  roomId: String(contract.room_id ?? contract.roomId ?? ''),
+  contract_code: contract.contract_code ?? contract.contract_code ?? '',
+  startDate: new Date(contract.start_date ?? contract.startDate ?? ''),
+  endDate: new Date(contract.end_date ?? contract.endDate ?? ''),
+  price: toNumber(contract.monthly_rent ?? contract.price ?? contract.room_price),
+  depositAmount: toNumber(contract.deposit_amount ?? contract.depositAmount),
+  signedDate: contract.signed_date ? new Date(contract.signed_date) : contract.signedDate,
+  status: (contract.status ?? 'active') as Contract['status'],
+  terms: contract.terms,
+  createdAt: new Date(contract.created_at ?? contract.createdAt ?? ''),
+  tenantName: contract.tenant_name ?? contract.tenantName,
+  tenantPhone: contract.tenant_phone ?? contract.tenantPhone,
+  roomNumber: contract.room_number ?? contract.roomNumber,
+  floor: contract.floor === undefined ? undefined : toNumber(contract.floor),
+  room: {
+    id: contract.room_id ?? contract.roomId,
+    room_number: contract.room_number,
+    area: toNumber(contract.area),
+    floor: toNumber(contract.floor),
+    status: 'rented',
+    price: toNumber(contract.room_price ?? contract.monthly_rent ?? contract.price),
+    description: contract.description,
+  },
+});
+
+const mapContractListResponse = (response: ApiResponse<BackendContract[]>): ApiResponse<Contract[]> => ({
+  ...response,
+  data: Array.isArray(response.data) ? response.data.map(toContract) : [],
+});
+
+const mapContractDetailResponse = (response: ApiResponse<BackendContract>): ApiResponse<Contract> => ({
+  ...response,
+  data: response.data ? toContract(response.data) : undefined,
+});
+
+export const contractService = {
+  getAll: async (filters: ContractFilters = {}) => {
+    const response = await apiCall<BackendContract[]>(`/api/v1/contracts${buildQuery(filters)}`, { method: 'GET' });
+    return mapContractListResponse(response);
+  },
+
+  getById: async (id: string) => {
+    const response = await apiCall<BackendContract>(`/api/v1/contracts/${id}`, { method: 'GET' });
+    return mapContractDetailResponse(response);
+  },
+
+  getMyContract: async () => {
+    const response = await apiCall<BackendContract>('/api/v1/contracts/my/contract', { method: 'GET' });
+    return mapContractDetailResponse(response);
+  },
 
   create: (data: CreateContractPayload) =>
     apiCall<Contract>('/api/v1/contracts', {

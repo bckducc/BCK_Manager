@@ -3,7 +3,7 @@ import type { Tenant } from './tenant.types';
 import type { User } from '../../types';
 
 export const tenantService = {
-  getDashboard: () => apiCall<{ profile: User; dashboard: Record<string, unknown> }>('/api/v1/tenant/dashboard', { method: 'GET' }),
+  getDashboard: () => apiCall<{ profile: User; dashboard: Record<string, unknown> }>('/api/v1/tenants/dashboard', { method: 'GET' }),
 
   updateProfile: (data: Partial<User>) =>
     apiCall<User>('/api/v1/tenants/profile', {
@@ -15,7 +15,7 @@ export const tenantService = {
 
   getById: (id: string) => apiCall<Tenant>(`/api/v1/tenants/${id}`, { method: 'GET' }),
 
-  create: (data: { username?: string; password?: string; name?: string; phone?: string; idNumber?: string; gender?: string }) =>
+  create: (data: { username?: string; password?: string; name?: string; phone?: string; idNumber?: string; gender?: User['gender'] }) =>
     apiCall<Tenant>('/api/v1/tenants', {
       method: 'POST',
       body: JSON.stringify({
@@ -28,7 +28,7 @@ export const tenantService = {
       }),
     }),
 
-  update: (id: string, data: Partial<Omit<Tenant, 'id' | 'currentRoom' | 'currentUser'>> & { name?: string; phone?: string; idNumber?: string; gender?: string }) =>
+  update: (id: string, data: Partial<Omit<Tenant, 'id' | 'currentRoom' | 'currentUser'>> & { name?: string; phone?: string; idNumber?: string; gender?: User['gender'] }) =>
     apiCall<Tenant>(`/api/v1/tenants/${id}`, {
       method: 'PUT',
       body: JSON.stringify({
@@ -39,6 +39,12 @@ export const tenantService = {
       }),
     }),
 
+  toggleStatus: (id: string) =>
+    apiCall<{ id: string | number; is_active: boolean }>(`/api/v1/tenants/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({}),
+    }),
+
   delete: (id: string) =>
-    apiCall<{ success: boolean }>(`/api/v1/tenants/${id}`, { method: 'DELETE' }),
+    tenantService.toggleStatus(id),
 };
