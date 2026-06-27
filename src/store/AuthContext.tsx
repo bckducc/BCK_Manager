@@ -8,7 +8,7 @@ const mapBackendRole = (backendRole: string): UserRole => {
   if (backendRole === 'landlord') return 'owner';
   if (backendRole === 'tenant') return 'tenant';
   if (backendRole === 'admin') return 'admin';
-  return 'tenant'; 
+  return 'tenant';
 };
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true);
-    
+
     try {
       if (!username || !password) {
         throw new Error('Vui lòng nhập tên tài khoản và mật khẩu');
@@ -46,10 +46,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Invalid response structure:', response);
         throw new Error('Dữ liệu từ server không hợp lệ');
       }
-      
+
       const backendRole = (userData as Record<string, unknown>).role as string;
       const mappedRole = mapBackendRole(backendRole);
-      
+
       const user: User = {
         id: (userData as Record<string, unknown>).id as string,
         username: (userData as Record<string, unknown>).username as string,
@@ -66,12 +66,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(tokenData as string);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', tokenData as string);
-      
+
       console.log('Login state updated:', { user, token: tokenData });
       return user;
     } catch (error) {
       const errorMessage = (error as Error)?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
-      
+
       console.error('Login error:', error);
       throw new Error(errorMessage);
     } finally {
@@ -93,15 +93,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    if (storedToken && !user) { 
+    if (storedToken && !user) {
       authService.getMe()
         .then((data) => {
           const userData = data.data?.user || (data as unknown as Record<string, unknown>).user;
-          
+
           if (data.success && userData) {
             const backendRole = (userData as Record<string, unknown>).role as string;
             const mappedRole = mapBackendRole(backendRole);
-            
+
             const user: User = {
               id: (userData as Record<string, unknown>).id as string,
               username: (userData as Record<string, unknown>).username as string,
@@ -127,7 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, logout]);
 
   const isAuthenticated = !!user && !!token;
-  
+
   const value = useMemo<AuthContextType>(() => ({
     user,
     token,

@@ -8,9 +8,17 @@ const rateLimitBackoff = new Map<string, number>();
 
 interface RequestOptions extends RequestInit {
   headers?: Record<string, string>;
+  skipCache?: boolean;
+  skipInvalidate?: boolean;
 }
 
 export type { ApiResponse };
+export const DATA_CHANGED_EVENT = 'app:data-changed';
+
+export const invalidateApiCache = () => {
+  responseCache.clear();
+  window.dispatchEvent(new CustomEvent(DATA_CHANGED_EVENT));
+};
 
 const buildRequestKey = (url: string, options: RequestOptions) => {
   const method = (options.method ?? 'GET').toUpperCase();
@@ -20,11 +28,22 @@ const buildRequestKey = (url: string, options: RequestOptions) => {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 export const apiCall = async <T = Record<string, unknown>>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<ApiResponse<T>> => {
   const token = localStorage.getItem('token');
+  const { skipCache, skipInvalidate, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -37,9 +56,9 @@ export const apiCall = async <T = Record<string, unknown>>(
 
   const url = `${API_BASE_URL}${endpoint}`;
   const method = (options.method ?? 'GET').toUpperCase();
-  const cacheKey = buildRequestKey(url, options);
-  const shouldDeduplicate = method === 'GET';
-  const shouldInvalidateCache = method !== 'GET';
+  const cacheKey = buildRequestKey(url, fetchOptions);
+  const shouldDeduplicate = method === 'GET' && !skipCache;
+  const shouldInvalidateCache = method !== 'GET' && !skipInvalidate;
 
   if (shouldDeduplicate) {
     const cached = responseCache.get(cacheKey);
@@ -73,13 +92,15 @@ export const apiCall = async <T = Record<string, unknown>>(
 
         try {
           const response = await fetch(url, {
-            ...options,
+            ...fetchOptions,
             headers,
           });
 
           const data = await response.json();
 
-          if (response.status === 401) {
+          const isLoginRequest = endpoint === '/api/v1/auth/login';
+
+          if (response.status === 401 && !isLoginRequest) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
@@ -103,12 +124,16 @@ export const apiCall = async <T = Record<string, unknown>>(
               }
             }
             
-            throw new Error(errorMessage);
+            throw new ApiError(errorMessage, response.status);
           }
 
           rateLimitBackoff.delete(endpointKey);
           return data;
         } catch (error) {
+          if (error instanceof ApiError && error.status !== 429) {
+            throw error;
+          }
+
           if (error instanceof Error) {
             lastError = error;
           }
@@ -134,7 +159,7 @@ export const apiCall = async <T = Record<string, unknown>>(
   try {
     const result = await fetchPromise;
     if (shouldInvalidateCache) {
-      responseCache.clear();
+      invalidateApiCache();
     }
     if (shouldDeduplicate) {
       responseCache.set(cacheKey, { timestamp: Date.now(), response: result as ApiResponse<unknown> });

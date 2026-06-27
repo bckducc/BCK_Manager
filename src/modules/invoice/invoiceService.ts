@@ -31,6 +31,8 @@ export type InvoiceFilters = {
 };
 
 export type GenerateInvoicePayload = {
+  contract_id?: string | number;
+  tenant_id?: string | number;
   month: number;
   year: number;
   other_fees?: number;
@@ -55,6 +57,27 @@ export type GenerateInvoiceResult = {
   created_count: number;
   skipped_count: number;
   warning_count: number;
+};
+
+export type InvoicePreview = {
+  contract_id: number;
+  tenant_id: number;
+  room_id: number;
+  room_number?: string;
+  tenant_name?: string;
+  month: number;
+  year: number;
+  room_fee: number;
+  service_fee: number;
+  electric_fee: number;
+  water_fee: number;
+  other_fees: number;
+  discount: number;
+  total_amount: number;
+  final_amount: number;
+  due_date?: string;
+  existing_invoice_id?: number | null;
+  warning?: string | null;
 };
 
 export type InvoiceListData = {
@@ -236,6 +259,29 @@ export const invoiceService = {
         skipped_count: toNumber(response.data?.skipped_count),
         warning_count: toNumber(response.data?.warning_count),
       },
+    };
+  },
+
+  preview: async (payload: GenerateInvoicePayload) => {
+    const response = await apiCall<InvoicePreview>('/api/v1/invoices/preview', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      skipInvalidate: true,
+    });
+
+    return {
+      ...response,
+      data: response.data ? {
+        ...response.data,
+        room_fee: toNumber(response.data.room_fee),
+        service_fee: toNumber(response.data.service_fee),
+        electric_fee: toNumber(response.data.electric_fee),
+        water_fee: toNumber(response.data.water_fee),
+        other_fees: toNumber(response.data.other_fees),
+        discount: toNumber(response.data.discount),
+        total_amount: toNumber(response.data.total_amount),
+        final_amount: toNumber(response.data.final_amount),
+      } : undefined,
     };
   },
 

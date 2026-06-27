@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import {
@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import { theme } from '../../styles/theme';
 import { Badge } from '../../components/common';
+import { DATA_CHANGED_EVENT } from '../../services/apiClient';
 import { useAuth } from '../auth/useAuth';
 import { tenantService } from './tenantService';
 import { contractService } from '../contract/contractService';
@@ -377,52 +378,71 @@ export const TenantDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const [dashboardResult, contractResult, invoiceResult] = await Promise.allSettled([
+      tenantService.getDashboard(),
+      contractService.getMyContract(),
+      invoiceService.getMyInvoices({ limit: 5 }),
+    ]);
+
+    if (dashboardResult.status === 'fulfilled') {
+      const dashboardProfile = dashboardResult.value.data?.profile as DashboardProfile | undefined;
+      if (dashboardProfile) {
+        setProfile({
+          id: String(dashboardProfile.id),
+          username: dashboardProfile.username,
+          name: dashboardProfile.name || dashboardProfile.full_name || '',
+          role: 'tenant',
+          phone: dashboardProfile.phone,
+          idNumber: dashboardProfile.idNumber || dashboardProfile.identity_card,
+          gender: dashboardProfile.gender,
+          createdAt: dashboardProfile.createdAt || new Date(),
+        });
+      }
+    }
+
+    if (contractResult.status === 'fulfilled' && contractResult.value.success) {
+      setContract(contractResult.value.data ?? null);
+    }
+
+    if (invoiceResult.status === 'fulfilled' && invoiceResult.value.success) {
+      setInvoices(invoiceResult.value.data?.invoices ?? []);
+    }
+
+    const failed = [dashboardResult, contractResult, invoiceResult].some((result) => result.status === 'rejected');
+    if (failed) {
+      setError('Một số dữ liệu chưa tải được. Bạn vẫn có thể dùng các lối tắt bên dưới.');
+    }
+
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
-    const loadDashboard = async () => {
-      setLoading(true);
-      setError(null);
+    loadDashboard();
 
-      const [dashboardResult, contractResult, invoiceResult] = await Promise.allSettled([
-        tenantService.getDashboard(),
-        contractService.getMyContract(),
-        invoiceService.getMyInvoices({ limit: 5 }),
-      ]);
-
-      if (dashboardResult.status === 'fulfilled') {
-        const dashboardProfile = dashboardResult.value.data?.profile as DashboardProfile | undefined;
-        if (dashboardProfile) {
-          setProfile({
-            id: String(dashboardProfile.id),
-            username: dashboardProfile.username,
-            name: dashboardProfile.name || dashboardProfile.full_name || '',
-            role: 'tenant',
-            phone: dashboardProfile.phone,
-            idNumber: dashboardProfile.idNumber || dashboardProfile.identity_card,
-            gender: dashboardProfile.gender,
-            birthday: dashboardProfile.birthday,
-            createdAt: dashboardProfile.createdAt || new Date(),
-          });
-        }
-      }
-
-      if (contractResult.status === 'fulfilled' && contractResult.value.success) {
-        setContract(contractResult.value.data ?? null);
-      }
-
-      if (invoiceResult.status === 'fulfilled' && invoiceResult.value.success) {
-        setInvoices(invoiceResult.value.data?.invoices ?? []);
-      }
-
-      const failed = [dashboardResult, contractResult, invoiceResult].some((result) => result.status === 'rejected');
-      if (failed) {
-        setError('Một số dữ liệu chưa tải được. Bạn vẫn có thể dùng các lối tắt bên dưới.');
-      }
-
-      setLoading(false);
+    const handleDataChanged = () => {
+      loadDashboard();
     };
 
-    loadDashboard();
-  }, []);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadDashboard();
+      }
+    };
+
+    window.addEventListener(DATA_CHANGED_EVENT, handleDataChanged);
+    window.addEventListener('focus', handleDataChanged);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener(DATA_CHANGED_EVENT, handleDataChanged);
+      window.removeEventListener('focus', handleDataChanged);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [loadDashboard]);
 
   const nextInvoice = useMemo(() => {
     return invoices

@@ -74,6 +74,7 @@ type BackendContract = Partial<Contract> & {
   start_date?: string;
   end_date?: string;
   monthly_rent?: string | number;
+  monthlyRent?: string | number;
   deposit_amount?: string | number;
   signed_date?: string;
   created_at?: string;
@@ -104,7 +105,8 @@ export const toContract = (contract: BackendContract): Contract => ({
   contract_code: contract.contract_code ?? contract.contract_code ?? '',
   startDate: new Date(contract.start_date ?? contract.startDate ?? ''),
   endDate: new Date(contract.end_date ?? contract.endDate ?? ''),
-  price: toNumber(contract.monthly_rent ?? contract.price ?? contract.room_price),
+  price: toNumber(contract.monthly_rent ?? contract.monthlyRent ?? contract.room_price ?? contract.price),
+  monthlyRent: toNumber(contract.monthly_rent ?? contract.monthlyRent ?? contract.room_price ?? contract.price),
   depositAmount: toNumber(contract.deposit_amount ?? contract.depositAmount),
   signedDate: contract.signed_date ? new Date(contract.signed_date) : contract.signedDate,
   status: (contract.status ?? 'active') as Contract['status'],
@@ -120,7 +122,7 @@ export const toContract = (contract: BackendContract): Contract => ({
     area: toNumber(contract.area),
     floor: toNumber(contract.floor),
     status: 'rented',
-    price: toNumber(contract.room_price ?? contract.monthly_rent ?? contract.price),
+    price: toNumber(contract.room_price ?? contract.monthly_rent ?? contract.monthlyRent ?? contract.price),
     description: contract.description,
   },
 });

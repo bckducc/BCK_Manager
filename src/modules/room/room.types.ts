@@ -7,6 +7,7 @@ export interface Room {
   floor: number;
   status: 'available' | 'rented' | 'maintenance';
   price: number;
+  deposit?: number;
   description?: string;
   landlord_id?: string | number;
   created_at?: Date;

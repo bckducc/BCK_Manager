@@ -9,6 +9,7 @@ export interface Contract {
   startDate: Date;
   endDate: Date;
   price: number;
+  monthlyRent?: number;
   depositAmount?: number;
   signedDate?: Date;
   status: 'active' | 'expired' | 'terminated';

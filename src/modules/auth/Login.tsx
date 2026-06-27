@@ -70,8 +70,8 @@ export const Login = () => {
     try {
       const loggedInUser = await login(username, password);
       const from = (location.state as Record<string, unknown>)?.from as Record<string, unknown> | undefined;
-      
-      let pathname = '/owner'; 
+
+      let pathname = '/owner';
       if (loggedInUser?.role === 'tenant') {
         pathname = '/tenant';
       } else if (loggedInUser?.role === 'admin') {
@@ -79,7 +79,7 @@ export const Login = () => {
       } else {
         pathname = (from?.pathname as string) || '/owner';
       }
-      
+
       console.log('Login successful:', { loggedInUser, pathname });
       setTimeout(() => {
         navigate(pathname);
@@ -95,7 +95,7 @@ export const Login = () => {
       <LoginContainer>
         <Form onSubmit={handleSubmit} title="Đăng Nhập">
           {error && <ErrorMessage>{error}</ErrorMessage>}
-          
+
           <FormGroup label="Tên Tài Khoản" required>
             <Input
               type="text"
@@ -116,9 +116,9 @@ export const Login = () => {
             />
           </FormGroup>
 
-          <Button 
-            type="submit" 
-            loading={isLoading} 
+          <Button
+            type="submit"
+            loading={isLoading}
             fullWidth
           >
             Đăng Nhập

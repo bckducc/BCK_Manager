@@ -6,8 +6,10 @@ import { Header, Button, Card, Modal, Alert, Loading, Badge } from '../../compon
 import { Table } from '../../components/Table';
 import { Form, FormGroup, Input, Select, TextArea } from '../../components/Forms/Form';
 import { invoiceService } from './invoiceService';
-import type { GenerateInvoiceResult, InvoicePaymentData } from './invoiceService';
+import type { GenerateInvoiceResult, InvoicePaymentData, InvoicePreview } from './invoiceService';
 import type { Invoice, InvoiceStatus, PaymentMethod } from './invoice.types';
+import { contractService } from '../contract/contractService';
+import type { Contract } from '../contract/contract.types';
 
 const Container = styled.div`
   display: flex;
@@ -116,12 +118,27 @@ const formatDate = (value?: string) => {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('vi-VN');
 };
 
+const downloadTextFile = (content: string, filename: string) => {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+const safeFilePart = (value: unknown) => String(value || 'hoa_don').replace(/[^\w-]+/g, '_');
+
 const getDefaultDueDate = (month: number, year: number) => {
   const dueDate = new Date(year, month, 5);
   return dueDate.toISOString().slice(0, 10);
 };
 
 const initialGenerateForm = {
+  contractId: '',
   month: String(currentMonth),
   year: String(currentYear),
   otherFees: '0',
@@ -144,9 +161,13 @@ export const InvoiceManagement = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [exportingInvoiceId, setExportingInvoiceId] = useState<number | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [payments, setPayments] = useState<InvoicePaymentData | null>(null);
   const [generationResult, setGenerationResult] = useState<GenerateInvoiceResult | null>(null);
+  const [activeContracts, setActiveContracts] = useState<Contract[]>([]);
+  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [formData, setFormData] = useState(initialGenerateForm);
   const [paymentForm, setPaymentForm] = useState(initialPaymentForm);
 
@@ -173,13 +194,79 @@ export const InvoiceManagement = () => {
     loadInvoices();
   }, [loadInvoices]);
 
+  const loadActiveContracts = useCallback(async () => {
+    try {
+      const response = await contractService.getAll({ status: 'active', limit: 100 });
+      setActiveContracts(response.success ? response.data ?? [] : []);
+    } catch {
+      setActiveContracts([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadActiveContracts();
+  }, [loadActiveContracts]);
+
+  const selectedContract = activeContracts.find((contract) => contract.id === formData.contractId);
+
+  const contractOptions = activeContracts.map((contract) => ({
+    value: contract.id,
+    label: `${contract.tenantName || `Người thuê #${contract.tenantId}`} - Phòng ${contract.roomNumber || contract.roomId}`,
+  }));
+
+  useEffect(() => {
+    if (!isModalOpen || !formData.contractId || !formData.month || !formData.year) {
+      setInvoicePreview(null);
+      return;
+    }
+
+    let isCurrent = true;
+    const timer = window.setTimeout(async () => {
+      setPreviewLoading(true);
+      try {
+        const response = await invoiceService.preview({
+          contract_id: formData.contractId,
+          month: Number(formData.month),
+          year: Number(formData.year),
+          other_fees: Number(formData.otherFees || 0),
+          discount: Number(formData.discount || 0),
+          due_date: formData.dueDate || undefined,
+        });
+
+        if (isCurrent) {
+          setInvoicePreview(response.success ? response.data ?? null : null);
+        }
+      } catch {
+        if (isCurrent) {
+          setInvoicePreview(null);
+        }
+      } finally {
+        if (isCurrent) {
+          setPreviewLoading(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(timer);
+    };
+  }, [formData.contractId, formData.month, formData.year, formData.otherFees, formData.discount, formData.dueDate, isModalOpen]);
+
   const handleGenerateInvoices = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
 
     try {
       setIsSaving(true);
       setError(null);
+
+      if (!formData.contractId) {
+        throw new Error('Vui lòng chọn người thuê cần tạo hóa đơn');
+      }
+
       const response = await invoiceService.generate({
+        contract_id: formData.contractId,
         month: Number(formData.month),
         year: Number(formData.year),
         other_fees: Number(formData.otherFees || 0),
@@ -192,6 +279,13 @@ export const InvoiceManagement = () => {
       }
 
       setGenerationResult(response.data);
+      if (response.data.created_count > 0) {
+        setInvoices((current) => [...response.data.created, ...current]);
+        setIsModalOpen(false);
+        setFormData(initialGenerateForm);
+        setGenerationResult(null);
+        setInvoicePreview(null);
+      }
       await loadInvoices();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không tạo được hóa đơn');
@@ -264,6 +358,21 @@ export const InvoiceManagement = () => {
     }
   };
 
+  const handleExportInvoice = async (invoice: Invoice) => {
+    try {
+      setExportingInvoiceId(invoice.id);
+      setError(null);
+
+      const content = await invoiceService.exportText(String(invoice.id));
+      const filename = `hoa_don_${safeFilePart(invoice.room_number)}_${invoice.month}_${invoice.year}_${invoice.id}.txt`;
+      downloadTextFile(content, filename);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không xuất được hóa đơn');
+    } finally {
+      setExportingInvoiceId(null);
+    }
+  };
+
   const columns: TableColumn<Invoice>[] = [
     { key: 'id', title: 'Mã HĐ', render: (value) => `#${value}` },
     { key: 'tenant_name', title: 'Người Thuê', render: (value) => String(value || 'N/A') },
@@ -286,6 +395,13 @@ export const InvoiceManagement = () => {
         <ActionButtons>
           <Button onClick={() => handleViewInvoice(row)} disabled={isSaving}>
             Xem
+          </Button>
+          <Button
+            onClick={() => handleExportInvoice(row)}
+            disabled={isSaving || exportingInvoiceId !== null}
+            loading={exportingInvoiceId === row.id}
+          >
+            Xuất hóa đơn
           </Button>
           {row.status !== 'paid' && row.status !== 'cancelled' && (
             <Button onClick={() => openPaymentModal(row)} disabled={isSaving}>
@@ -331,15 +447,29 @@ export const InvoiceManagement = () => {
             setIsModalOpen(false);
             setError(null);
             setGenerationResult(null);
+            setInvoicePreview(null);
+            setFormData(initialGenerateForm);
           }}
           onConfirm={() => {
-            handleGenerateInvoices({ preventDefault: () => undefined } as React.FormEvent);
+            void handleGenerateInvoices({ preventDefault: () => undefined } as React.FormEvent);
           }}
           confirmText={isSaving ? 'Đang tạo...' : 'Tạo'}
+          confirmDisabled={isSaving || !formData.contractId || !!invoicePreview?.existing_invoice_id}
+          confirmLoading={isSaving}
           cancelText="Đóng"
         >
           <Form onSubmit={handleGenerateInvoices}>
             <FormGrid>
+              <FormGroup label="Người Thuê" required>
+                <Select
+                  value={formData.contractId}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setFormData({ ...formData, contractId: e.target.value })
+                  }
+                  options={[{ value: '', label: 'Chọn người thuê' }, ...contractOptions]}
+                  disabled={isSaving}
+                />
+              </FormGroup>
               <FormGroup label="Tháng" required>
                 <Select
                   value={formData.month}
@@ -401,6 +531,62 @@ export const InvoiceManagement = () => {
                 />
               </FormGroup>
             </FormGrid>
+            {selectedContract && (
+              <DetailItem>
+                Hợp đồng #{selectedContract.contract_code || selectedContract.id} - Phòng{' '}
+                {selectedContract.roomNumber || selectedContract.roomId}. Tiền phòng:{' '}
+                <strong>{formatCurrency(Number(selectedContract.monthlyRent ?? selectedContract.price ?? 0))}</strong>
+              </DetailItem>
+            )}
+            {previewLoading && <DetailItem>Đang tính hóa đơn từ dữ liệu hợp đồng, điện nước và dịch vụ...</DetailItem>}
+            {invoicePreview && (
+              <DetailGrid>
+                <DetailItem>
+                  <DetailLabel>Tiền phòng</DetailLabel>
+                  <DetailValue>{formatCurrency(invoicePreview.room_fee)}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Dịch vụ đã gán</DetailLabel>
+                  <DetailValue>{formatCurrency(invoicePreview.service_fee)}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Tiền điện</DetailLabel>
+                  <DetailValue>{formatCurrency(invoicePreview.electric_fee)}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Tiền nước</DetailLabel>
+                  <DetailValue>{formatCurrency(invoicePreview.water_fee)}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Phí khác</DetailLabel>
+                  <DetailValue>{formatCurrency(invoicePreview.other_fees)}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Giảm giá</DetailLabel>
+                  <DetailValue>{formatCurrency(invoicePreview.discount)}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Tổng cộng</DetailLabel>
+                  <DetailValue>{formatCurrency(invoicePreview.total_amount)}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Thành tiền</DetailLabel>
+                  <DetailValue>{formatCurrency(invoicePreview.final_amount)}</DetailValue>
+                </DetailItem>
+                {invoicePreview.warning && (
+                  <DetailItem>
+                    <DetailLabel>Cảnh báo</DetailLabel>
+                    <DetailValue>{invoicePreview.warning}</DetailValue>
+                  </DetailItem>
+                )}
+                {invoicePreview.existing_invoice_id && (
+                  <DetailItem>
+                    <DetailLabel>Trạng thái</DetailLabel>
+                    <DetailValue>Đã có hóa đơn #{invoicePreview.existing_invoice_id} cho kỳ này</DetailValue>
+                  </DetailItem>
+                )}
+              </DetailGrid>
+            )}
             {generationResult && (
               <DetailItem>
                 Đã tạo {generationResult.created_count} hóa đơn, bỏ qua {generationResult.skipped_count}, cảnh báo{' '}

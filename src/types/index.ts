@@ -15,7 +15,6 @@ export interface User {
   bankName?: string;
   bankAccountNumber?: string;
   bankAccountName?: string;
-  birthday?: string;
   createdAt: Date;
 }
 

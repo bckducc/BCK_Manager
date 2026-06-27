@@ -113,6 +113,8 @@ interface ModalProps {
   onConfirm?: () => void;
   confirmText?: string;
   cancelText?: string;
+  confirmDisabled?: boolean;
+  confirmLoading?: boolean;
 }
 
 export const Modal = ({
@@ -123,6 +125,8 @@ export const Modal = ({
   onConfirm,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
+  confirmDisabled = false,
+  confirmLoading = false,
 }: ModalProps) => {
   if (!isOpen) return null;
 
@@ -136,7 +140,16 @@ export const Modal = ({
         <ModalBody>{children}</ModalBody>
         <ModalFooter>
           <Button onClick={onClose}>{cancelText}</Button>
-          {onConfirm && <Button variant="primary" onClick={onConfirm}>{confirmText}</Button>}
+          {onConfirm && (
+            <Button
+              variant="primary"
+              onClick={onConfirm}
+              disabled={confirmDisabled}
+              loading={confirmLoading}
+            >
+              {confirmText}
+            </Button>
+          )}
         </ModalFooter>
       </ModalContent>
     </ModalOverlay>

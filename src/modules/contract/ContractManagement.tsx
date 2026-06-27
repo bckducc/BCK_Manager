@@ -61,13 +61,6 @@ const ActionButtons = styled.div`
   }
 `;
 
-const PrintContainer = styled.div`
-  @media print {
-    padding: ${theme.spacing.lg};
-    background: white;
-  }
-`;
-
 const initialContractForm = {
   tenantId: '',
   roomId: '',
@@ -221,17 +214,13 @@ export const ContractManagement = () => {
     }
   };
 
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
-
   const columns: TableColumn<Contract>[] = useMemo(() => [
     { key: 'contract_code', title: 'Mã HĐ', width: '12%', render: (value) => String(value || 'N/A') },
     { key: 'tenantName', title: 'Tên Người Thuê', width: '18%', render: (_, row) => row.tenantName || 'N/A' },
     { key: 'roomNumber', title: 'Số Phòng', width: '12%', render: (_, row) => row.roomNumber || 'N/A' },
     { key: 'startDate', title: 'Ngày Bắt Đầu', width: '13%', render: (value) => formatDate(value as Date | string) },
     { key: 'endDate', title: 'Ngày Kết Thúc', width: '13%', render: (value) => formatDate(value as Date | string) },
-    { key: 'price', title: 'Giá Phòng', width: '13%', render: (value) => formatCurrency(value) },
+    { key: 'monthlyRent', title: 'Giá Phòng', width: '13%', render: (_, row) => formatCurrency(row.monthlyRent ?? row.price) },
     {
       key: 'status',
       title: 'Trạng Thái',
@@ -277,9 +266,6 @@ export const ContractManagement = () => {
               <Button onClick={() => setIsModalOpen(true)}>
                 + Tạo Hợp Đồng
               </Button>
-              <Button onClick={handlePrint} variant="secondary">
-                In Danh Sách
-              </Button>
             </ActionButtons>
           }
         />
@@ -312,9 +298,7 @@ export const ContractManagement = () => {
         </Card>
 
         <Card>
-          <PrintContainer>
-            <Table columns={columns} data={filteredContracts} emptyText="Chưa có hợp đồng nào" />
-          </PrintContainer>
+          <Table columns={columns} data={filteredContracts} emptyText="Chưa có hợp đồng nào" />
         </Card>
 
         <Modal
@@ -345,10 +329,13 @@ export const ContractManagement = () => {
                   value={formData.roomId}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                     const room = rooms.find((item) => String(item.id) === e.target.value);
+                    const roomPrice = Number(room?.price || 0);
+                    const roomDeposit = Number(room?.deposit ?? roomPrice * 2);
                     setFormData({
                       ...formData,
                       roomId: e.target.value,
-                      monthlyRent: room?.price ? String(room.price) : formData.monthlyRent,
+                      monthlyRent: roomPrice > 0 ? String(roomPrice) : formData.monthlyRent,
+                      depositAmount: roomDeposit > 0 ? String(roomDeposit) : formData.depositAmount,
                     });
                   }}
                   options={roomOptions}
@@ -400,9 +387,8 @@ export const ContractManagement = () => {
                   type="number"
                   min="0"
                   value={formData.depositAmount}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, depositAmount: e.target.value })
-                  }
+                  readOnly
+                  placeholder="Chọn phòng để tự động điền"
                   disabled={isSubmitting}
                 />
               </FormGroup>
@@ -411,9 +397,8 @@ export const ContractManagement = () => {
                   type="number"
                   min="0"
                   value={formData.monthlyRent}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, monthlyRent: e.target.value })
-                  }
+                  readOnly
+                  placeholder="Chọn phòng để tự động điền"
                   disabled={isSubmitting}
                 />
               </FormGroup>

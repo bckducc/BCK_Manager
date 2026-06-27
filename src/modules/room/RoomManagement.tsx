@@ -86,6 +86,7 @@ export const RoomManagement = () => {
   const { data: responseData, loading, error, execute } = useFetch(() => roomService.getAll());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<Record<string, unknown>[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 6;
@@ -99,6 +100,8 @@ export const RoomManagement = () => {
     status: 'available',
     description: '',
   });
+
+  const formatCurrency = (value: unknown) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
 
   useEffect(() => {
     if (responseData) {
@@ -172,6 +175,7 @@ export const RoomManagement = () => {
         area,
         floor,
         price,
+        deposit: price * 2,
         status: editingRoom ? formData.status as 'available' | 'rented' | 'maintenance' : 'available' as const,
         description: formData.description.trim(),
       };
@@ -219,26 +223,39 @@ export const RoomManagement = () => {
   };
 
   const handleDeleteRoom = async (room: Record<string, unknown>) => {
+    const roomId = String(room.id || '');
+    const roomNumber = String(room.room_number || room.roomNumber || roomId);
+
+    if (!roomId) {
+      alert('Không xác định được phòng cần xóa');
+      return;
+    }
+
+    if (deletingRoomId) {
+      return;
+    }
+
     if (String(room.status) === 'rented') {
       alert('Không thể xóa phòng đang có người thuê');
       return;
     }
 
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa phòng ${room.room_number}?`)) {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa phòng ${roomNumber}?`)) {
       return;
     }
 
+    setDeletingRoomId(roomId);
     try {
-      const response = await roomService.delete(String(room.id));
+      const response = await roomService.delete(roomId);
       if (response.success) {
-        setRooms((currentRooms) => currentRooms.filter((currentRoom) => String(currentRoom.id) !== String(room.id)));
-        execute().catch((refreshError) => {
-          console.error('Failed to refresh rooms after deletion:', refreshError);
-        });
-        alert('Xóa phòng thành công');
+        setRooms((currentRooms) => currentRooms.filter((currentRoom) => String(currentRoom.id) !== roomId));
+        await execute();
+        alert(response.message || 'Xóa phòng thành công');
       }
     } catch (err) {
       alert(`Lỗi: ${err instanceof Error ? err.message : 'Không thể xóa phòng'}`);
+    } finally {
+      setDeletingRoomId(null);
     }
   };
 
@@ -283,7 +300,7 @@ export const RoomManagement = () => {
     { key: 'room_number', title: 'Số Phòng' },
     { key: 'area', title: 'Diện Tích (m²)' },
     { key: 'floor', title: 'Tầng' },
-    { key: 'price', title: 'Giá Thuê/Tháng', render: (val: unknown) => `${(val as number).toLocaleString()}đ` },
+    { key: 'price', title: 'Giá Thuê/Tháng', render: (val: unknown) => formatCurrency(val) },
     {
       key: 'status',
       title: 'Trạng Thái',
@@ -300,12 +317,26 @@ export const RoomManagement = () => {
     {
       key: 'actions',
       title: 'Hành Động',
-      render: (_, row) => (
-        <ActionButtons>
-          <Button onClick={() => handleEditRoom(row as Record<string, unknown>)}>Sửa</Button>
-          <Button variant="danger" onClick={() => handleDeleteRoom(row as Record<string, unknown>)}>Xóa</Button>
-        </ActionButtons>
-      ),
+      render: (_, row) => {
+        const roomId = String((row as Record<string, unknown>).id || '');
+        const isDeleting = deletingRoomId === roomId;
+
+        return (
+          <ActionButtons>
+            <Button onClick={() => handleEditRoom(row as Record<string, unknown>)} disabled={isDeleting || !!deletingRoomId}>
+              Sửa
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => handleDeleteRoom(row as Record<string, unknown>)}
+              disabled={isDeleting || !!deletingRoomId}
+              loading={isDeleting}
+            >
+              {isDeleting ? 'Đang xóa...' : 'Xóa'}
+            </Button>
+          </ActionButtons>
+        );
+      },
     },
   ];
 

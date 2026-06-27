@@ -112,7 +112,7 @@ const buildContractText = (contract: Contract) => [
   `Phong: ${contract.roomNumber || 'N/A'}`,
   `Ngay bat dau: ${formatDate(contract.startDate)}`,
   `Ngay ket thuc: ${formatDate(contract.endDate)}`,
-  `Gia thue: ${formatCurrency(contract.price)}`,
+  `Gia thue: ${formatCurrency(contract.monthlyRent ?? contract.price)}`,
   `Tien coc: ${formatCurrency(contract.depositAmount)}`,
   `Trang thai: ${statusLabels[contract.status] || contract.status}`,
   '',
@@ -179,7 +179,7 @@ export const MyContracts = () => {
     { key: 'roomNumber', title: 'Phòng', render: (_, row) => row.roomNumber || 'N/A' },
     { key: 'startDate', title: 'Ngày bắt đầu', render: (value) => formatDate(value as Date | string) },
     { key: 'endDate', title: 'Ngày kết thúc', render: (value) => formatDate(value as Date | string) },
-    { key: 'price', title: 'Giá thuê', render: (value) => formatCurrency(value) },
+    { key: 'monthlyRent', title: 'Giá thuê', render: (_, row) => formatCurrency(row.monthlyRent ?? row.price) },
     {
       key: 'status',
       title: 'Trạng thái',
@@ -269,7 +269,7 @@ export const MyContracts = () => {
             </SummaryItem>
             <SummaryItem>
               <SummaryLabel>Giá thuê</SummaryLabel>
-              <SummaryValue>{formatCurrency(selectedContract.price)}</SummaryValue>
+              <SummaryValue>{formatCurrency(selectedContract.monthlyRent ?? selectedContract.price)}</SummaryValue>
             </SummaryItem>
             <SummaryItem>
               <SummaryLabel>Tiền cọc</SummaryLabel>

@@ -52,7 +52,6 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
     fullName: '',
     phone: '',
     idNumber: '',
-    birthday: '',
     gender: '',
     bankName: '',
     bankAccountNumber: '',
@@ -88,7 +87,6 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
               fullName: nextUser.name || '',
               phone: nextUser.phone || '',
               idNumber: nextUser.idNumber || '',
-              birthday: nextUser.birthday || '',
               gender: nextUser.gender || '',
               bankName: nextUser.bankName || '',
               bankAccountNumber: nextUser.bankAccountNumber || '',
@@ -137,7 +135,6 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
             full_name: formData.fullName.trim(),
             phone: formData.phone.trim() || undefined,
             identity_card: formData.idNumber.trim() || undefined,
-            birthday: formData.birthday || undefined,
             gender: (formData.gender || undefined) as typeof user.gender,
           })
         : await profileService.updateLandlord({
@@ -207,15 +204,6 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                         }
                       />
                     </FormGroup>
-                    <FormGroup label="Ngày sinh">
-                      <Input
-                        type="date"
-                        value={formData.birthday}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                          setFormData({ ...formData, birthday: event.target.value })
-                        }
-                      />
-                    </FormGroup>
                     <FormGroup label="Giới tính">
                       <Select
                         value={formData.gender}
@@ -272,9 +260,6 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                 </FormGroup>
                 <FormGroup label="CCCD/CMND">
                   <ReadonlyValue>{displayProfile.idNumber || 'N/A'}</ReadonlyValue>
-                </FormGroup>
-                <FormGroup label="Ngày sinh">
-                  <ReadonlyValue>{displayProfile.birthday || 'N/A'}</ReadonlyValue>
                 </FormGroup>
               </>
             )}

@@ -3,7 +3,10 @@ import type { Tenant } from './tenant.types';
 import type { User } from '../../types';
 
 export const tenantService = {
-  getDashboard: () => apiCall<{ profile: User; dashboard: Record<string, unknown> }>('/api/v1/tenants/dashboard', { method: 'GET' }),
+  getDashboard: () => apiCall<{ profile: User; dashboard: Record<string, unknown> }>('/api/v1/tenants/dashboard', {
+    method: 'GET',
+    skipCache: true,
+  }),
 
   updateProfile: (data: Partial<User>) =>
     apiCall<User>('/api/v1/tenants/profile', {
