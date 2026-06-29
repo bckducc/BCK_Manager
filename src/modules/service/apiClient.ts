@@ -1,4 +1,4 @@
-import type { ApiResponse } from '../types';
+import type { ApiResponse } from '../../types';
 
 const API_BASE_URL = 'http://localhost:5000';
 const pendingRequests = new Map<string, Promise<ApiResponse<unknown>>>();
