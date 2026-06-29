@@ -9,6 +9,7 @@ const AuthLayoutWrapper = styled.div<{ $bgImage: string }>`
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.5) 100%), 
                     url(${props => props.$bgImage});
   background-size: cover;
@@ -16,6 +17,13 @@ const AuthLayoutWrapper = styled.div<{ $bgImage: string }>`
   background-repeat: no-repeat;
   background-attachment: fixed;
   padding: ${theme.spacing.md};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    align-items: stretch;
+    background-attachment: scroll;
+    padding: max(${theme.spacing.md}, env(safe-area-inset-top)) ${theme.spacing.md}
+      max(${theme.spacing.md}, env(safe-area-inset-bottom));
+  }
 `;
 
 const AuthLayoutContainer = styled.div`
@@ -27,6 +35,12 @@ const AuthLayoutContainer = styled.div`
   width: 100%;
   max-width: 400px;
   border: 1px solid rgba(255, 255, 255, 0.4);
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    align-self: center;
+    padding: ${theme.spacing.lg} ${theme.spacing.md};
+    border-radius: ${theme.radius.lg};
+  }
 `;
 
 const AuthLayoutLogo = styled.div`

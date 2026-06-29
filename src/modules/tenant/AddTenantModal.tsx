@@ -23,6 +23,11 @@ const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   align-items: center;
   justify-content: center;
   padding: ${theme.spacing.md};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    align-items: flex-end;
+    padding: ${theme.spacing.sm} ${theme.spacing.sm} 0;
+  }
 `;
 
 const ModalContent = styled.div`
@@ -32,6 +37,7 @@ const ModalContent = styled.div`
   max-width: 600px;
   width: 90%;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   box-shadow: ${theme.shadow.lg};
 
@@ -44,6 +50,9 @@ const ModalContent = styled.div`
   @media (max-width: ${theme.breakpoints.mobile}) {
     width: 100%;
     padding: ${theme.spacing.md};
+    padding-bottom: calc(${theme.spacing.md} + env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 8px);
+    border-radius: ${theme.radius.lg} ${theme.radius.lg} 0 0;
   }
 `;
 

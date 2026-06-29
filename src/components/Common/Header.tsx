@@ -40,10 +40,12 @@ const HeaderActions = styled.div`
   @media (max-width: ${theme.breakpoints.mobile}) {
     width: 100%;
     gap: ${theme.spacing.sm};
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
 
     > * {
-      flex: 1 1 auto;
+      width: 100%;
+      min-width: 0;
     }
   }
 `;

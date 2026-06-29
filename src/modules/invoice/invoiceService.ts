@@ -22,6 +22,7 @@ type BackendPayment = Partial<Omit<InvoicePayment, 'payment_method'>> & {
 };
 
 export type InvoiceFilters = {
+  search?: string;
   status?: InvoiceStatus | '';
   month?: number | '';
   year?: number | '';
@@ -151,6 +152,7 @@ const toPayment = (payment: BackendPayment): InvoicePayment => ({
 const buildQuery = (filters: InvoiceFilters = {}) => {
   const params = new URLSearchParams();
 
+  if (filters.search?.trim()) params.set('search', filters.search.trim());
   if (filters.status) params.set('status', filters.status);
   if (filters.month) params.set('month', String(filters.month));
   if (filters.year) params.set('year', String(filters.year));

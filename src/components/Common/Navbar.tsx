@@ -26,19 +26,26 @@ const NavbarWrapper = styled.nav`
   z-index: 1000;
 
   @media (max-width: ${theme.breakpoints.tablet}) {
-    height: 56px;
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    height: calc(56px + env(safe-area-inset-top));
+    padding: calc(${theme.spacing.sm} + env(safe-area-inset-top)) ${theme.spacing.md} ${theme.spacing.sm};
   }
 `;
 
 const NavbarBrand = styled.div`
   flex: 1;
+  min-width: 0;
 
   a {
     text-decoration: none;
     color: ${theme.colors.white};
     display: flex;
     align-items: center;
+  }
+
+  @media (max-width: 420px) {
+    span {
+      display: none;
+    }
   }
 `;
 

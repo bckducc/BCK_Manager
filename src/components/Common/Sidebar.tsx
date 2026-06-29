@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   ApartmentOutlined,
@@ -35,7 +36,8 @@ const SidebarWrapper = styled.aside<SidebarProps>`
     top: auto;
     right: 0;
     width: 100%;
-    height: 72px;
+    height: calc(68px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     transition: none;
   }
@@ -51,6 +53,12 @@ const SidebarNav = styled.nav`
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 `;
 
@@ -76,12 +84,15 @@ const NavItem = styled(Link)<NavItemProps>`
   }
 
   @media (max-width: ${theme.breakpoints.tablet}) {
-    min-width: 76px;
-    height: 72px;
+    min-width: 74px;
+    height: 68px;
     flex-direction: column;
     justify-content: center;
     padding: ${theme.spacing.xs};
     gap: ${theme.spacing.xs};
+    scroll-snap-align: center;
+    border-top: 3px solid ${(p) => (p.$active ? theme.colors.primaryLight : 'transparent')};
+    background: ${(p) => (p.$active ? 'rgba(52, 152, 219, 0.18)' : 'transparent')};
   }
 `;
 
@@ -181,6 +192,11 @@ export const Sidebar = () => {
   const { collapsed, toggleSidebar } = useSidebar();
   const { user } = useAuth();
   const navItems = user?.role === 'tenant' ? tenantNavItems : ownerNavItems;
+  const activeItemRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    activeItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, [location.pathname]);
 
   return (
     <SidebarWrapper $collapsed={collapsed}>
@@ -197,11 +213,13 @@ export const Sidebar = () => {
 
           return (
             <NavItem
+              ref={active ? activeItemRef : undefined}
               key={item.path}
               to={item.path}
               $active={active}
               $collapsed={collapsed}
               title={collapsed ? item.label : ''}
+              aria-current={active ? 'page' : undefined}
             >
               <NavIcon>{item.icon}</NavIcon>
               <NavLabel $collapsed={collapsed}>{item.label}</NavLabel>

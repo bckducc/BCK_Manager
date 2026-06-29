@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
@@ -36,6 +36,17 @@ const ActionButtons = styled.div`
   button {
     padding: ${theme.spacing.sm} ${theme.spacing.md};
     font-size: ${theme.fontSize.sm};
+  }
+`;
+
+const Toolbar = styled.div`
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) auto;
+  gap: ${theme.spacing.md};
+  align-items: end;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -170,6 +181,8 @@ export const InvoiceManagement = () => {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [formData, setFormData] = useState(initialGenerateForm);
   const [paymentForm, setPaymentForm] = useState(initialPaymentForm);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const loadInvoices = useCallback(async () => {
     setLoading(true);
@@ -189,6 +202,23 @@ export const InvoiceManagement = () => {
       setLoading(false);
     }
   }, []);
+
+  const filteredInvoices = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase().replace(/^#/, '');
+
+    return invoices.filter((invoice) => {
+      const matchesStatus = !statusFilter || invoice.status === statusFilter;
+      const searchContent = [
+        invoice.id,
+        invoice.contract_id,
+        invoice.tenant_name,
+        invoice.tenant_phone,
+        invoice.room_number,
+      ].join(' ').toLowerCase();
+
+      return matchesStatus && (!keyword || searchContent.includes(keyword));
+    });
+  }, [invoices, searchText, statusFilter]);
 
   useEffect(() => {
     loadInvoices();
@@ -437,7 +467,35 @@ export const InvoiceManagement = () => {
         {error && <Alert message={`Lỗi: ${error}`} type="error" />}
 
         <Card>
-          <Table columns={columns} data={invoices} loading={loading} emptyText="Chưa có hóa đơn nào" />
+          <Toolbar>
+            <FormGroup label="Tìm kiếm">
+              <Input
+                value={searchText}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
+                placeholder="Tên người thuê, phòng, mã hóa đơn..."
+              />
+            </FormGroup>
+            <FormGroup label="Trạng thái">
+              <Select
+                value={statusFilter}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(event.target.value)}
+                options={[
+                  { value: '', label: 'Tất cả' },
+                  { value: 'pending', label: 'Chưa thanh toán' },
+                  { value: 'paid', label: 'Đã thanh toán' },
+                  { value: 'overdue', label: 'Quá hạn' },
+                  { value: 'cancelled', label: 'Đã hủy' },
+                ]}
+              />
+            </FormGroup>
+            <Button onClick={loadInvoices} disabled={loading} loading={loading}>
+              Tải lại
+            </Button>
+          </Toolbar>
+        </Card>
+
+        <Card>
+          <Table columns={columns} data={filteredInvoices} loading={loading} emptyText="Chưa có hóa đơn nào" />
         </Card>
 
         <Modal

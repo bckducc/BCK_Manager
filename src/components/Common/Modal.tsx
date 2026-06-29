@@ -16,7 +16,7 @@ const ModalOverlay = styled.div`
 
   @media (max-width: ${theme.breakpoints.mobile}) {
     align-items: flex-end;
-    padding: ${theme.spacing.sm};
+    padding: ${theme.spacing.sm} ${theme.spacing.sm} 0;
   }
 `;
 
@@ -35,8 +35,8 @@ const ModalContent = styled.div`
   @media (max-width: ${theme.breakpoints.mobile}) {
     width: 100%;
     max-height: calc(100vh - 16px);
-    max-height: calc(100dvh - 16px);
-    border-radius: ${theme.radius.md} ${theme.radius.md} ${theme.radius.sm} ${theme.radius.sm};
+    max-height: calc(100dvh - 8px);
+    border-radius: ${theme.radius.lg} ${theme.radius.lg} 0 0;
   }
 `;
 
@@ -69,6 +69,9 @@ const ModalCloseBtn = styled.button`
   cursor: pointer;
   color: ${theme.colors.textSecondary};
   padding: 0;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   line-height: 1;
   transition: color ${theme.transition.base};
 
@@ -83,7 +86,7 @@ const ModalBody = styled.div`
   overflow-y: auto;
 
   @media (max-width: ${theme.breakpoints.mobile}) {
-    padding: ${theme.spacing.md};
+    padding: ${theme.spacing.md} ${theme.spacing.md} calc(${theme.spacing.md} + env(safe-area-inset-bottom));
   }
 `;
 
@@ -135,7 +138,7 @@ export const Modal = ({
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
           <h2>{title}</h2>
-          <ModalCloseBtn onClick={onClose}>×</ModalCloseBtn>
+          <ModalCloseBtn onClick={onClose} aria-label="Đóng cửa sổ">×</ModalCloseBtn>
         </ModalHeader>
         <ModalBody>{children}</ModalBody>
         <ModalFooter>

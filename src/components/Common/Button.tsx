@@ -51,7 +51,7 @@ const StyledButton = styled.button<ButtonStyledProps>`
   justify-content: center;
   gap: 0.5rem;
   text-align: center;
-  min-height: 40px;
+  min-height: 44px;
   white-space: nowrap;
 
   ${(props) => getVariantStyles(props.$variant || 'primary')}
@@ -69,8 +69,8 @@ const StyledButton = styled.button<ButtonStyledProps>`
   `}
 
   @media (max-width: ${theme.breakpoints.mobile}) {
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
-    font-size: ${theme.fontSize.sm};
+    padding: 0.7rem ${theme.spacing.md};
+    font-size: ${theme.fontSize.base};
     white-space: normal;
   }
 `;

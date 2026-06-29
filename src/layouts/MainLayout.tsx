@@ -38,12 +38,12 @@ const MainLayoutMain = styled.main<MainLayoutMainProps>`
   transition: margin-left 0.25s ease, width 0.25s ease;
 
   @media (max-width: ${theme.breakpoints.tablet}) {
-    margin-top: 56px;
+    margin-top: calc(56px + env(safe-area-inset-top));
     margin-left: 0;
     width: 100%;
-    height: calc(100vh - 128px);
-    height: calc(100dvh - 128px);
-    padding-bottom: 72px;
+    height: calc(100vh - 124px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: calc(100dvh - 124px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overscroll-behavior-y: contain;
   }
 `;
 

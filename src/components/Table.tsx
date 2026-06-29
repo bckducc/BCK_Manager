@@ -23,6 +23,11 @@ const PaginationWrapper = styled.div`
   justify-content: center;
   padding: ${theme.spacing.md};
   border-top: 1px solid ${theme.colors.borderLight};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.sm};
+    overflow-x: auto;
+  }
 `;
 
 const StyledTable = styled.table`
@@ -60,12 +65,53 @@ const StyledTable = styled.table`
   }
 
   @media (max-width: ${theme.breakpoints.mobile}) {
-    min-width: 640px;
+    min-width: 0;
+    display: block;
     font-size: ${theme.fontSize.sm};
 
-    th,
+    thead {
+      display: none;
+    }
+
+    tbody {
+      display: grid;
+      gap: ${theme.spacing.sm};
+      padding: ${theme.spacing.sm};
+      background: ${theme.colors.lightBg};
+    }
+
+    tbody tr {
+      display: block;
+      background: ${theme.colors.white};
+      border: 1px solid ${theme.colors.borderLight};
+      border-radius: ${theme.radius.md};
+      box-shadow: ${theme.shadow.sm};
+      overflow: hidden;
+    }
+
     td {
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
+      display: grid;
+      grid-template-columns: minmax(92px, 38%) minmax(0, 1fr);
+      gap: ${theme.spacing.sm};
+      align-items: center;
+      padding: 0.7rem ${theme.spacing.md};
+      border-bottom: 1px solid ${theme.colors.borderLight};
+
+      &::before {
+        content: attr(data-label);
+        color: ${theme.colors.textSecondary};
+        font-weight: ${theme.fontWeight.semibold};
+        overflow-wrap: anywhere;
+      }
+
+      &:last-child {
+        border-bottom: 0;
+      }
+
+      > * {
+        min-width: 0;
+        max-width: 100%;
+      }
     }
   }
 `;
@@ -166,7 +212,7 @@ export const Table = <T extends object>({
                 {columns.map((col) => {
                   const value = (record as Record<string, unknown>)[col.key];
                   return (
-                    <td key={col.key}>
+                    <td key={col.key} data-label={col.title}>
                       {col.render ? col.render(value, record) : (value as React.ReactNode)}
                     </td>
                   );
@@ -182,6 +228,8 @@ export const Table = <T extends object>({
           pageSize={pageSize}
           total={data.length}
           showSizeChanger={false}
+          showLessItems
+          responsive
           onChange={setCurrentPage}
         />
       </PaginationWrapper>

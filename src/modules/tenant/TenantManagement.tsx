@@ -4,6 +4,7 @@ import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
 import { Header, Button, Card, Alert, Loading } from '../../components/common';
 import { Table } from '../../components/Table';
+import { FormGroup, Input, Select } from '../../components/Forms/Form';
 import { useTenant } from '../../store/TenantContext';
 import { useContract } from '../../store/contract-context';
 import { AddTenantModal } from './AddTenantModal';
@@ -62,25 +63,14 @@ const ErrorContainer = styled.div`
   }
 `;
 
-const SearchPanel = styled.div`
-  display: flex;
-  gap: ${theme.spacing.sm};
-  align-items: center;
-  flex-wrap: wrap;
-`;
+const Toolbar = styled.div`
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) auto;
+  gap: ${theme.spacing.md};
+  align-items: flex-end;
 
-const SearchInput = styled.input`
-  width: min(420px, 100%);
-  padding: 0.75rem;
-  border: 1px solid ${theme.colors.border};
-  border-radius: ${theme.radius.sm};
-  font-size: ${theme.fontSize.base};
-  font-family: inherit;
-
-  &:focus {
-    outline: none;
-    border-color: ${theme.colors.primary};
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -99,6 +89,7 @@ export const TenantManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const { tenants, loading, error, deleteTenant, fetchTenants } = useTenant();
   const { contracts } = useContract();
 
@@ -153,14 +144,22 @@ export const TenantManagement = () => {
 
   const filteredTenantData = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
-    if (!keyword) return tenantDisplayData;
 
-    return tenantDisplayData.filter((tenant) =>
-      [tenant.username, tenant.name, tenant.phone, tenant.idNumber, tenant.roomNumber]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(keyword))
-    );
-  }, [searchText, tenantDisplayData]);
+    return tenantDisplayData.filter((tenant) => {
+      const matchesStatus = !statusFilter || (
+        statusFilter === 'active' ? tenant.isActive : !tenant.isActive
+      );
+      const searchContent = [
+        tenant.username,
+        tenant.name,
+        tenant.phone,
+        tenant.idNumber,
+        tenant.roomNumber,
+      ].join(' ').toLowerCase();
+
+      return matchesStatus && (!keyword || searchContent.includes(keyword));
+    });
+  }, [searchText, statusFilter, tenantDisplayData]);
 
   const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'name', title: 'Tên Người Thuê' },
@@ -231,19 +230,29 @@ export const TenantManagement = () => {
           </ErrorContainer>
         )}
         <Card>
-          <SearchPanel>
-            <SearchInput
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Tìm kiếm người thuê theo tên, tài khoản, SĐT, CCCD hoặc phòng"
-              aria-label="Tìm kiếm người thuê"
-            />
-            {searchText && (
-              <Button type="button" onClick={() => setSearchText('')}>
-                Xóa tìm kiếm
-              </Button>
-            )}
-          </SearchPanel>
+          <Toolbar>
+            <FormGroup label="Tìm kiếm">
+              <Input
+                value={searchText}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
+                placeholder="Tên, tài khoản, SĐT, CCCD hoặc phòng..."
+              />
+            </FormGroup>
+            <FormGroup label="Trạng thái">
+              <Select
+                value={statusFilter}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(event.target.value)}
+                options={[
+                  { value: '', label: 'Tất cả' },
+                  { value: 'active', label: 'Đang hoạt động' },
+                  { value: 'inactive', label: 'Đã khóa' },
+                ]}
+              />
+            </FormGroup>
+            <Button onClick={() => fetchTenants(true)} disabled={loading} loading={loading}>
+              Tải lại
+            </Button>
+          </Toolbar>
         </Card>
         <Card>
           {loading ? (
@@ -252,7 +261,7 @@ export const TenantManagement = () => {
             <Table 
               columns={columns} 
               data={filteredTenantData} 
-              emptyText={searchText.trim() ? 'Không tìm thấy người thuê phù hợp' : 'Chưa có người thuê nào'} 
+              emptyText={searchText.trim() || statusFilter ? 'Không tìm thấy người thuê phù hợp' : 'Chưa có người thuê nào'} 
             />
           )}
         </Card>

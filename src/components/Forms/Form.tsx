@@ -51,6 +51,7 @@ const StyledInput = styled.input<{ $error?: boolean }>`
   background-color: ${theme.colors.white};
   color: ${theme.colors.text};
   width: 100%;
+  min-height: 44px;
 
   &::placeholder {
     color: ${theme.colors.textSecondary};
@@ -82,6 +83,7 @@ const StyledSelect = styled.select<{ $error?: boolean }>`
   color: ${theme.colors.text};
   cursor: pointer;
   width: 100%;
+  min-height: 44px;
 
   &:focus {
     outline: none;

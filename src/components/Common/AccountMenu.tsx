@@ -34,6 +34,11 @@ const AvatarButton = styled.button`
     outline: 2px solid ${theme.colors.white};
     outline-offset: 2px;
   }
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    width: 44px;
+    height: 44px;
+  }
 `;
 
 const DropdownMenu = styled.div<{ $isOpen: boolean }>`
@@ -49,6 +54,16 @@ const DropdownMenu = styled.div<{ $isOpen: boolean }>`
   display: ${props => props.$isOpen ? 'block' : 'none'};
   z-index: 1000;
   animation: slideDown 0.2s ease;
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    position: fixed;
+    top: calc(56px + env(safe-area-inset-top));
+    right: ${theme.spacing.sm};
+    left: ${theme.spacing.sm};
+    width: auto;
+    min-width: 0;
+    margin-top: ${theme.spacing.sm};
+  }
 
   @keyframes slideDown {
     from {
@@ -163,7 +178,12 @@ export const AccountMenu = ({
 
   return (
     <MenuContainer ref={menuRef}>
-      <AvatarButton onClick={() => setIsOpen(!isOpen)} title={user.name || user.username}>
+      <AvatarButton
+        onClick={() => setIsOpen(!isOpen)}
+        title={user.name || user.username}
+        aria-label="Mở menu tài khoản"
+        aria-expanded={isOpen}
+      >
         {userInitial}
       </AvatarButton>
 

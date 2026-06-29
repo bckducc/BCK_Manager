@@ -25,6 +25,8 @@ export const GlobalStyle = createGlobalStyle`
     color: ${theme.colors.text};
     background-color: ${theme.colors.white};
     overflow-x: hidden;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   img,
@@ -42,6 +44,7 @@ export const GlobalStyle = createGlobalStyle`
   button {
     font-family: inherit;
     cursor: pointer;
+    touch-action: manipulation;
   }
 
   input,
@@ -60,6 +63,17 @@ export const GlobalStyle = createGlobalStyle`
     select,
     textarea {
       font-size: 16px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 
