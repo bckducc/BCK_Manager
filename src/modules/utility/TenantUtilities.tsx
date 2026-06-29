@@ -12,6 +12,12 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: ${theme.spacing.lg};
 
   @media (max-width: ${theme.breakpoints.mobile}) {
@@ -161,8 +167,9 @@ export const TenantUtilities = () => {
   ];
 
   return (
-    <Container>
-      <Header title="Lịch Sử Điện Nước" />
+    <PageWrapper>
+      <Container>
+        <Header title="Lịch Sử Điện Nước" />
 
       <Card>
         <Toolbar>
@@ -216,6 +223,7 @@ export const TenantUtilities = () => {
       <Card>
         <Table columns={columns} data={readings} loading={loading} emptyText="Chưa có lịch sử điện nước" />
       </Card>
-    </Container>
+      </Container>
+    </PageWrapper>
   );
 };

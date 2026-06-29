@@ -20,12 +20,13 @@ export interface UtilityReading {
 
 export interface RecordUtilityReadingPayload {
   roomId: string;
+  contractId?: string;
   month: number;
   year: number;
-  electricOld: number;
+  electricOld?: number;
   electricNew: number;
   electricPrice: number;
-  waterOld: number;
+  waterOld?: number;
   waterNew: number;
   waterPrice: number;
   recordedDate?: string;
@@ -73,12 +74,13 @@ const toReading = (reading: BackendUtilityReading): UtilityReading => ({
 const toRecordPayload = (data: RecordUtilityReadingPayload) =>
   JSON.stringify({
     room_id: data.roomId,
+    contract_id: data.contractId,
     month: data.month,
     year: data.year,
-    electric_old: data.electricOld,
+    electric_old: data.electricOld ?? 0,
     electric_new: data.electricNew,
     electric_price: data.electricPrice,
-    water_old: data.waterOld,
+    water_old: data.waterOld ?? 0,
     water_new: data.waterNew,
     water_price: data.waterPrice,
     recorded_date: data.recordedDate,
@@ -146,6 +148,17 @@ export const utilityService = {
       })}`,
       { method: 'GET' }
     );
+
+    return {
+      ...response,
+      data: Array.isArray(response.data) ? response.data.map(toReading) : [],
+    };
+  },
+
+  getContractReadings: async (contractId: string) => {
+    const response = await apiCall<BackendUtilityReading[]>(`/api/v1/utilities/contract/${contractId}`, {
+      method: 'GET',
+    });
 
     return {
       ...response,

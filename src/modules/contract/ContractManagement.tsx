@@ -106,37 +106,41 @@ export const ContractManagement = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [formData, setFormData] = useState(initialContractForm);
 
-  useEffect(() => {
-    const loadOptions = async () => {
-      try {
-        const [tenantResponse, roomResponse] = await Promise.all([
-          tenantService.getAll(),
-          roomService.getAvailable(),
-        ]);
+  const loadOptions = useCallback(async () => {
+    try {
+      const [tenantResponse, roomResponse] = await Promise.all([
+        tenantService.getAll({ hasActiveContract: false }),
+        roomService.getAvailable(),
+      ]);
 
-        const tenantData = tenantResponse.data as unknown;
-        const roomData = roomResponse.data as unknown;
-        setTenants(
-          Array.isArray(tenantData)
-            ? tenantData as Tenant[]
-            : Array.isArray((tenantData as Record<string, unknown> | undefined)?.tenants)
-              ? (tenantData as Record<string, unknown>).tenants as Tenant[]
-              : []
-        );
-        setRooms(
-          Array.isArray(roomData)
-            ? roomData as Room[]
-            : Array.isArray((roomData as Record<string, unknown> | undefined)?.rooms)
-              ? (roomData as Record<string, unknown>).rooms as Room[]
-              : []
-        );
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'Không tải được dữ liệu tạo hợp đồng');
-      }
-    };
+      const tenantData = tenantResponse.data as unknown;
+      const roomData = roomResponse.data as unknown;
+      const availableTenants = Array.isArray(tenantData)
+        ? tenantData as Tenant[]
+        : Array.isArray((tenantData as Record<string, unknown> | undefined)?.tenants)
+          ? (tenantData as Record<string, unknown>).tenants as Tenant[]
+          : [];
 
-    loadOptions();
+      setTenants(availableTenants.filter((tenant) => {
+        const record = tenant as Tenant & { has_active_contract?: boolean | number | string };
+        const hasActiveContract = record.has_active_contract === true || Number(record.has_active_contract) === 1;
+        return !hasActiveContract;
+      }));
+      setRooms(
+        Array.isArray(roomData)
+          ? roomData as Room[]
+          : Array.isArray((roomData as Record<string, unknown> | undefined)?.rooms)
+            ? (roomData as Record<string, unknown>).rooms as Room[]
+            : []
+      );
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Không tải được dữ liệu tạo hợp đồng');
+    }
   }, []);
+
+  useEffect(() => {
+    loadOptions();
+  }, [loadOptions]);
 
   const tenantOptions = tenants.map((tenant) => {
     const record = tenant as Tenant & {
@@ -175,10 +179,11 @@ export const ContractManagement = () => {
     try {
       setActionError(null);
       await deleteContract(contract.id);
+      await loadOptions();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Không kết thúc được hợp đồng');
     }
-  }, [deleteContract]);
+  }, [deleteContract, loadOptions]);
 
   const handleCreateContract = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,7 +210,7 @@ export const ContractManagement = () => {
 
       setIsModalOpen(false);
       setFormData(initialContractForm);
-      await fetchContracts();
+      await Promise.all([fetchContracts(), loadOptions()]);
       alert('Tạo hợp đồng thành công');
     } catch (err) {
       alert(`Lỗi: ${err instanceof Error ? err.message : 'Không tạo được hợp đồng'}`);
@@ -263,7 +268,11 @@ export const ContractManagement = () => {
           title="Quản Lý Hợp Đồng"
           actions={
             <ActionButtons>
-              <Button onClick={() => setIsModalOpen(true)}>
+              <Button onClick={() => {
+                setFormData(initialContractForm);
+                setIsModalOpen(true);
+                loadOptions();
+              }}>
                 + Tạo Hợp Đồng
               </Button>
             </ActionButtons>
@@ -320,8 +329,8 @@ export const ContractManagement = () => {
                     setFormData({ ...formData, tenantId: e.target.value })
                   }
                   options={tenantOptions}
-                  placeholder="Chọn người thuê..."
-                  disabled={isSubmitting}
+                  placeholder={tenantOptions.length > 0 ? 'Chọn người thuê...' : 'Không có người thuê chưa có phòng'}
+                  disabled={isSubmitting || tenantOptions.length === 0}
                 />
               </FormGroup>
               <FormGroup label="Phòng" required>

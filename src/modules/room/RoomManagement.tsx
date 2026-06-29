@@ -117,7 +117,6 @@ export const RoomManagement = () => {
         setRooms([]);
       }
     }
-    // reset to first page when full list changes
     setCurrentPage(1);
   }, [responseData]);
 
@@ -380,8 +379,6 @@ export const RoomManagement = () => {
             pageSize={PAGE_SIZE}
             total={rooms.length}
             onChange={(page) => setCurrentPage(page)}
-            showSizeChanger={false}
-            showQuickJumper
           />
         </div>
       </Card>

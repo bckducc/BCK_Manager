@@ -14,7 +14,14 @@ export const tenantService = {
       body: JSON.stringify(data),
     }),
 
-  getAll: () => apiCall<{ tenants: Tenant[] }>('/api/v1/tenants', { method: 'GET' }),
+  getAll: (filters: { hasActiveContract?: boolean } = {}) => {
+    const params = new URLSearchParams();
+    if (filters.hasActiveContract !== undefined) {
+      params.set('has_active_contract', String(filters.hasActiveContract));
+    }
+    const query = params.toString();
+    return apiCall<{ tenants: Tenant[] }>(`/api/v1/tenants${query ? `?${query}` : ''}`, { method: 'GET' });
+  },
 
   getById: (id: string) => apiCall<Tenant>(`/api/v1/tenants/${id}`, { method: 'GET' }),
 

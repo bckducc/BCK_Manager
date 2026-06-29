@@ -12,6 +12,12 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: ${theme.spacing.lg};
 
   @media (max-width: ${theme.breakpoints.mobile}) {
@@ -94,32 +100,6 @@ const formatDate = (value?: Date | string) => {
   return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('vi-VN');
 };
 
-const downloadTextFile = (content: string, filename: string) => {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-};
-
-const buildContractText = (contract: Contract) => [
-  'HOP DONG THUE PHONG',
-  `Ma hop dong: ${contract.contract_code || contract.id}`,
-  `Phong: ${contract.roomNumber || 'N/A'}`,
-  `Ngay bat dau: ${formatDate(contract.startDate)}`,
-  `Ngay ket thuc: ${formatDate(contract.endDate)}`,
-  `Gia thue: ${formatCurrency(contract.monthlyRent ?? contract.price)}`,
-  `Tien coc: ${formatCurrency(contract.depositAmount)}`,
-  `Trang thai: ${statusLabels[contract.status] || contract.status}`,
-  '',
-  'Dieu khoan:',
-  contract.terms || 'N/A',
-].join('\n');
-
 export const MyContracts = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
@@ -170,10 +150,6 @@ export const MyContracts = () => {
     setIsDetailModalOpen(true);
   };
 
-  const handleExport = (contract: Contract) => {
-    downloadTextFile(buildContractText(contract), `hopdong_${contract.contract_code || contract.id}.txt`);
-  };
-
   const columns: TableColumn<Contract>[] = [
     { key: 'contract_code', title: 'Mã HĐ', render: (_, row) => row.contract_code || `#${row.id}` },
     { key: 'roomNumber', title: 'Phòng', render: (_, row) => row.roomNumber || 'N/A' },
@@ -193,16 +169,15 @@ export const MyContracts = () => {
       title: 'Hành động',
       render: (_, contract) => (
         <ActionButtons>
-          <Button onClick={() => openDetailModal(contract)}>Xem</Button>
-          <Button onClick={() => handleExport(contract)}>Xuất</Button>
-        </ActionButtons>
+          <Button onClick={() => openDetailModal(contract)}>Xem</Button>        </ActionButtons>
       ),
     },
   ];
 
   return (
-    <Container>
-      <Header title="Hợp Đồng Của Tôi" />
+    <PageWrapper>
+      <Container>
+        <Header title="Hợp Đồng Của Tôi" />
 
       <Card>
         <Toolbar>
@@ -290,6 +265,7 @@ export const MyContracts = () => {
           </Grid>
         )}
       </Modal>
-    </Container>
+      </Container>
+    </PageWrapper>
   );
 };

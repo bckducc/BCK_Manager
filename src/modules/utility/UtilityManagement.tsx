@@ -8,6 +8,8 @@ import { Form, FormGroup, Input, Select } from '../../components/Forms/Form';
 import { useAuth } from '../auth/useAuth';
 import { roomService } from '../room/roomService';
 import type { Room } from '../room/room.types';
+import { contractService } from '../contract/contractService';
+import type { Contract } from '../contract/contract.types';
 import { utilityService } from './utilityService';
 import type { UtilityReading } from './utilityService';
 
@@ -149,9 +151,20 @@ const yearOptions = Array.from({ length: 6 }, (_, index) => {
 const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
 const getRoomLabel = (room: Room) => `Phòng ${room.room_number || room.roomNumber || room.name || room.id}`;
 const getReadingPeriodValue = (reading: UtilityReading) => reading.year * 100 + reading.month;
-const getPreviousMonth = (month: number, year: number) => (
-  month === 1 ? { month: 12, year: year - 1 } : { month: month - 1, year }
-);
+const getContractPeriod = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value);
+  return date.getFullYear() * 100 + date.getMonth() + 1;
+};
+const getDefaultEntryPeriod = (contract?: Contract) => {
+  if (!contract) return { month: currentMonth, year: currentYear };
+
+  const currentPeriod = currentYear * 100 + currentMonth;
+  const startPeriod = getContractPeriod(contract.startDate);
+  const endPeriod = getContractPeriod(contract.endDate);
+  const targetPeriod = Math.min(Math.max(currentPeriod, startPeriod), endPeriod);
+
+  return { month: targetPeriod % 100, year: Math.floor(targetPeriod / 100) };
+};
 
 export const UtilityManagement = () => {
   const { user } = useAuth();
@@ -159,6 +172,7 @@ export const UtilityManagement = () => {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('entry');
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [activeContracts, setActiveContracts] = useState<Contract[]>([]);
   const [readings, setReadings] = useState<UtilityReading[]>([]);
   const [savedReading, setSavedReading] = useState<UtilityReading | null>(null);
   const [existingReading, setExistingReading] = useState<UtilityReading | null>(null);
@@ -192,10 +206,31 @@ export const UtilityManagement = () => {
     .map((room) => ({ value: String(room.id), label: getRoomLabel(room) }));
 
   const entryRoomOptions = rooms
-    .filter((room) => room.id !== undefined && room.status === 'rented')
+    .filter((room) => room.id !== undefined && activeContracts.some(
+      (contract) => contract.status === 'active' && String(contract.roomId) === String(room.id)
+    ))
     .map((room) => ({ value: String(room.id), label: getRoomLabel(room) }));
 
-  const effectiveEntryRoomOptions = entryRoomOptions.length > 0 ? entryRoomOptions : roomOptions;
+  const selectedContract = activeContracts.find(
+    (contract) => contract.status === 'active' && String(contract.roomId) === entryForm.roomId
+  );
+  const contractStartPeriod = selectedContract ? getContractPeriod(selectedContract.startDate) : null;
+  const contractEndPeriod = selectedContract ? getContractPeriod(selectedContract.endDate) : null;
+  const latestAllowedPeriod = contractEndPeriod === null
+    ? currentYear * 100 + currentMonth
+    : Math.min(contractEndPeriod, currentYear * 100 + currentMonth);
+  const entryYearOptions = selectedContract && contractStartPeriod !== null
+    ? Array.from(
+        { length: Math.max(Math.floor(latestAllowedPeriod / 100) - Math.floor(contractStartPeriod / 100) + 1, 0) },
+        (_, index) => Math.floor(latestAllowedPeriod / 100) - index
+      ).map((year) => ({ value: String(year), label: String(year) }))
+    : yearOptions;
+  const entryMonthOptions = selectedContract && contractStartPeriod !== null
+    ? monthOptions.filter((option) => {
+        const period = Number(entryForm.year) * 100 + Number(option.value);
+        return period >= contractStartPeriod && period <= latestAllowedPeriod;
+      })
+    : monthOptions;
 
   const electricOld = Number(entryForm.electricOld || 0);
   const electricNew = Number(entryForm.electricNew || 0);
@@ -215,19 +250,31 @@ export const UtilityManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await roomService.getAll();
-      const data = response.data as unknown;
+      const [roomResponse, contractResponse] = await Promise.all([
+        roomService.getAll(),
+        contractService.getAll({ status: 'active', limit: 1000 }),
+      ]);
+      const data = roomResponse.data as unknown;
       const parsedRooms = Array.isArray(data)
         ? data as Room[]
         : Array.isArray((data as Record<string, unknown> | undefined)?.rooms)
           ? (data as Record<string, unknown>).rooms as Room[]
           : [];
+      const parsedContracts = Array.isArray(contractResponse.data) ? contractResponse.data : [];
 
       setRooms(parsedRooms);
-      const firstRoomId = parsedRooms.find((room) => room.status === 'rented')?.id ?? parsedRooms[0]?.id;
+      setActiveContracts(parsedContracts);
+      const firstContract = parsedContracts.find((contract) => contract.status === 'active');
+      const firstRoomId = firstContract?.roomId;
       if (firstRoomId !== undefined) {
         const roomId = String(firstRoomId);
-        setEntryForm((prev) => ({ ...prev, roomId }));
+        const defaultPeriod = getDefaultEntryPeriod(firstContract);
+        setEntryForm((prev) => ({
+          ...prev,
+          roomId,
+          month: String(defaultPeriod.month),
+          year: String(defaultPeriod.year),
+        }));
         setHistoryFilter((prev) => ({ ...prev, roomId }));
       }
     } catch (err) {
@@ -257,11 +304,10 @@ export const UtilityManagement = () => {
   }, [historyFilter.roomId, isOwner]);
 
   const refreshReadingContext = useCallback(async () => {
-    if (!isOwner || !entryForm.roomId) return;
+    if (!isOwner || !entryForm.roomId || !selectedContract) return;
 
     const month = Number(entryForm.month);
     const year = Number(entryForm.year);
-    const previousPeriod = getPreviousMonth(month, year);
 
     setExistingReading(null);
 
@@ -269,11 +315,23 @@ export const UtilityManagement = () => {
       const response = await utilityService.getRoomReadings(entryForm.roomId);
       const roomReadings = Array.isArray(response.data) ? response.data : [];
       const currentReading = roomReadings.find(
-        (reading) => reading.month === month && reading.year === year
+        (reading) =>
+          String(reading.contractId) === String(selectedContract.id) &&
+          reading.month === month &&
+          reading.year === year
       );
-      const previousReading = roomReadings.find(
-        (reading) => reading.month === previousPeriod.month && reading.year === previousPeriod.year
-      );
+      const currentPeriod = year * 100 + month;
+      const previousReading = roomReadings
+        .filter((reading) => {
+          const readingPeriod = reading.year * 100 + reading.month;
+          const isCurrentRecord =
+            String(reading.contractId) === String(selectedContract.id) && readingPeriod === currentPeriod;
+          return !isCurrentRecord && readingPeriod <= currentPeriod;
+        })
+        .sort((a, b) => {
+          const periodDifference = (b.year * 100 + b.month) - (a.year * 100 + a.month);
+          return periodDifference || Number(b.id) - Number(a.id);
+        })[0];
 
       setExistingReading(currentReading || null);
 
@@ -298,7 +356,7 @@ export const UtilityManagement = () => {
         waterOld: '0',
       }));
     }
-  }, [entryForm.month, entryForm.roomId, entryForm.year, isOwner]);
+  }, [entryForm.month, entryForm.roomId, entryForm.year, isOwner, selectedContract]);
 
   useEffect(() => {
     loadRooms();
@@ -331,6 +389,17 @@ export const UtilityManagement = () => {
       return;
     }
 
+    if (!selectedContract || contractStartPeriod === null) {
+      alert('Phòng chưa có hợp đồng đang hiệu lực');
+      return;
+    }
+
+    const selectedPeriod = Number(entryForm.year) * 100 + Number(entryForm.month);
+    if (selectedPeriod < contractStartPeriod || selectedPeriod > latestAllowedPeriod) {
+      alert('Tháng ghi chỉ số phải nằm trong thời hạn hợp đồng và không được ở tương lai');
+      return;
+    }
+
     if (existingReading) {
       alert('Dữ liệu tháng này đã tồn tại');
       return;
@@ -350,6 +419,7 @@ export const UtilityManagement = () => {
       setIsSubmitting(true);
       const response = await utilityService.recordReading({
         roomId: entryForm.roomId,
+        contractId: String(selectedContract.id),
         month: Number(entryForm.month),
         year: Number(entryForm.year),
         electricOld,
@@ -446,11 +516,20 @@ export const UtilityManagement = () => {
                   <FormGroup label="Phòng" required>
                     <Select
                       value={entryForm.roomId}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                        setEntryForm({ ...entryForm, roomId: e.target.value })
-                      }
-                      options={effectiveEntryRoomOptions}
-                      placeholder="Chọn phòng..."
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const contract = activeContracts.find(
+                          (item) => item.status === 'active' && String(item.roomId) === e.target.value
+                        );
+                        const defaultPeriod = getDefaultEntryPeriod(contract);
+                        setEntryForm({
+                          ...entryForm,
+                          roomId: e.target.value,
+                          month: String(defaultPeriod.month),
+                          year: String(defaultPeriod.year),
+                        });
+                      }}
+                      options={entryRoomOptions}
+                      placeholder={entryRoomOptions.length > 0 ? 'Chọn phòng...' : 'Không có phòng đang có hợp đồng'}
                       disabled={loading || isSubmitting}
                     />
                   </FormGroup>
@@ -460,18 +539,26 @@ export const UtilityManagement = () => {
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         setEntryForm({ ...entryForm, month: e.target.value })
                       }
-                      options={monthOptions}
-                      disabled={isSubmitting}
+                      options={entryMonthOptions}
+                      disabled={isSubmitting || !selectedContract}
                     />
                   </FormGroup>
                   <FormGroup label="Năm" required>
                     <Select
                       value={entryForm.year}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                        setEntryForm({ ...entryForm, year: e.target.value })
-                      }
-                      options={yearOptions}
-                      disabled={isSubmitting}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const nextYear = e.target.value;
+                        const availableMonths = monthOptions.filter((option) => {
+                          const period = Number(nextYear) * 100 + Number(option.value);
+                          return contractStartPeriod !== null && period >= contractStartPeriod && period <= latestAllowedPeriod;
+                        });
+                        const nextMonth = availableMonths.some((option) => option.value === entryForm.month)
+                          ? entryForm.month
+                          : availableMonths[availableMonths.length - 1]?.value || '';
+                        setEntryForm({ ...entryForm, year: nextYear, month: nextMonth });
+                      }}
+                      options={entryYearOptions}
+                      disabled={isSubmitting || !selectedContract}
                     />
                   </FormGroup>
                   <FormGroup label="Ghi chú">

@@ -7,7 +7,18 @@ import { Table } from '../../components/Table';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: ${theme.spacing.lg};
+
+  @media (max-width: ${theme.breakpoints.mobile}) {
+    padding: ${theme.spacing.md};
+  }
 `;
 
 export const Notifications = () => {
@@ -30,15 +41,17 @@ export const Notifications = () => {
   ];
 
   return (
-    <Container>
-      <Header title="Thông Báo" />
-      <Card>
-        <Table
-          columns={columns}
-          data={notifications}
-          emptyText="Chưa có thông báo nào"
-        />
-      </Card>
-    </Container>
+    <PageWrapper>
+      <Container>
+        <Header title="Thông Báo" />
+        <Card>
+          <Table
+            columns={columns}
+            data={notifications}
+            emptyText="Chưa có thông báo nào"
+          />
+        </Card>
+      </Container>
+    </PageWrapper>
   );
 };

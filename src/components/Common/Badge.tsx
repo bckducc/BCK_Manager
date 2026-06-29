@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 
 interface StyledBadgeProps {
-  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
+  $variant?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
 }
 
 const getVariantColor = (variant: string) => {
@@ -23,7 +23,7 @@ const StyledBadge = styled.span<StyledBadgeProps>`
   font-size: ${theme.fontSize.sm};
   font-weight: ${theme.fontWeight.semibold};
   white-space: nowrap;
-  background-color: ${(props) => getVariantColor(props.variant || 'primary')};
+  background-color: ${(props) => getVariantColor(props.$variant || 'primary')};
   color: ${theme.colors.white};
 `;
 
@@ -33,5 +33,5 @@ interface BadgeProps {
 }
 
 export const Badge = ({ children, variant = 'primary' }: BadgeProps) => {
-  return <StyledBadge variant={variant}>{children}</StyledBadge>;
+  return <StyledBadge $variant={variant}>{children}</StyledBadge>;
 };

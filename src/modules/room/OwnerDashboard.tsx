@@ -547,27 +547,27 @@ export const OwnerDashboard = () => {
         </OperationsBar>
 
         <QuickActions aria-label="Lối tắt quản lý">
-          <QuickLink to="/owner/contracts">
+          <QuickLink to="/quan-ly-hop-dong">
             <QuickIcon><FileProtectOutlined /></QuickIcon>
             <div><QuickTitle>Hợp đồng</QuickTitle><QuickDescription>Quản lý hiệu lực và tiền cọc</QuickDescription></div>
             <ArrowRightOutlined />
           </QuickLink>
-          <QuickLink to="/owner/invoices">
+          <QuickLink to="/quan-ly-hoa-don">
             <QuickIcon><FileTextOutlined /></QuickIcon>
             <div><QuickTitle>Hóa đơn</QuickTitle><QuickDescription>Theo dõi thanh toán và công nợ</QuickDescription></div>
             <ArrowRightOutlined />
           </QuickLink>
-          <QuickLink to="/owner/tenants">
+          <QuickLink to="/quan-ly-nguoi-thue">
             <QuickIcon><TeamOutlined /></QuickIcon>
             <div><QuickTitle>Người thuê</QuickTitle><QuickDescription>Thông tin và tài khoản người thuê</QuickDescription></div>
             <ArrowRightOutlined />
           </QuickLink>
-          <QuickLink to="/owner/services">
+          <QuickLink to="/quan-ly-dich-vu">
             <QuickIcon><ToolOutlined /></QuickIcon>
             <div><QuickTitle>Dịch vụ</QuickTitle><QuickDescription>Thiết lập dịch vụ và đơn giá</QuickDescription></div>
             <ArrowRightOutlined />
           </QuickLink>
-          <QuickLink to="/owner/utilities">
+          <QuickLink to="/quan-ly-dien-nuoc">
             <QuickIcon><ThunderboltOutlined /></QuickIcon>
             <div><QuickTitle>Điện nước</QuickTitle><QuickDescription>Ghi chỉ số và tính chi phí sử dụng</QuickDescription></div>
             <ArrowRightOutlined />
@@ -578,12 +578,12 @@ export const OwnerDashboard = () => {
           <Section>
             <SectionHeader>
               <SectionTitle>Trạng thái phòng</SectionTitle>
-              <TextLink to="/owner/rooms">Xem tất cả <ArrowRightOutlined /></TextLink>
+              <TextLink to="/quan-ly-phong">Xem tất cả <ArrowRightOutlined /></TextLink>
             </SectionHeader>
             {rooms.length > 0 ? (
               <RoomGrid>
                 {rooms.slice(0, 9).map((room) => (
-                  <RoomItem key={room.id} to="/owner/rooms" $status={room.status}>
+                  <RoomItem key={room.id} to="/quan-ly-phong" $status={room.status}>
                     <RoomHeader>
                       <RoomName>Phòng {room.roomNumber || room.room_number}</RoomName>
                       <StatusTag $status={room.status}>{getRoomStatusText(room.status)}</StatusTag>
@@ -602,12 +602,12 @@ export const OwnerDashboard = () => {
           <Section>
             <SectionHeader>
               <SectionTitle>Hóa đơn gần đây</SectionTitle>
-              <TextLink to="/owner/invoices">Xem tất cả <ArrowRightOutlined /></TextLink>
+              <TextLink to="/quan-ly-hoa-don">Xem tất cả <ArrowRightOutlined /></TextLink>
             </SectionHeader>
             {recentInvoices.length > 0 ? (
               <InvoiceList>
                 {recentInvoices.slice(0, 6).map((invoice) => (
-                  <InvoiceItem key={invoice.id} to="/owner/invoices">
+                  <InvoiceItem key={invoice.id} to="/quan-ly-hoa-don">
                     <div>
                       <InvoiceTitle>Hóa đơn kỳ {invoice.month}/{invoice.year}</InvoiceTitle>
                       <InvoiceMeta>

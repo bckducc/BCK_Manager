@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { Navbar, Sidebar, PageTransition } from '../components/common';
 import { ProfileModal } from '../components/common/ProfileModal';
 import { useSidebar } from '../store/SidebarContext';
+import { useAuth } from '../modules/auth/useAuth';
 import { TenantProvider } from '../store/TenantContext';
 import { ContractProvider } from '../store/ContractContext';
 import { theme } from '../styles/theme';
@@ -52,25 +53,32 @@ interface MainLayoutProps {
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const { collapsed } = useSidebar();
+  const { user } = useAuth();
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const layout = (
+    <MainLayoutWrapper>
+      <Navbar onProfileClick={() => setIsProfileOpen(true)} />
+      <MainLayoutContent>
+        <Sidebar />
+        <MainLayoutMain $sidebarCollapsed={collapsed}>
+          <PageTransition key={location.pathname}>
+            {children}
+          </PageTransition>
+        </MainLayoutMain>
+      </MainLayoutContent>
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+    </MainLayoutWrapper>
+  );
+
+  if (user?.role !== 'owner') {
+    return layout;
+  }
+
   return (
     <TenantProvider>
-      <ContractProvider>
-        <MainLayoutWrapper>
-          <Navbar onProfileClick={() => setIsProfileOpen(true)} />
-          <MainLayoutContent>
-            <Sidebar />
-            <MainLayoutMain $sidebarCollapsed={collapsed}>
-              <PageTransition key={location.pathname}>
-                {children}
-              </PageTransition>
-            </MainLayoutMain>
-          </MainLayoutContent>
-          <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
-        </MainLayoutWrapper>
-      </ContractProvider>
+      <ContractProvider>{layout}</ContractProvider>
     </TenantProvider>
   );
 };

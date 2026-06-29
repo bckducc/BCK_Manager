@@ -8,7 +8,13 @@ import type { Contract } from '../contract/contract.types';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: ${theme.spacing.lg};
 
   @media (max-width: ${theme.breakpoints.mobile}) {
@@ -100,8 +106,9 @@ export const MyRoom = () => {
   const room = contract?.room;
 
   return (
-    <Container>
-      <Header title="Phòng Đang Thuê" />
+    <PageWrapper>
+      <Container>
+        <Header title="Phòng Đang Thuê" />
 
       {loading && <Notice>Đang tải thông tin phòng...</Notice>}
       {error && <Notice>Lỗi: {error}</Notice>}
@@ -174,6 +181,7 @@ export const MyRoom = () => {
           )}
         </>
       )}
-    </Container>
+      </Container>
+    </PageWrapper>
   );
 };

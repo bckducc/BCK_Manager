@@ -9,13 +9,17 @@ import { FormGroup, Input, Select } from '../../components/Forms/Form';
 import { invoiceService } from './invoiceService';
 import type { Invoice, InvoiceStatus } from './invoice.types';
 
-const Page = styled.div`
+const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.lg};
-  min-height: 100%;
+  gap: ${theme.spacing.md};
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: ${theme.spacing.lg};
-  background: ${theme.colors.lightBg};
 
   @media (max-width: ${theme.breakpoints.mobile}) {
     padding: ${theme.spacing.md};
@@ -311,8 +315,9 @@ export const MyInvoices = () => {
   ];
 
   return (
-    <Page>
-      <Header
+    <PageWrapper>
+      <Container>
+        <Header
         title="Hóa Đơn Của Tôi"
         actions={
           <Button onClick={loadInvoices} disabled={loading || submitting}>
@@ -457,7 +462,8 @@ export const MyInvoices = () => {
             </DetailItem>
           </DetailGrid>
         )}
-      </Modal>
-    </Page>
+        </Modal>
+      </Container>
+    </PageWrapper>
   );
 };

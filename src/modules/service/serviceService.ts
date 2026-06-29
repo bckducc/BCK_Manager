@@ -24,9 +24,23 @@ type BackendRoomService = {
 
 type ServicePayload = Pick<Service, 'name' | 'price' | 'unit' | 'type'>;
 type AssignRoomServicePayload = {
-  roomId: string;
+  roomIds: string[];
   serviceId: string;
   quantity?: number;
+  appliedDate?: string;
+};
+type BackendBulkAssignment = {
+  service_id: string | number;
+  assigned_room_ids: Array<string | number>;
+  skipped_room_ids: Array<string | number>;
+  quantity: number;
+  applied_date?: string;
+};
+type BulkAssignment = {
+  serviceId: string;
+  assignedRoomIds: string[];
+  skippedRoomIds: string[];
+  quantity: number;
   appliedDate?: string;
 };
 type UpdateRoomServicePayload = {
@@ -81,7 +95,7 @@ const toRoomService = (roomService: BackendRoomService, fallbackRoomId?: string 
 
 const toAssignRoomServicePayload = (data: AssignRoomServicePayload) =>
   JSON.stringify({
-    room_id: data.roomId,
+    room_ids: data.roomIds,
     service_id: data.serviceId,
     quantity: data.quantity,
     applied_date: data.appliedDate,
@@ -141,15 +155,21 @@ export const serviceService = {
   delete: (id: string) =>
     apiCall<{ success: boolean }>(`/api/v1/services/${id}`, { method: 'DELETE' }),
 
-  assignToRoom: async (data: AssignRoomServicePayload) => {
-    const response = await apiCall<BackendRoomService>('/api/v1/services/room/assign', {
+  assignToRooms: async (data: AssignRoomServicePayload) => {
+    const response = await apiCall<BackendBulkAssignment>('/api/v1/services/room/assign', {
       method: 'POST',
       body: toAssignRoomServicePayload(data),
     });
 
     return {
       ...response,
-      data: response.data ? toRoomService(response.data) : undefined,
+      data: response.data ? {
+        serviceId: String(response.data.service_id),
+        assignedRoomIds: response.data.assigned_room_ids.map(String),
+        skippedRoomIds: response.data.skipped_room_ids.map(String),
+        quantity: Number(response.data.quantity),
+        appliedDate: response.data.applied_date,
+      } satisfies BulkAssignment : undefined,
     };
   },
 

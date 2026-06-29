@@ -70,19 +70,36 @@ export const Login = () => {
     try {
       const loggedInUser = await login(username, password);
       const from = (location.state as Record<string, unknown>)?.from as Record<string, unknown> | undefined;
+      const requestedPath = from?.pathname as string | undefined;
+      const ownerPaths = new Set([
+        '/dashboard',
+        '/quan-ly-phong',
+        '/quan-ly-nguoi-thue',
+        '/quan-ly-hop-dong',
+        '/quan-ly-dich-vu',
+        '/quan-ly-dien-nuoc',
+        '/quan-ly-hoa-don',
+      ]);
+      const tenantPaths = new Set([
+        '/trang-chu',
+        '/phong-dang-thue',
+        '/hop-dong-cua-toi',
+        '/hoa-don-cua-toi',
+        '/dien-nuoc-hang-thang',
+        '/thong-bao',
+      ]);
 
-      let pathname = '/owner';
+      let pathname = '/dashboard';
       if (loggedInUser?.role === 'tenant') {
-        pathname = '/tenant';
+        pathname = requestedPath && tenantPaths.has(requestedPath) ? requestedPath : '/trang-chu';
       } else if (loggedInUser?.role === 'admin') {
         pathname = '/admin';
       } else {
-        pathname = (from?.pathname as string) || '/owner';
+        pathname = requestedPath && ownerPaths.has(requestedPath) ? requestedPath : '/dashboard';
       }
 
-      console.log('Login successful:', { loggedInUser, pathname });
       setTimeout(() => {
-        navigate(pathname);
+        navigate(pathname, { replace: true });
       }, 100);
     } catch (err) {
       const errorMsg = (err as Error)?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
@@ -125,7 +142,7 @@ export const Login = () => {
           </Button>
 
           <Footer>
-            Chưa có tài khoản? <a href="#">Liên hệ quản trị viên</a>
+            Chưa có tài khoản? <a href="#">Liên hệ chủ nhà</a>
           </Footer>
         </Form>
       </LoginContainer>

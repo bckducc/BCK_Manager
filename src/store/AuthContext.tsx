@@ -67,7 +67,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', tokenData as string);
 
-      console.log('Login state updated:', { user, token: tokenData });
       return user;
     } catch (error) {
       const errorMessage = (error as Error)?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';

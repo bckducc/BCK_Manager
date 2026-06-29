@@ -76,6 +76,49 @@ const AssignmentControls = styled.div`
   }
 `;
 
+const RoomSelection = styled.div`
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.sm};
+  background: ${theme.colors.white};
+`;
+
+const RoomSelectionHeader = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  border-bottom: 1px solid ${theme.colors.borderLight};
+  background: ${theme.colors.lightBg};
+  color: ${theme.colors.dark};
+  font-weight: ${theme.fontWeight.semibold};
+  cursor: pointer;
+`;
+
+const RoomChoice = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  color: ${theme.colors.text};
+  cursor: pointer;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid ${theme.colors.borderLight};
+  }
+
+  &:hover {
+    background: ${theme.colors.lightBg};
+  }
+`;
+
+const SelectionNote = styled.div`
+  margin-top: ${theme.spacing.xs};
+  color: ${theme.colors.textSecondary};
+  font-size: ${theme.fontSize.sm};
+`;
+
 const ActionButtons = styled.div`
   display: flex;
   gap: ${theme.spacing.sm};
@@ -97,7 +140,7 @@ const initialServiceForm = {
 };
 
 const initialAssignmentForm = {
-  roomId: '',
+  roomIds: [] as string[],
   serviceId: '',
   quantity: '1',
   appliedDate: '',
@@ -174,9 +217,6 @@ export const ServiceManagement = () => {
   }, [roomData]);
 
   const selectedRoom = rooms.find((room) => String(room.id) === selectedRoomId);
-  const assignedServiceIds = new Set(assignedServices.map((item) => String(item.serviceId)));
-  const assignableServices = services.filter((service) => !assignedServiceIds.has(String(service.id)));
-
   const roomOptions = rooms
     .filter((room) => room.id !== undefined)
     .map((room) => ({
@@ -184,7 +224,7 @@ export const ServiceManagement = () => {
       label: `Phòng ${room.room_number || room.roomNumber || room.name || room.id}`,
     }));
 
-  const serviceOptions = assignableServices.map((service) => ({
+  const serviceOptions = services.map((service) => ({
     value: String(service.id),
     label: `${service.name} - ${formatCurrency(service.price)}/${unitLabels[service.unit] || service.unit}`,
   }));
@@ -257,7 +297,7 @@ export const ServiceManagement = () => {
   const openAssignmentModal = () => {
     setAssignmentForm({
       ...initialAssignmentForm,
-      roomId: selectedRoomId,
+      roomIds: selectedRoomId ? [selectedRoomId] : [],
       serviceId: serviceOptions[0]?.value || '',
     });
     setIsAssignmentModalOpen(true);
@@ -339,8 +379,8 @@ export const ServiceManagement = () => {
     e.preventDefault();
 
     const quantity = Number(assignmentForm.quantity);
-    if (!assignmentForm.roomId || !assignmentForm.serviceId) {
-      alert('Vui lòng chọn phòng và dịch vụ');
+    if (assignmentForm.roomIds.length === 0 || !assignmentForm.serviceId) {
+      alert('Vui lòng chọn ít nhất một phòng và một dịch vụ');
       return;
     }
 
@@ -351,8 +391,8 @@ export const ServiceManagement = () => {
 
     try {
       setIsSubmitting(true);
-      const response = await serviceService.assignToRoom({
-        roomId: assignmentForm.roomId,
+      const response = await serviceService.assignToRooms({
+        roomIds: assignmentForm.roomIds,
         serviceId: assignmentForm.serviceId,
         quantity,
         appliedDate: assignmentForm.appliedDate || undefined,
@@ -362,10 +402,17 @@ export const ServiceManagement = () => {
         throw new Error(response.message || 'Không gán được dịch vụ');
       }
 
-      setSelectedRoomId(assignmentForm.roomId);
-      await fetchAssignedServices(assignmentForm.roomId);
+      const firstRoomId = assignmentForm.roomIds[0];
+      setSelectedRoomId(firstRoomId);
+      await fetchAssignedServices(firstRoomId);
       closeAssignmentModal();
-      alert('Gán dịch vụ vào phòng thành công');
+      const assignedCount = response.data?.assignedRoomIds.length ?? 0;
+      const skippedCount = response.data?.skippedRoomIds.length ?? 0;
+      alert(
+        assignedCount > 0
+          ? `Đã gán dịch vụ cho ${assignedCount} phòng${skippedCount > 0 ? `, bỏ qua ${skippedCount} phòng đã có dịch vụ` : ''}`
+          : 'Các phòng đã chọn đều đã có dịch vụ này'
+      );
     } catch (err) {
       alert(`Lỗi: ${err instanceof Error ? err.message : 'Không gán được dịch vụ'}`);
     } finally {
@@ -517,7 +564,7 @@ export const ServiceManagement = () => {
               </FormGroup>
               <Button
                 onClick={openAssignmentModal}
-                disabled={isSubmitting || !selectedRoomId || assignableServices.length === 0}
+                disabled={isSubmitting || rooms.length === 0 || services.length === 0}
               >
                 Gán Dịch Vụ
               </Button>
@@ -605,16 +652,40 @@ export const ServiceManagement = () => {
           cancelText="Hủy"
         >
           <Form onSubmit={handleAssignService}>
-            <FormGroup label="Phòng" required>
-              <Select
-                value={assignmentForm.roomId}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setAssignmentForm({ ...assignmentForm, roomId: e.target.value })
-                }
-                options={roomOptions}
-                placeholder="Chọn phòng..."
-                disabled
-              />
+            <FormGroup label="Phòng áp dụng" required>
+              <div>
+                <RoomSelection>
+                  <RoomSelectionHeader>
+                    <input
+                      type="checkbox"
+                      checked={roomOptions.length > 0 && assignmentForm.roomIds.length === roomOptions.length}
+                      onChange={(event) => setAssignmentForm({
+                        ...assignmentForm,
+                        roomIds: event.target.checked ? roomOptions.map((room) => room.value) : [],
+                      })}
+                      disabled={isSubmitting}
+                    />
+                    Chọn tất cả phòng
+                  </RoomSelectionHeader>
+                  {roomOptions.map((room) => (
+                    <RoomChoice key={room.value}>
+                      <input
+                        type="checkbox"
+                        checked={assignmentForm.roomIds.includes(room.value)}
+                        onChange={(event) => setAssignmentForm({
+                          ...assignmentForm,
+                          roomIds: event.target.checked
+                            ? [...assignmentForm.roomIds, room.value]
+                            : assignmentForm.roomIds.filter((roomId) => roomId !== room.value),
+                        })}
+                        disabled={isSubmitting}
+                      />
+                      {room.label}
+                    </RoomChoice>
+                  ))}
+                </RoomSelection>
+                <SelectionNote>Đã chọn {assignmentForm.roomIds.length}/{roomOptions.length} phòng</SelectionNote>
+              </div>
             </FormGroup>
             <FormGroup label="Dịch Vụ" required>
               <Select
