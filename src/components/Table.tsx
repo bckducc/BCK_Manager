@@ -1,5 +1,9 @@
+import { useMemo, useState } from 'react';
+import { Pagination } from 'antd';
 import styled from 'styled-components';
 import { theme } from '../styles/theme';
+
+const DEFAULT_PAGE_SIZE = 10;
 
 const TableContainer = styled.div`
   background-color: ${theme.colors.white};
@@ -12,6 +16,13 @@ const TableContainer = styled.div`
 const TableScroll = styled.div`
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+`;
+
+const PaginationWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: ${theme.spacing.md};
+  border-top: 1px solid ${theme.colors.borderLight};
 `;
 
 const StyledTable = styled.table`
@@ -109,6 +120,7 @@ interface TableProps<T extends object> {
   data: T[];
   loading?: boolean;
   emptyText?: string;
+  pageSize?: number;
 }
 
 export const Table = <T extends object>({
@@ -116,7 +128,17 @@ export const Table = <T extends object>({
   data,
   loading = false,
   emptyText = 'No data',
+  pageSize = DEFAULT_PAGE_SIZE,
 }: TableProps<T>) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
+  const visiblePage = Math.min(currentPage, totalPages);
+
+  const paginatedData = useMemo(() => {
+    const start = (visiblePage - 1) * pageSize;
+    return data.slice(start, start + pageSize);
+  }, [data, pageSize, visiblePage]);
+
   if (loading) {
     return <SkeletonLoader />;
   }
@@ -139,7 +161,7 @@ export const Table = <T extends object>({
             </tr>
           </thead>
           <tbody>
-            {data.map((record, idx) => (
+            {paginatedData.map((record, idx) => (
               <tr key={idx}>
                 {columns.map((col) => {
                   const value = (record as Record<string, unknown>)[col.key];
@@ -154,6 +176,15 @@ export const Table = <T extends object>({
           </tbody>
         </StyledTable>
       </TableScroll>
+      <PaginationWrapper>
+        <Pagination
+          current={visiblePage}
+          pageSize={pageSize}
+          total={data.length}
+          showSizeChanger={false}
+          onChange={setCurrentPage}
+        />
+      </PaginationWrapper>
     </TableContainer>
   );
 };

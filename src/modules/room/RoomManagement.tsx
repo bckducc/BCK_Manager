@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Pagination } from 'antd';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import type { TableColumn } from '../../components/Table';
@@ -88,8 +87,6 @@ export const RoomManagement = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<Record<string, unknown>[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 6;
   const [hasInitialized, setHasInitialized] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Record<string, unknown> | null>(null);
   const [formData, setFormData] = useState({
@@ -117,7 +114,6 @@ export const RoomManagement = () => {
         setRooms([]);
       }
     }
-    setCurrentPage(1);
   }, [responseData]);
 
   useEffect(() => {
@@ -283,18 +279,6 @@ export const RoomManagement = () => {
     { total: 0, available: 0, rented: 0, maintenance: 0 }
   );
 
-  const totalPages = Math.max(1, Math.ceil(rooms.length / PAGE_SIZE));
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
-  const pagedRooms = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return rooms.slice(start, start + PAGE_SIZE);
-  }, [rooms, currentPage]);
-
   const columns: TableColumn<Record<string, unknown>>[] = [
     { key: 'room_number', title: 'Số Phòng' },
     { key: 'area', title: 'Diện Tích (m²)' },
@@ -372,15 +356,7 @@ export const RoomManagement = () => {
 
       <Card>
         {error && <p style={{ color: 'red' }}>Lỗi: {String(error)}</p>}
-        <Table columns={columns} data={pagedRooms as unknown as Record<string, string | number>[]} emptyText="Chưa có phòng nào" />
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
-          <Pagination
-            current={currentPage}
-            pageSize={PAGE_SIZE}
-            total={rooms.length}
-            onChange={(page) => setCurrentPage(page)}
-          />
-        </div>
+        <Table columns={columns} data={rooms as unknown as Record<string, string | number>[]} emptyText="Chưa có phòng nào" />
       </Card>
 
       <Modal
