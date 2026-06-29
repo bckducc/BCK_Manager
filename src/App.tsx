@@ -27,10 +27,10 @@ function App() {
         <SidebarProvider>
           <PageTransitionProvider>
             <Routes>
-              <Route path="/login" element={<Login />} />
+              <Route path="/dang-nhap" element={<Login />} />
 
           <Route
-            path="/owner"
+            path="/dashboard"
             element={
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
@@ -40,7 +40,7 @@ function App() {
             }
           />
           <Route
-            path="/owner/rooms"
+            path="/quan-ly-phong"
             element={
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
@@ -50,7 +50,7 @@ function App() {
             }
           />
           <Route
-            path="/owner/tenants"
+            path="/quan-ly-nguoi-thue"
             element={
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
@@ -60,7 +60,7 @@ function App() {
             }
           />
           <Route
-            path="/owner/contracts"
+            path="/quan-ly-hop-dong"
             element={
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
@@ -70,7 +70,7 @@ function App() {
             }
           />
           <Route
-            path="/owner/services"
+            path="/quan-ly-dich-vu"
             element={
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
@@ -80,7 +80,7 @@ function App() {
             }
           />
           <Route
-            path="/owner/utilities"
+            path="/quan-ly-dien-nuoc"
             element={
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
@@ -90,7 +90,7 @@ function App() {
             }
           />
           <Route
-            path="/owner/invoices"
+            path="/quan-ly-hoa-don"
             element={
               <ProtectedRoute requiredRole="owner">
                 <MainLayout>
@@ -101,7 +101,7 @@ function App() {
           />
 
           <Route
-            path="/tenant"
+            path="/trang-chu"
             element={
               <ProtectedRoute requiredRole="tenant">
                 <MainLayout>
@@ -111,7 +111,7 @@ function App() {
             }
           />
           <Route
-            path="/tenant/room"
+            path="/phong-dang-thue"
             element={
               <ProtectedRoute requiredRole="tenant">
                 <MainLayout>
@@ -121,7 +121,7 @@ function App() {
             }
           />
           <Route
-            path="/tenant/contracts"
+            path="/hop-dong-cua-toi"
             element={
               <ProtectedRoute requiredRole="tenant">
                 <MainLayout>
@@ -131,7 +131,7 @@ function App() {
             }
           />
           <Route
-            path="/tenant/invoices"
+            path="/hoa-don-cua-toi"
             element={
               <ProtectedRoute requiredRole="tenant">
                 <MainLayout>
@@ -141,7 +141,7 @@ function App() {
             }
           />
           <Route
-            path="/tenant/utilities"
+            path="/dien-nuoc-hang-thang"
             element={
               <ProtectedRoute requiredRole="tenant">
                 <MainLayout>
@@ -151,7 +151,7 @@ function App() {
             }
           />
           <Route
-            path="/tenant/notifications"
+            path="/thong-bao"
             element={
               <ProtectedRoute requiredRole="tenant">
                 <MainLayout>
@@ -170,7 +170,7 @@ function App() {
             }
           />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/dang-nhap" replace />} />
             </Routes>
           </PageTransitionProvider>
         </SidebarProvider>

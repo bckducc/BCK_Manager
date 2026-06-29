@@ -18,7 +18,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const currentUser = user || parsedUser;
 
   if (!isValidated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/dang-nhap" state={{ from: location }} replace />;
   }
                     
   if (requiredRole && currentUser?.role !== requiredRole) {

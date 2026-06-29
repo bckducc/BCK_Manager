@@ -103,7 +103,7 @@ export const apiCall = async <T = Record<string, unknown>>(
           if (response.status === 401 && !isLoginRequest) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            window.location.href = '/dang-nhap';
           }
 
           if (!response.ok) {

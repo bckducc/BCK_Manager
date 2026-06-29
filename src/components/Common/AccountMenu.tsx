@@ -130,7 +130,7 @@ export const AccountMenu = ({
   const handleLogout = () => {
     logout();
     setIsOpen(false);
-    navigate('/login');
+    navigate('/dang-nhap');
   };
 
   const handleProfileClick = () => {

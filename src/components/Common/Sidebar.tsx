@@ -158,22 +158,22 @@ interface NavItemType {
 }
 
 const ownerNavItems: NavItemType[] = [
-  { label: 'Trang chủ', path: '/owner', icon: <HomeOutlined /> },
-  { label: 'Quản lý phòng', path: '/owner/rooms', icon: <ApartmentOutlined /> },
-  { label: 'Người thuê', path: '/owner/tenants', icon: <TeamOutlined /> },
-  { label: 'Hợp đồng', path: '/owner/contracts', icon: <FileProtectOutlined /> },
-  { label: 'Dịch vụ', path: '/owner/services', icon: <ToolOutlined /> },
-  { label: 'Điện nước', path: '/owner/utilities', icon: <ThunderboltOutlined /> },
-  { label: 'Hóa đơn', path: '/owner/invoices', icon: <FileTextOutlined /> },
+  { label: 'Trang chủ', path: '/dashboard', icon: <HomeOutlined /> },
+  { label: 'Quản lý phòng', path: '/quan-ly-phong', icon: <ApartmentOutlined /> },
+  { label: 'Người thuê', path: '/quan-ly-nguoi-thue', icon: <TeamOutlined /> },
+  { label: 'Hợp đồng', path: '/quan-ly-hop-dong', icon: <FileProtectOutlined /> },
+  { label: 'Dịch vụ', path: '/quan-ly-dich-vu', icon: <ToolOutlined /> },
+  { label: 'Điện nước', path: '/quan-ly-dien-nuoc', icon: <ThunderboltOutlined /> },
+  { label: 'Hóa đơn', path: '/quan-ly-hoa-don', icon: <FileTextOutlined /> },
 ];
 
 const tenantNavItems: NavItemType[] = [
-  { label: 'Trang chủ', path: '/tenant', icon: <HomeOutlined /> },
-  { label: 'Phòng đang thuê', path: '/tenant/room', icon: <ApartmentOutlined /> },
-  { label: 'Hợp đồng', path: '/tenant/contracts', icon: <FileProtectOutlined /> },
-  { label: 'Hóa đơn', path: '/tenant/invoices', icon: <FileTextOutlined /> },
-  { label: 'Điện nước', path: '/tenant/utilities', icon: <ThunderboltOutlined /> },
-  { label: 'Thông báo', path: '/tenant/notifications', icon: <BellOutlined /> },
+  { label: 'Trang chủ', path: '/trang-chu', icon: <HomeOutlined /> },
+  { label: 'Phòng đang thuê', path: '/phong-dang-thue', icon: <ApartmentOutlined /> },
+  { label: 'Hợp đồng', path: '/hop-dong-cua-toi', icon: <FileProtectOutlined /> },
+  { label: 'Hóa đơn', path: '/hoa-don-cua-toi', icon: <FileTextOutlined /> },
+  { label: 'Điện nước', path: '/dien-nuoc-hang-thang', icon: <ThunderboltOutlined /> },
+  { label: 'Thông báo', path: '/thong-bao', icon: <BellOutlined /> },
 ];
 
 export const Sidebar = () => {
