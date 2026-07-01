@@ -1,6 +1,7 @@
 import type { ApiResponse } from '../types';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 const pendingRequests = new Map<string, Promise<ApiResponse<unknown>>>();
 const responseCache = new Map<string, { timestamp: number; response: ApiResponse<unknown> }>();
 const CACHE_TTL_MS = 5000;
@@ -18,6 +19,20 @@ export const DATA_CHANGED_EVENT = 'app:data-changed';
 export const invalidateApiCache = () => {
   responseCache.clear();
   window.dispatchEvent(new CustomEvent(DATA_CHANGED_EVENT));
+};
+
+export const apiText = async (endpoint: string): Promise<string> => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `HTTP Error ${response.status}`);
+  }
+
+  return response.text();
 };
 
 const buildRequestKey = (url: string, options: RequestOptions) => {

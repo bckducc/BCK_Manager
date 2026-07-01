@@ -1,8 +1,6 @@
-import { apiCall } from '../../services/apiClient';
+import { apiCall, apiText } from '../../services/apiClient';
 import type { ApiResponse } from '../../types';
 import type { Invoice, InvoicePayment, InvoiceStatus, PaymentMethod } from './invoice.types';
-
-const API_BASE_URL = 'http://localhost:5000';
 
 type BackendInvoice = Partial<Omit<Invoice, 'status'>> & {
   id: string | number;
@@ -189,20 +187,6 @@ const getInvoiceRows = (
   return [];
 };
 
-const downloadTextResponse = async (endpoint: string) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `HTTP Error ${response.status}`);
-  }
-
-  return response.text();
-};
-
 export const invoiceService = {
   getAll: async (filters: InvoiceFilters = {}) => {
     const response = await apiCall<BackendInvoice[]>(`/api/v1/invoices${buildQuery(filters)}`, {
@@ -324,5 +308,5 @@ export const invoiceService = {
       body: JSON.stringify(data),
     }),
 
-  exportText: (id: string) => downloadTextResponse(`/api/v1/invoices/${id}/export`),
+  exportText: (id: string) => apiText(`/api/v1/invoices/${id}/export`),
 };
