@@ -137,7 +137,6 @@ export const TenantManagement = () => {
           room?.roomNumber ||
           (room as { room_number?: string } | undefined)?.room_number ||
           'Chưa có phòng',
-        leaseStart: new Date(tenant.startDate).toLocaleDateString('vi-VN'),
       };
     });
   }, [contracts, tenants]);
@@ -175,7 +174,6 @@ export const TenantManagement = () => {
       },
     },
     { key: 'roomNumber', title: 'Phòng' },
-    { key: 'leaseStart', title: 'Ngày Bắt Đầu' },
     {
       key: 'actions',
       title: 'Hành Động',

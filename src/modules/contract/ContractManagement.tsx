@@ -64,7 +64,6 @@ const ActionButtons = styled.div`
 const initialContractForm = {
   tenantId: '',
   roomId: '',
-  contractCode: '',
   startDate: '',
   endDate: '',
   depositAmount: '',
@@ -199,7 +198,6 @@ export const ContractManagement = () => {
       await addContract({
         tenantId: formData.tenantId,
         roomId: formData.roomId,
-        contractCode: formData.contractCode || undefined,
         startDate: formData.startDate,
         endDate: formData.endDate,
         depositAmount: Number(formData.depositAmount),
@@ -349,15 +347,6 @@ export const ContractManagement = () => {
                   }}
                   options={roomOptions}
                   placeholder="Chọn phòng..."
-                  disabled={isSubmitting}
-                />
-              </FormGroup>
-              <FormGroup label="Mã hợp đồng">
-                <Input
-                  value={formData.contractCode}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, contractCode: e.target.value })
-                  }
                   disabled={isSubmitting}
                 />
               </FormGroup>

@@ -14,7 +14,6 @@ export type ContractFilters = {
 export type CreateContractPayload = {
   tenantId: string;
   roomId: string;
-  contractCode?: string;
   startDate: Date | string;
   endDate: Date | string;
   depositAmount: number;
@@ -48,7 +47,6 @@ const serializeContract = (data: CreateContractPayload) => {
   return JSON.stringify({
     tenant_id: data.tenantId,
     room_id: data.roomId,
-    contract_code: data.contractCode || undefined,
     start_date: serializeDate(data.startDate),
     end_date: serializeDate(data.endDate),
     deposit_amount: data.depositAmount,
